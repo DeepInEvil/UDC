@@ -340,7 +340,7 @@ if __name__ == '__main__':
     training_dataframe, vocab, word_to_id, id_to_vec, emb_dim, validation_dataframe = creating_variables(
         num_training_examples=10000,
         embedding_dim=50,
-        num_validation_examples=1000)
+        num_validation_examples=100)
 
     encoder, dual_encoder = creating_model(hidden_size=50,
                                            p_dropout=0.85)
@@ -352,8 +352,8 @@ if __name__ == '__main__':
         if param.requires_grad:
             print(name)
 
-    train_model(learning_rate=0.0001,
-                l2_penalty=0.0001,
+    train_model(learning_rate=0.001,
+                l2_penalty=0.01,
                 epochs=100)
 
     dual_encoder.load_state_dict(torch.load('saved_model_10000_examples.pt'))
