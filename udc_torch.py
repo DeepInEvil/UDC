@@ -177,15 +177,14 @@ class DualEncoder(nn.Module):
         context_last_hidden = self.encoder(context_tensor)  # dimensions: (batch_size x hidden_size)
         response_last_hidden = self.encoder(response_tensor)  # dimensions: (batch_size x hidden_size)
 
-        # context = context_last_hidden.mm(self.M).cuda()
-        context = context_last_hidden.mm(self.M)  # dimensions: (batch_size x hidden_size)
+        context = context_last_hidden.mm(self.M).cuda()
+        #context = context_last_hidden.mm(self.M)  # dimensions: (batch_size x hidden_size)
         context = context.view(-1, 1, self.hidden_size)  # dimensions: (batch_size x 1 x hidden_size)
 
         response = response_last_hidden.view(-1, self.hidden_size, 1)  # dimensions: (batch_size x hidden_size x 1)
 
-        # score = torch.bmm(context, response).view(-1, 1).cuda()
-        score = torch.bmm(context, response).view(-1,
-                                                  1)  # dimensions: (batch_size x 1 x 1) and lastly --> (batch_size x 1)
+        score = torch.bmm(context, response).view(-1, 1).cuda()
+        #score = torch.bmm(context, response).view(-1, 1)  # dimensions: (batch_size x 1 x 1) and lastly --> (batch_size x 1)
 
         return score
 
@@ -253,7 +252,7 @@ def train_model(learning_rate, l2_penalty, epochs):
     optimizer = torch.optim.Adam(dual_encoder.parameters(), lr=learning_rate, weight_decay=l2_penalty)
 
     loss_func = torch.nn.BCEWithLogitsLoss()
-    # loss_func.cuda()
+    loss_func.cuda()
 
     best_validation_accuracy = 0.0
 
@@ -270,12 +269,12 @@ def train_model(learning_rate, l2_penalty, epochs):
         for index, row in training_dataframe.iterrows():
             context_ids, response_ids, label = load_ids_and_labels(row, word_to_id)
 
-            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1), requires_grad=False)  # .cuda()
+            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1), requires_grad=False).cuda()
 
-            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1), requires_grad=False)  # .cuda()
+            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1), requires_grad=False).cuda()
 
             label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1))),
-                                      requires_grad=False)  # .cuda()
+                                      requires_grad=False).cuda()
 
             score = dual_encoder(context, response)
 
@@ -306,11 +305,11 @@ def train_model(learning_rate, l2_penalty, epochs):
         for index, row in validation_dataframe.iterrows():
             context_ids, response_ids, label = load_ids_and_labels(row, word_to_id)
 
-            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1))  # .cuda()
+            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1)).cuda()
 
-            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1))  # .cuda()
+            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1)).cuda()
 
-            label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1))))  # .cuda()
+            label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1)))).cuda()
 
             score = dual_encoder(context, response)
 
@@ -345,8 +344,8 @@ if __name__ == '__main__':
     encoder, dual_encoder = creating_model(hidden_size=50,
                                            p_dropout=0.85)
 
-    # encoder.cuda()
-    # dual_encoder.cuda
+    encoder.cuda()
+    dual_encoder.cuda()
 
     for name, param in dual_encoder.named_parameters():
         if param.requires_grad:
