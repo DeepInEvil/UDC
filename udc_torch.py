@@ -338,7 +338,7 @@ def train_model(learning_rate, l2_penalty, epochs):
 
 if __name__ == '__main__':
     training_dataframe, vocab, word_to_id, id_to_vec, emb_dim, validation_dataframe = creating_variables(
-        num_training_examples=10000,
+        num_training_examples=1000,
         embedding_dim=50,
         num_validation_examples=100)
 
