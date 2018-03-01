@@ -342,7 +342,7 @@ if __name__ == '__main__':
         if param.requires_grad:
             print(name)
 
-    train_model(learning_rate=0.001,
+    train_model(learning_rate=0.1,
                 l2_penalty=0.01,
                 epochs=100)
 
