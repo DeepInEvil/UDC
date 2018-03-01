@@ -10,7 +10,7 @@ import operator
 
 np.random.seed(0)
 
-
+max_context_len = 160
 def create_dataframe(csvfile):
     dataframe = pd.read_csv(csvfile)
     return dataframe
@@ -21,8 +21,7 @@ def shuffle_dataframe(dataframe):
 
 
 def create_vocab(dataframe):
-    vocab = []
-    word_freq = {}
+    vocab = {}
 
     for index, row in dataframe.iterrows():
 
@@ -32,27 +31,21 @@ def create_vocab(dataframe):
         train_words = str(context_cell).split() + str(response_cell).split()
 
         for word in train_words:
+            try:
+                vocab[word.lower()] += 1.0
+            except KeyError:
+                vocab[word.lower()] = 1.0
 
-            if word.lower() not in vocab:
-                vocab.append(word.lower())
+    vocab['<UNK>'] = 1.0
 
-            if word.lower() not in word_freq:
-                word_freq[word.lower()] = 1
-            else:
-                word_freq[word] += 1
-
-    word_freq_sorted = sorted(word_freq.items(), key=lambda item: item[1], reverse=True)
-    vocab = ["<UNK>"] + [pair[0] for pair in word_freq_sorted]
-
-    return vocab
+    return vocab.keys()
 
 
 def create_word_to_id(vocab):
-    enumerate_list = [(id, word) for id, word in enumerate(vocab)]
 
-    word_to_id = {pair[1]: pair[0] for pair in enumerate_list}
+    word2id = {word: id for id, word in enumerate(vocab)}
 
-    return word_to_id
+    return word2id
 
 
 def create_id_to_vec(word_to_id, glovefile):
@@ -85,8 +78,6 @@ def load_ids_and_labels(row, word_to_id):
     context_cell = row['Context']
     response_cell = row['Utterance']
     label_cell = row['Label']
-
-    max_context_len = 160
 
     context_words = context_cell.split()
     if len(context_words) > max_context_len:
@@ -140,7 +131,7 @@ class Encoder(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        init.uniform(self.lstm.weight_ih_l0, a=-0.01, b=0.01)
+        init.uniform(self.lstm.weight_ih_l0, a=-0.25, b=0.25)
         init.orthogonal(self.lstm.weight_hh_l0)
         self.lstm.weight_ih_l0.requires_grad = True
         self.lstm.weight_hh_l0.requires_grad = True
@@ -154,11 +145,11 @@ class Encoder(nn.Module):
 
     def forward(self, inputs):
         embeddings = self.embedding(inputs)
+        #outputs, hiddens_tuple = self.lstm(embeddings)
+
         outputs, hiddens_tuple = self.lstm(embeddings)
 
-        last_hidden = hiddens_tuple[
-            0]  # access first tuple element to get last hidden state, dimensions: (num_layers * num_directions x batch_size x hidden_size)
-        last_hidden = last_hidden[-1]  # access last lstm layer, dimensions: (batch_size x hidden_size)
+        last_hidden = outputs[-1]  # access last lstm layer, dimensions: (batch_size x hidden_size)
         last_hidden = self.dropout_layer(last_hidden)  # dimensions: (batch_size x hidden_size)
 
         return last_hidden
