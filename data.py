@@ -46,14 +46,30 @@ class UDC:
     word_embed.weight.data.copy_(udc.vectors)
 
     # Training loop
-    for it in range(n_iter):
-        contexts, responses, labels = udc.next_train_batch()
+    for epoch in range(n_epoch):
+        for mb in udc.train_iter():
+            contexts, responses, labels = mb
+            pred = model(contexts, responses)
+            loss = compute_loss(pred, labels)
+            loss.backward()
+
+        for mb in udc.valid_iter():
+            contexts, responses, labels = mb
+            pred = model(contexts, responses)
+            acc = accuracy(pred, labels)
+
+    for mb in udc.test_iter():
+        contexts, responses, labels = mb
         pred = model(contexts, responses)
-        loss = compute_loss(pred, labels)
+        acc = accuracy(pred, labels)
     ```
     """
 
     def __init__(self, path='data', train_file='train10k.tsv', valid_file='valid500.tsv', test_file='test500.tsv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, gpu=False):
+        self.batch_size = batch_size
+        self.device = 0 if gpu else -1
+        self.sort_key = lambda x: data.interleave_keys(len(x.context), len(x.response))
+
         self.TEXT = data.Field(
             lower=True, tokenize=custom_tokenizer,
             unk_token='__unk__', pad_token='__pad__'
@@ -66,29 +82,34 @@ class UDC:
             fields=[('context', self.TEXT), ('response', self.TEXT), ('label', self.LABEL)],
         )
 
-        device = 0 if gpu else -1
-        sort_key = lambda x: data.interleave_keys(len(x.context), len(x.response))
-
-        self.train_iter, self.valid_iter, self.test_iter = data.BucketIterator.splits(
-            (self.train, self.valid, self.test), batch_size=batch_size, device=device,
-            shuffle=True, sort_key=sort_key
-        )
-
         self.TEXT.build_vocab(
             self.train, max_size=max_vocab_size, min_freq=min_freq,
             vectors=GloVe('6B', dim=embed_dim)
         )
         self.LABEL.build_vocab(self.train)
 
+        self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
         self.vectors = self.TEXT.vocab.vectors
 
-    def next_train_batch(self):
-        return next(iter(self.train_iter))
+    def train_iter(self):
+        train_iter = data.BucketIterator(
+            self.train, batch_size=self.batch_size, device=self.device,
+            shuffle=True, sort_key=self.sort_key, train=True, repeat=False
+        )
+        return iter(train_iter)
 
-    def next_valid_batch(self):
-        return next(iter(self.valid_iter))
+    def valid_iter(self):
+        valid_iter = data.BucketIterator(
+            self.valid, batch_size=self.batch_size, device=self.device,
+            sort_key=self.sort_key, shuffle=False, train=False, repeat=False
+        )
+        return iter(valid_iter)
 
-    def next_test_batch(self):
-        return next(iter(self.test_iter))
+    def test_iter(self):
+        test_iter = data.BucketIterator(
+            self.test, batch_size=self.batch_size, device=self.device,
+            sort_key=self.sort_key, shuffle=False, train=False, repeat=False
+        )
+        return iter(test_iter)
