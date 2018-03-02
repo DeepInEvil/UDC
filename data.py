@@ -1,33 +1,22 @@
 from torchtext import data
 from torchtext.vocab import GloVe
-import spacy
+import torch
 import re
 
 
 URL_TOK = '__url__'
 PATH_TOK = '__path__'
-# nlp = spacy.load('en')
 
 
 def custom_tokenizer(text):
     """
     Preprocess and tokenize a text:
     -------------------------------
-    1. Replace named entities with its label, i.e. '__label__' <DISABLED for now>
-    2. Replace urls with '__url__'
-    3. Replace system paths with '__path__'
-    4. Tokenize by whitespace, i.e. str.split()
+    1. Replace urls with '__url__'
+    2. Replace system paths with '__path__'
+    3. Tokenize by whitespace, i.e. str.split()
     """
     res = text
-
-    """
-    Note: replacing named entities is very expensive on Spacy, needs a better way
-    """
-    # doc = nlp(text)
-
-    # Named entities
-    # for ent in doc.ents:
-    #     res = res.replace(str(ent), '__{}__'.format(ent.label_))
 
     # URLs
     urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', res)
@@ -69,7 +58,7 @@ class UDC:
             lower=True, tokenize=custom_tokenizer,
             unk_token='__unk__', pad_token='__pad__'
         )
-        self.LABEL = data.Field(sequential=False, unk_token=None)
+        self.LABEL = data.Field(sequential=False, tensor_type=torch.FloatTensor, unk_token=None)
 
         self.train, self.valid, self.test = data.TabularDataset.splits(
             path=path, train=train_file, validation=valid_file, test=test_file,
