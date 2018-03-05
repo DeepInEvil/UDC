@@ -54,21 +54,17 @@ class UDC:
             loss.backward()
 
         for mb in udc.valid_iter():
-            contexts, responses, labels = mb
-            pred = model(contexts, responses)
-            acc = accuracy(pred, labels)
+            contexts, positives, negatives_1, ..., negatives_9 = mb
 
-    for mb in udc.test_iter():
-        contexts, responses, labels = mb
-        pred = model(contexts, responses)
-        acc = accuracy(pred, labels)
+            for responses in cat(positives, negatives_1, ... negatives_9)
+                pred = model(contexts, responses)
     ```
     """
 
     def __init__(self, path='data', train_file='train10k.tsv', valid_file='valid500.tsv', test_file='test500.tsv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, gpu=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
-        self.sort_key = lambda x: data.interleave_keys(len(x.context), len(x.response))
+        self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
             lower=True, tokenize=custom_tokenizer,
@@ -78,10 +74,20 @@ class UDC:
 
         file_format = train_file[-3:]
 
-        self.train, self.valid, self.test = data.TabularDataset.splits(
-            path=path, train=train_file, validation=valid_file, test=test_file,
-            format=file_format, skip_header=True,
+        self.train = data.TabularDataset(
+            path='{}/{}'.format(path, train_file), format=file_format, skip_header=True,
             fields=[('context', self.TEXT), ('response', self.TEXT), ('label', self.LABEL)],
+        )
+
+        self.valid, self.test = data.TabularDataset.splits(
+            path=path, validation=valid_file, test=test_file,
+            format=file_format, skip_header=True,
+            fields=[('context', self.TEXT), ('positive', self.TEXT),
+                    ('negative_1', self.TEXT), ('negative_2', self.TEXT),
+                    ('negative_3', self.TEXT), ('negative_4', self.TEXT),
+                    ('negative_5', self.TEXT), ('negative_6', self.TEXT),
+                    ('negative_7', self.TEXT), ('negative_8', self.TEXT),
+                    ('negative_9', self.TEXT)]
         )
 
         self.TEXT.build_vocab(
