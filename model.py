@@ -57,7 +57,7 @@ class CNNDualEncoder(nn.Module):
 
 class CrossConvNet(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, max_seq_len pretrained_emb=None, k=1):
+    def __init__(self, emb_dim, n_vocab, max_seq_len, pretrained_emb=None, k=1):
         super(CrossConvNet, self).__init__()
 
         self.n_vocab = n_vocab
@@ -83,8 +83,8 @@ class CrossConvNet(nn.Module):
         h: vector of (batch_size)
         """
         # Both are (batch_size, emb_dim, seq_len)
-        x1_emb = self.emb(x1).transpose(1, 2)
-        x2_emb = self.emb(x2).transpose(1, 2)
+        x1_emb = self.word_embed(x1).transpose(1, 2)
+        x2_emb = self.word_embed(x2).transpose(1, 2)
 
         # Pad into (batch_size, emb_dim, max_seq_len)
         x1_seq_len = x1_emb.size(-1)
@@ -93,15 +93,15 @@ class CrossConvNet(nn.Module):
         pad_size1 = self.max_seq_len - x1_seq_len
         pad_size2 = self.max_seq_len - x2_seq_len
 
-        x1 = F.pad(x1, (0, pad_size1))
-        x2 = F.pad(x2, (0, pad_size2))
+        x1_emb = F.pad(x1_emb, (0, pad_size1))
+        x2_emb = F.pad(x2_emb, (0, pad_size2))
 
         # Take dot product. S is (batch_size, L, L)
-        a = torch.bmm(x2.transpose(1, 2), x1)
+        a = torch.bmm(x2_emb.transpose(1, 2), x1_emb)
         # k-maxpool: (batch_size, L, L) -> (batch_size, k, L)
-        a, _ = torch.topk(x, k=k, dim=1, sorted=False)
+        a, _ = torch.topk(a, k=self.k, dim=1, sorted=False)
         # Ravel: (batch_size, k, L) -> (batch_size, k*L)
-        a = torch.view(-1, self.k*self.max_seq_len)
+        a = a.view(-1, self.k*self.max_seq_len)
 
         # batch_size x 1
         h = self.fc(a)
