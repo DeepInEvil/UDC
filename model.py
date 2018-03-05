@@ -26,7 +26,7 @@ class CNNDualEncoder(nn.Module):
         emb_x2 = self.word_embed(x2)
 
         c1 = self._forward(emb_x1)
-        c2 = self._forward(emb_x1)
+        c2 = self._forward(emb_x2)
 
         o = self.bilinear(c1, c2)
 
