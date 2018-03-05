@@ -76,9 +76,11 @@ class UDC:
         )
         self.LABEL = data.Field(sequential=False, tensor_type=torch.FloatTensor, unk_token=None)
 
+        file_format = train_file[-3:]
+
         self.train, self.valid, self.test = data.TabularDataset.splits(
             path=path, train=train_file, validation=valid_file, test=test_file,
-            format='tsv', skip_header=True,
+            format=file_format, skip_header=True,
             fields=[('context', self.TEXT), ('response', self.TEXT), ('label', self.LABEL)],
         )
 
