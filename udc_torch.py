@@ -12,6 +12,11 @@ np.random.seed(0)
 
 
 def create_dataframe(csvfile):
+    """
+    Read from csv file using pandas
+    :param csvfile:
+    :return:
+    """
     dataframe = pd.read_csv(csvfile)
     return dataframe
 
@@ -21,8 +26,8 @@ def shuffle_dataframe(dataframe):
 
 
 def create_vocab(dataframe):
-    vocab = []
-    word_freq = {}
+    vocab = {}
+    #word_freq = {}
 
     for index, row in dataframe.iterrows():
 
@@ -30,29 +35,31 @@ def create_vocab(dataframe):
         response_cell = row["Utterance"]
 
         train_words = str(context_cell).split() + str(response_cell).split()
+        #print train_words
 
         for word in train_words:
+            try:
+                vocab[word.lower()] += 1.0
+            except KeyError:
+                vocab[word.lower()] = 1.0
 
-            if word.lower() not in vocab:
-                vocab.append(word.lower())
+    vocab['<UNK>'] = 1.0
+    word_freq_sorted = sorted(vocab.items(), key=lambda item: item[1], reverse=True)
+    #print vocab[20]
+    #vocab = ["<UNK>"] + [pair[0] for pair in word_freq_sorted]
 
-            if word.lower() not in word_freq:
-                word_freq[word.lower()] = 1
-            else:
-                word_freq[word] += 1
+    #print vocab[0]
 
-    word_freq_sorted = sorted(word_freq.items(), key=lambda item: item[1], reverse=True)
-    vocab = ["<UNK>"] + [pair[0] for pair in word_freq_sorted]
-
-    return vocab
+    return vocab.keys()
 
 
 def create_word_to_id(vocab):
-    enumerate_list = [(id, word) for id, word in enumerate(vocab)]
+    #enumerate_list = [(id, word) for id, word in enumerate(vocab)]
 
-    word_to_id = {pair[1]: pair[0] for pair in enumerate_list}
-
-    return word_to_id
+    #word_to_id = {pair[1]: pair[0] for pair in enumerate_list}
+    word2id = {word: id for id, word in enumerate(vocab)}
+    #print word2id
+    return word2id
 
 
 def create_id_to_vec(word_to_id, glovefile):
@@ -154,11 +161,11 @@ class Encoder(nn.Module):
 
     def forward(self, inputs):
         embeddings = self.embedding(inputs)
+        #print embeddings.size()
         outputs, hiddens_tuple = self.lstm(embeddings)
 
-        last_hidden = hiddens_tuple[
-            0]  # access first tuple element to get last hidden state, dimensions: (num_layers * num_directions x batch_size x hidden_size)
-        last_hidden = last_hidden[-1]  # access last lstm layer, dimensions: (batch_size x hidden_size)
+        last_hidden = outputs[-1]  # access first tuple element to get last hidden state, dimensions: (num_layers * num_directions x batch_size x hidden_size)
+        #last_hidden = last_hidden[-1]  # access last lstm layer, dimensions: (batch_size x hidden_size)
         last_hidden = self.dropout_layer(last_hidden)  # dimensions: (batch_size x hidden_size)
 
         return last_hidden
@@ -176,15 +183,15 @@ class DualEncoder(nn.Module):
     def forward(self, context_tensor, response_tensor):
         context_last_hidden = self.encoder(context_tensor)  # dimensions: (batch_size x hidden_size)
         response_last_hidden = self.encoder(response_tensor)  # dimensions: (batch_size x hidden_size)
-
-        context = context_last_hidden.mm(self.M).cuda()
-        #context = context_last_hidden.mm(self.M)  # dimensions: (batch_size x hidden_size)
+        #print context_last_hidden.size()
+        #context = context_last_hidden.mm(self.M).cuda()
+        context = context_last_hidden.mm(self.M)  # dimensions: (batch_size x hidden_size)
         context = context.view(-1, 1, self.hidden_size)  # dimensions: (batch_size x 1 x hidden_size)
 
         response = response_last_hidden.view(-1, self.hidden_size, 1)  # dimensions: (batch_size x hidden_size x 1)
 
-        score = torch.bmm(context, response).view(-1, 1).cuda()
-        #score = torch.bmm(context, response).view(-1, 1)  # dimensions: (batch_size x 1 x 1) and lastly --> (batch_size x 1)
+        #score = torch.bmm(context, response).view(-1, 1).cuda()
+        score = torch.bmm(context, response).view(-1, 1)  # dimensions: (batch_size x 1 x 1) and lastly --> (batch_size x 1)
 
         return score
 
@@ -252,7 +259,7 @@ def train_model(learning_rate, l2_penalty, epochs):
     optimizer = torch.optim.Adam(dual_encoder.parameters(), lr=learning_rate, weight_decay=l2_penalty)
 
     loss_func = torch.nn.BCEWithLogitsLoss()
-    loss_func.cuda()
+    #loss_func.cuda()
 
     best_validation_accuracy = 0.0
 
@@ -269,12 +276,12 @@ def train_model(learning_rate, l2_penalty, epochs):
         for index, row in training_dataframe.iterrows():
             context_ids, response_ids, label = load_ids_and_labels(row, word_to_id)
 
-            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1), requires_grad=False).cuda()
+            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1), requires_grad=False) #.cuda()
 
-            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1), requires_grad=False).cuda()
+            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1), requires_grad=False) #.cuda()
 
             label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1))),
-                                      requires_grad=False).cuda()
+                                      requires_grad=False) #.cuda()
 
             score = dual_encoder(context, response)
 
@@ -305,11 +312,11 @@ def train_model(learning_rate, l2_penalty, epochs):
         for index, row in validation_dataframe.iterrows():
             context_ids, response_ids, label = load_ids_and_labels(row, word_to_id)
 
-            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1)).cuda()
+            context = autograd.Variable(torch.LongTensor(context_ids).view(-1, 1)) #.cuda()
 
-            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1)).cuda()
+            response = autograd.Variable(torch.LongTensor(response_ids).view(-1, 1)) #.cuda()
 
-            label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1)))).cuda()
+            label = autograd.Variable(torch.FloatTensor(torch.from_numpy(np.array(label).reshape(1, 1)))) #.cuda()
 
             score = dual_encoder(context, response)
 
@@ -344,8 +351,8 @@ if __name__ == '__main__':
     encoder, dual_encoder = creating_model(hidden_size=50,
                                            p_dropout=0.85)
 
-    encoder.cuda()
-    dual_encoder.cuda()
+    #encoder.cuda()
+    #dual_encoder.cuda()
 
     for name, param in dual_encoder.named_parameters():
         if param.requires_grad:
