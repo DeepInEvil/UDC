@@ -61,7 +61,7 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', train_file='train10k.tsv', valid_file='valid500.tsv', test_file='test500.tsv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, gpu=False):
+    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, gpu=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
