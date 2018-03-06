@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder
 from data import UDC
-from eval import accuracy
+from evaluation import recall_at_k
 
 import argparse
 
@@ -29,7 +29,10 @@ parser.add_argument('--n_epoch', type=int, default=10, metavar='',
 args = parser.parse_args()
 
 
-dataset = UDC(embed_dim=args.emb_dim, batch_size=args.mb_size, gpu=args.gpu)
+dataset = UDC(
+    train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
+    embed_dim=args.emb_dim, batch_size=args.mb_size, gpu=args.gpu
+)
 model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors)
 
 solver = optim.Adam(model.parameters(), lr=1e-3)
@@ -50,12 +53,25 @@ for epoch in range(args.n_epoch):
             total_acc = 0
             n = 0
 
+            scores = []
+
             for mb in dataset.valid_iter():
-                y_pred = F.sigmoid(model(mb.context.t(), mb.response.t()))
-                total_acc += accuracy(y_pred, mb.label, mean=False)
-                n += mb.batch_size
+                context = mb.context.t()
 
-            val_acc = total_acc / n
+                # Get score for positive/ground-truth response
+                score_pos = model(context, mb.positive.t()).unsqueeze(1)
+                # Get scores for negative samples
+                score_negs = [
+                    model(context, getattr(mb, 'negative_{}'.format(i)).t()).unsqueeze(1)
+                    for i in range(1, 10)
+                ]
+                # Total scores, positives at position zero
+                scores_mb = torch.cat([score_pos, *score_negs], dim=1)
 
-            print('Iter-{}; loss: {:.3f}; val_acc: {:.3f}'
-                  .format(it, loss.data[0], val_acc.data[0]))
+                scores.append(scores_mb)
+
+            scores = torch.cat(scores, dim=0)
+            recall_at_ks = recall_at_k(scores)
+
+            print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
+                  .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))
