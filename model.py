@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class CNNDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, pretrained_emb=None):
+    def __init__(self, emb_dim, n_vocab, pretrained_emb=None, gpu=False):
         super(CNNDualEncoder, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim)
@@ -17,6 +17,9 @@ class CNNDualEncoder(nn.Module):
         self.conv4 = nn.Conv2d(1, 100, (4, emb_dim))
         self.conv5 = nn.Conv2d(1, 100, (5, emb_dim))
         self.bilinear = nn.Bilinear(300, 300, 1)
+
+        if gpu:
+            self.cuda()
 
     def forward(self, x1, x2):
         """
@@ -57,7 +60,7 @@ class CNNDualEncoder(nn.Module):
 
 class CrossConvNet(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, max_seq_len, pretrained_emb=None, k=1):
+    def __init__(self, emb_dim, n_vocab, max_seq_len, pretrained_emb=None, k=1, gpu=False):
         super(CrossConvNet, self).__init__()
 
         self.n_vocab = n_vocab
@@ -71,6 +74,9 @@ class CrossConvNet(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.fc = nn.Linear(max_seq_len*k, 1)
+
+        if gpu:
+            self.cuda()
 
     def forward(self, x1, x2):
         """

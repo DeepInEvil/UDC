@@ -33,7 +33,7 @@ dataset = UDC(
     train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
     embed_dim=args.emb_dim, batch_size=args.mb_size, gpu=args.gpu
 )
-model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors)
+model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=1e-3)
 
@@ -42,6 +42,8 @@ for epoch in range(args.n_epoch):
     print('-------------------------------------------')
 
     for it, mb in enumerate(dataset.train_iter()):
+        model.train()
+
         output = model(mb.context.t(), mb.response.t())
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
@@ -50,9 +52,7 @@ for epoch in range(args.n_epoch):
         solver.zero_grad()
 
         if it % 100 == 0:
-            total_acc = 0
-            n = 0
-
+            model.eval()
             scores = []
 
             for mb in dataset.valid_iter():
@@ -71,7 +71,10 @@ for epoch in range(args.n_epoch):
                 scores.append(scores_mb)
 
             scores = torch.cat(scores, dim=0)
-            recall_at_ks = recall_at_k(scores)
+            recall_at_ks = [
+                r.cpu().data[0] if args.gpu else r.data[0]
+                for r in recall_at_k(scores)
+            ]
 
             print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
                   .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))

@@ -15,6 +15,6 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     _, sorted_idxs = torch.sort(scores, dim=1, descending=True)
     _, ranks = (sorted_idxs == 0).max(1)
 
-    recalls = [((ranks + 1) <= k).float().mean().data[0] for k in ks]
+    recalls = [((ranks + 1) <= k).float().mean() for k in ks]
 
     return recalls
