@@ -2,6 +2,7 @@ from torchtext import data
 from torchtext.vocab import GloVe
 import torch
 import re
+import twokenize
 
 
 URL_TOK = '__url__'
@@ -29,7 +30,7 @@ def custom_tokenizer(text):
         res = res.replace(p, PATH_TOK)
 
     # Tokenize
-    return res.split()
+    return twokenize.tokenize(res)
 
 
 class UDC:
