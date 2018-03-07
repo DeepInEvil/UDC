@@ -6,7 +6,7 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 
-from model import CNNDualEncoder
+from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
 from data import UDC
 from evaluation import recall_at_k
 
@@ -23,17 +23,31 @@ parser.add_argument('--emb_dim', type=int, default=100, metavar='',
                     help='embedding dimension (default: 100)')
 parser.add_argument('--mb_size', type=int, default=32, metavar='',
                     help='size of minibatch (default: 32)')
-parser.add_argument('--n_epoch', type=int, default=10, metavar='',
-                    help='number of iterations (default: 10)')
+parser.add_argument('--n_epoch', type=int, default=500, metavar='',
+                    help='number of iterations (default: 500)')
+parser.add_argument('--toy_data', default=False, action='store_true',
+                    help='whether to use toy dataset (10k instead of 1m)')
 
 args = parser.parse_args()
 
+max_seq_len = 160
+k = 1
+h_dim = 256
 
-dataset = UDC(
+if args.toy_data:
+    dataset = UDC(
     train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
-    embed_dim=args.emb_dim, batch_size=args.mb_size, gpu=args.gpu
+    embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
 )
-model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors, args.gpu)
+else:
+    dataset = UDC(
+        train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
+    )
+
+# model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors, args.gpu)
+# model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, 300, dataset.vectors, args.gpu)
+model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=1e-3)
 
@@ -44,7 +58,7 @@ for epoch in range(args.n_epoch):
     for it, mb in enumerate(dataset.train_iter()):
         model.train()
 
-        output = model(mb.context.t(), mb.response.t())
+        output = model(mb.context, mb.response)
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
@@ -56,13 +70,11 @@ for epoch in range(args.n_epoch):
             scores = []
 
             for mb in dataset.valid_iter():
-                context = mb.context.t()
-
                 # Get score for positive/ground-truth response
-                score_pos = model(context, mb.positive.t()).unsqueeze(1)
+                score_pos = model(mb.context, mb.positive).unsqueeze(1)
                 # Get scores for negative samples
                 score_negs = [
-                    model(context, getattr(mb, 'negative_{}'.format(i)).t()).unsqueeze(1)
+                    model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1)
                     for i in range(1, 10)
                 ]
                 # Total scores, positives at position zero

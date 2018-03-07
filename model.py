@@ -16,7 +16,7 @@ class CNNDualEncoder(nn.Module):
         self.conv3 = nn.Conv2d(1, 100, (3, emb_dim))
         self.conv4 = nn.Conv2d(1, 100, (4, emb_dim))
         self.conv5 = nn.Conv2d(1, 100, (5, emb_dim))
-        self.bilinear = nn.Bilinear(300, 300, 1)
+        self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(300, 300)))
 
         if gpu:
             self.cuda()
@@ -35,9 +35,13 @@ class CNNDualEncoder(nn.Module):
         emb_x2 = self.word_embed(x2)
 
         c1 = self._forward(emb_x1)
-        c2 = self._forward(emb_x2)
+        # (batch_size x 300 x 1)
+        c2 = self._forward(emb_x2).unsqueeze(2)
 
-        o = self.bilinear(c1, c2)
+        # (batch_size x 1 x 300)
+        o = torch.mm(c1, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, c2)
 
         return o.view(-1)
 
@@ -56,6 +60,52 @@ class CNNDualEncoder(nn.Module):
         out = torch.cat([x3, x4, x5], dim=1)
 
         return out
+
+
+class LSTMDualEncoder(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
+        super(LSTMDualEncoder, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.rnn = nn.LSTM(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True
+        )
+
+        self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(h_dim, h_dim)))
+
+        if gpu:
+            self.cuda()
+
+    def forward(self, x1, x2):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        h: vector of (batch_size)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.word_embed(x1)
+        x2_emb = self.word_embed(x2)
+
+        # Each is (1 x batch_size x h_dim)
+        _, (c, _) = self.rnn(x1_emb)
+        _, (r, _) = self.rnn(x2_emb)
+
+        # (batch_size x 1 x 300)
+        o = torch.mm(c.squeeze(), self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.squeeze().unsqueeze(2))
+
+        return o.view(-1)
 
 
 class CrossConvNet(nn.Module):
@@ -113,3 +163,35 @@ class CrossConvNet(nn.Module):
         h = self.fc(a)
 
         return h.view(-1)
+
+
+class CCN_LSTM(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, max_seq_len=160, k=1, pretrained_emb=None, gpu=False):
+        super(CCN_LSTM, self).__init__()
+
+        self.lstm = LSTMDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb, gpu)
+        self.ccn = CrossConvNet(emb_dim, n_vocab, max_seq_len, pretrained_emb, k, gpu)
+
+        self.fc = nn.Linear(2, 1)
+
+        if gpu:
+            self.cuda()
+
+    def forward(self, x1, x2):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        h: vector of (batch_size)
+        """
+        o_lstm = self.lstm(x1, x2).unsqueeze(1)
+        o_ccn = self.ccn(x1, x2).unsqueeze(1)
+
+        inputs = torch.cat([o_lstm, o_ccn], 1)
+        o = self.fc(inputs)
+
+        return o.view(-1)

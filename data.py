@@ -62,22 +62,29 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, gpu=False):
+    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', batch_size=32, embed_dim=100, max_vocab_size=10000, min_freq=5, max_seq_len=160, gpu=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
             lower=True, tokenize=custom_tokenizer,
-            unk_token='__unk__', pad_token='__pad__'
+            unk_token='__unk__', pad_token='__pad__', batch_first=True
         )
-        self.LABEL = data.Field(sequential=False, tensor_type=torch.FloatTensor, unk_token=None)
+        self.LABEL = data.Field(
+            sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
+            batch_first=True
+        )
 
         file_format = train_file[-3:]
+
+        # Only take data with max length 160
+        f = lambda ex: len(ex.context) <= max_seq_len and len(ex.response)
 
         self.train = data.TabularDataset(
             path='{}/{}'.format(path, train_file), format=file_format, skip_header=True,
             fields=[('context', self.TEXT), ('response', self.TEXT), ('label', self.LABEL)],
+            filter_pred=f
         )
 
         self.valid, self.test = data.TabularDataset.splits(
