@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 import operator
 import re
 import sys
+import itertools
 
 try:
     from html.parser import HTMLParser
@@ -219,12 +220,15 @@ def simpleTokenize(text):
     # e.g. URLs, 1.0, U.N.K.L.E., 12:53
     bads = []
     badSpans = []
+    # print Protected.finditer(splitPunctText)
+    # bads = [[splitPunctText[match.start():match.end()]] for match in Protected.finditer(splitPunctText)]
+    # badSpans = [(match.start(), match.end()) for match in Protected.finditer(splitPunctText)]
+    # print badSpans
     for match in Protected.finditer(splitPunctText):
         # The spans of the "bads" should not be split.
         if (match.start() != match.end()): #unnecessary?
-            bads.append( [splitPunctText[match.start():match.end()]] )
-            badSpans.append( (match.start(), match.end()) )
-
+            bads.append([splitPunctText[match.start():match.end()]])
+            badSpans.append((match.start(), match.end()))
     # Create a list of indices to create the "goods", which can be
     # split. We are taking "bad" spans like
     #     List((2,5), (8,10))
@@ -232,27 +236,33 @@ def simpleTokenize(text):
     #     List(0, 2, 5, 8, 10, 12)
     # where, e.g., "12" here would be the textLength
     # has an even length and no indices are the same
-    indices = [0]
-    for (first, second) in badSpans:
-        indices.append(first)
-        indices.append(second)
-    indices.append(textLength)
+    #indices = [0]
+    #indices = [(f, s) for (f, s) in badSpans]
+    indices = list(itertools.chain(*badSpans))
+    indices = [0] + indices + [textLength]
+    #print indices
+    # for (first, second) in badSpans:
+    #     indices.append(first)
+    #     indices.append(second)
+    #     print indices
+    # indices.append(textLength)
 
     # Group the indices and map them to their respective portion of the string
-    splitGoods = []
-    for i in range(0, len(indices), 2):
-        goodstr = splitPunctText[indices[i]:indices[i+1]]
-        splitstr = goodstr.strip().split(" ")
-        splitGoods.append(splitstr)
+    #splitGoods = []
+    splitGoods = [splitPunctText[indices[i]:indices[i+1]].strip().split(" ") for i in range(0, len(indices), 2)]
+    # for i in range(0, len(indices), 2):
+    #     goodstr = splitPunctText[indices[i]:indices[i+1]]
+    #     splitstr = goodstr.strip().split(" ")
+    #     splitGoods.append(splitstr)
 
     #  Reinterpolate the 'good' and 'bad' Lists, ensuring that
     #  additonal tokens from last good item get included
     zippedStr = []
-    for i in range(len(bads)):
+    #zippedStr = list(itertools.chain(*[[splitGoods[i], bads[i]] for i in range(len(bads))]))
+    for i, b in enumerate(bads):
         zippedStr = addAllnonempty(zippedStr, splitGoods[i])
-        zippedStr = addAllnonempty(zippedStr, bads[i])
+        zippedStr = addAllnonempty(zippedStr, b)
     zippedStr = addAllnonempty(zippedStr, splitGoods[len(bads)])
-
     # BTO: our POS tagger wants "ur" and "you're" to both be one token.
     # Uncomment to get "you 're"
     #splitStr = []
@@ -262,7 +272,9 @@ def simpleTokenize(text):
 
     return zippedStr
 
+
 def addAllnonempty(master, smaller):
+    #[master.append(s.strip()) for s in smaller if len(s.strip()) > 0]
     for s in smaller:
         strim = s.strip()
         if (len(strim) > 0):
@@ -270,6 +282,7 @@ def addAllnonempty(master, smaller):
     return master
 
 # "foo   bar " => "foo bar"
+
 def squeezeWhitespace(input):
     return Whitespace.sub(" ", input).strip()
 
@@ -308,3 +321,6 @@ def normalizeTextForTagger(text):
 def tokenizeRawTweetText(text):
     tokens = tokenize(normalizeTextForTagger(text))
     return tokens
+
+if __name__ == '__main__':
+    print tokenize('Hi @asd are you good? :) :) :( #whatisthis')
