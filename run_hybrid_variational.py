@@ -9,6 +9,7 @@ from torch.autograd import Variable
 from hybrid_model import VariationalHybridModel
 from data import UDC
 from evaluation import recall_at_k
+from util import save_model
 
 import argparse
 
@@ -69,10 +70,11 @@ for epoch in range(args.n_epoch):
         loss = loss_ret + loss_vae
 
         loss.backward()
+        grad_norm = nn.utils.clip_grad_norm(model.parameters(), 10)
         solver.step()
         solver.zero_grad()
 
-        if it % 100 == 0:
+        if it % 99999 == 0:
             model.eval()
             scores = []
 
@@ -97,3 +99,5 @@ for epoch in range(args.n_epoch):
 
             print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
                   .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))
+
+    save_model(model, 'hybrid_variational')

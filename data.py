@@ -31,6 +31,7 @@ def custom_tokenizer(text):
 
     # Tokenize
     return twokenize.tokenize(res)
+    # return res.split()
 
 
 class UDC:

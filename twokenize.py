@@ -199,14 +199,14 @@ offEdge = r"(^|$|:|;|\s|\.|,)"  # colon here gets "(hello):" ==> "( hello ):"
 EdgePunctLeft  = re.compile(offEdge + "("+edgePunct+"+)("+notEdgePunct+")", re.UNICODE)
 EdgePunctRight = re.compile("("+notEdgePunct+")("+edgePunct+"+)" + offEdge, re.UNICODE)
 
-@profile
+# @profile
 def splitEdgePunct(input):
     input = EdgePunctLeft.sub(r"\1\2 \3", input)
     input = EdgePunctRight.sub(r"\1 \2\3", input)
     return input
 
 # The main work of tokenizing a tweet.
-@profile
+# @profile
 def simpleTokenize(text):
 
     # Do the no-brainers first
@@ -328,4 +328,4 @@ def tokenizeRawTweetText(text):
     return tokens
 
 if __name__ == '__main__':
-    print tokenize('Hi @asd are you good? :) :) :( #whatisthis')
+    print(tokenize('Hi @asd are you good? :) :) :( #whatisthis'))

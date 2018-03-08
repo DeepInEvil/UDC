@@ -9,6 +9,7 @@ from torch.autograd import Variable
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
 from data import UDC
 from evaluation import recall_at_k
+from util import save_model
 
 import argparse
 
@@ -21,8 +22,12 @@ parser.add_argument('--gpu', default=False, action='store_true',
                     help='whether to run in the GPU')
 parser.add_argument('--emb_dim', type=int, default=100, metavar='',
                     help='embedding dimension (default: 100)')
-parser.add_argument('--mb_size', type=int, default=32, metavar='',
-                    help='size of minibatch (default: 32)')
+parser.add_argument('--h_dim', type=int, default=100, metavar='',
+                    help='hidden dimension (default: 100)')
+parser.add_argument('--lr', type=float, default=1e-3, metavar='',
+                    help='learning rate (default: 1e-3)')
+parser.add_argument('--mb_size', type=int, default=128, metavar='',
+                    help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
 parser.add_argument('--toy_data', default=False, action='store_true',
@@ -32,7 +37,7 @@ args = parser.parse_args()
 
 max_seq_len = 160
 k = 1
-h_dim = 256
+h_dim = args.h_dim
 
 if args.toy_data:
     dataset = UDC(
@@ -49,7 +54,7 @@ else:
 # model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, 300, dataset.vectors, args.gpu)
 model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
-solver = optim.Adam(model.parameters(), lr=1e-3)
+solver = optim.Adam(model.parameters(), lr=args.lr)
 
 for epoch in range(args.n_epoch):
     print('\nEpoch-{}'.format(epoch))
@@ -62,10 +67,11 @@ for epoch in range(args.n_epoch):
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
+        grad_norm = nn.utils.clip_grad_norm(model.parameters(), 10)
         solver.step()
         solver.zero_grad()
 
-        if it % 100 == 0:
+        if it % 99999 == 0:
             model.eval()
             scores = []
 
@@ -90,3 +96,5 @@ for epoch in range(args.n_epoch):
 
             print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
                   .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))
+
+    save_model(model, 'ccn_lstm')
