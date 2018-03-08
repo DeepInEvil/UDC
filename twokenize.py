@@ -199,6 +199,7 @@ offEdge = r"(^|$|:|;|\s|\.|,)"  # colon here gets "(hello):" ==> "( hello ):"
 EdgePunctLeft  = re.compile(offEdge + "("+edgePunct+"+)("+notEdgePunct+")", re.UNICODE)
 EdgePunctRight = re.compile("("+notEdgePunct+")("+edgePunct+"+)" + offEdge, re.UNICODE)
 
+@profile
 def splitEdgePunct(input):
     input = EdgePunctLeft.sub(r"\1\2 \3", input)
     input = EdgePunctRight.sub(r"\1 \2\3", input)
