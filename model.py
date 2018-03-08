@@ -90,7 +90,16 @@ class LSTMDualEncoder(nn.Module):
 
         Outputs:
         --------
-        h: vector of (batch_size)
+        o: vector of (batch_size)
+        """
+        c, r = self.forward_enc(x1, x2)
+        o = self.forward_fc(c, r)
+
+        return o.view(-1)
+
+    def forward_enc(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
@@ -100,12 +109,18 @@ class LSTMDualEncoder(nn.Module):
         _, (c, _) = self.rnn(x1_emb)
         _, (r, _) = self.rnn(x2_emb)
 
-        # (batch_size x 1 x 300)
+        return c.squeeze(), r.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
         o = torch.mm(c.squeeze(), self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.squeeze().unsqueeze(2))
 
-        return o.view(-1)
+        return o
 
 
 class CrossConvNet(nn.Module):
@@ -186,7 +201,7 @@ class CCN_LSTM(nn.Module):
 
         Outputs:
         --------
-        h: vector of (batch_size)
+        o: vector of (batch_size)
         """
         o_lstm = self.lstm(x1, x2).unsqueeze(1)
         o_ccn = self.ccn(x1, x2).unsqueeze(1)
