@@ -283,8 +283,10 @@ def addAllnonempty(master, smaller):
 
 # "foo   bar " => "foo bar"
 
+
 def squeezeWhitespace(input):
     return Whitespace.sub(" ", input).strip()
+
 
 # Final pass tokenization based on special patterns
 def splitToken(token):
@@ -292,6 +294,7 @@ def splitToken(token):
     if m:
         return [m.group(1), m.group(2)]
     return [token]
+
 
 # Assume 'text' has no HTML escaping.
 def tokenize(text):
