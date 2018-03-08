@@ -205,6 +205,7 @@ def splitEdgePunct(input):
     return input
 
 # The main work of tokenizing a tweet.
+@profile
 def simpleTokenize(text):
 
     # Do the no-brainers first
