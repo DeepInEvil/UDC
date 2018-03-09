@@ -18,10 +18,10 @@ class HybridModel(nn.Module):
         self.retrieval_model = LSTMDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb)
         self.latent_fc = nn.Linear(h_dim+h_dim, z_dim)
         self.decoder = nn.LSTM(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=z_dim,
             num_layers=1, batch_first=True
         )
-        self.decoder_fc = nn.Linear(h_dim, n_vocab)
+        self.decoder_fc = nn.Linear(z_dim, n_vocab)
 
         if gpu:
             self.cuda()
@@ -60,7 +60,7 @@ class HybridModel(nn.Module):
         # Forward decoder
         dec_inputs = self.retrieval_model.word_embed(dec_inputs)
         outputs, _ = self.decoder(dec_inputs, init_state)
-        outputs = outputs.contiguous().view(-1, self.h_dim)
+        outputs = outputs.contiguous().view(-1, self.z_dim)
         out_generative = self.decoder_fc(outputs)
 
         return out_retrieval, out_generative
@@ -80,10 +80,10 @@ class VariationalHybridModel(nn.Module):
         self.latent_mu_fc = nn.Linear(h_dim+h_dim, z_dim)
         self.latent_logvar_fc = nn.Linear(h_dim+h_dim, z_dim)
         self.decoder = nn.LSTM(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=z_dim,
             num_layers=1, batch_first=True
         )
-        self.decoder_fc = nn.Linear(h_dim, n_vocab)
+        self.decoder_fc = nn.Linear(z_dim, n_vocab)
 
         if gpu:
             self.cuda()
@@ -130,7 +130,7 @@ class VariationalHybridModel(nn.Module):
         # Forward decoder
         dec_inputs = self.retrieval_model.word_embed(dec_inputs)
         outputs, _ = self.decoder(dec_inputs, init_state)
-        outputs = outputs.contiguous().view(-1, self.h_dim)
+        outputs = outputs.contiguous().view(-1, self.z_dim)
         out_generative = self.decoder_fc(outputs)
 
         return out_retrieval, out_generative, z_mu, z_logvar

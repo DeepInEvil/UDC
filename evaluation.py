@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 
 def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
@@ -18,3 +19,62 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     recalls = [((ranks + 1) <= k).float().mean() for k in ks]
 
     return recalls
+
+
+def eval_model(model, dataset, gpu=False):
+    model.eval()
+    scores = []
+
+    valid_iter = tqdm(dataset.valid_iter())
+    valid_iter.set_description_str('Validation')
+
+    for mb in valid_iter:
+        # Get score for positive/ground-truth response
+        score_pos = model(mb.context, mb.positive).unsqueeze(1)
+        # Get scores for negative samples
+        score_negs = [
+            model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1)
+            for i in range(1, 10)
+        ]
+        # Total scores, positives at position zero
+        scores_mb = torch.cat([score_pos, *score_negs], dim=1)
+
+        scores.append(scores_mb)
+
+    scores = torch.cat(scores, dim=0)
+    recall_at_ks = [
+        r.cpu().data[0] if gpu else r.data[0]
+        for r in recall_at_k(scores)
+    ]
+
+    return recall_at_ks
+
+
+def eval_hybrid_model(model, dataset, gpu=False):
+    model.eval()
+    scores = []
+
+    valid_iter = tqdm(dataset.valid_iter())
+    valid_iter.set_description_str('Validation')
+
+    for mb in valid_iter:
+        # Get score for positive/ground-truth response
+        score_pos = model(mb.context, mb.positive)[0].unsqueeze(1)
+        # Get scores for negative samples
+        score_negs = [
+            model(mb.context, getattr(mb, 'negative_{}'.format(i)))[0].unsqueeze(1)
+            for i in range(1, 10)
+        ]
+        # Total scores, positives at position zero
+        scores_mb = torch.cat([score_pos, *score_negs], dim=1)
+
+        scores.append(scores_mb)
+
+    scores = torch.cat(scores, dim=0)
+    recall_at_ks = [
+        r.cpu().data[0] if gpu else r.data[0]
+        for r in recall_at_k(scores)
+    ]
+
+    return recall_at_ks
+

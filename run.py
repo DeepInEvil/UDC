@@ -8,10 +8,11 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
 from data import UDC
-from evaluation import recall_at_k
+from evaluation import recall_at_k, eval_model
 from util import save_model
 
 import argparse
+from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(
@@ -41,9 +42,9 @@ h_dim = args.h_dim
 
 if args.toy_data:
     dataset = UDC(
-    train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
-    embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
-)
+        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
+    )
 else:
     dataset = UDC(
         train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
@@ -51,18 +52,22 @@ else:
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, dataset.vectors, args.gpu)
-# model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, 300, dataset.vectors, args.gpu)
+# model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
 for epoch in range(args.n_epoch):
-    print('\nEpoch-{}'.format(epoch))
+    print('\n\n-------------------------------------------')
+    print('Epoch-{}'.format(epoch))
     print('-------------------------------------------')
 
-    for it, mb in enumerate(dataset.train_iter()):
-        model.train()
+    model.train()
 
+    train_iter = tqdm(enumerate(dataset.train_iter()))
+    train_iter.set_description_str('Training')
+
+    for it, mb in train_iter:
         output = model(mb.context, mb.response)
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
@@ -71,30 +76,10 @@ for epoch in range(args.n_epoch):
         solver.step()
         solver.zero_grad()
 
-        if it % 99999 == 0:
-            model.eval()
-            scores = []
+    # Validation
+    recall_at_ks = eval_model(model, dataset, args.gpu)
 
-            for mb in dataset.valid_iter():
-                # Get score for positive/ground-truth response
-                score_pos = model(mb.context, mb.positive).unsqueeze(1)
-                # Get scores for negative samples
-                score_negs = [
-                    model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1)
-                    for i in range(1, 10)
-                ]
-                # Total scores, positives at position zero
-                scores_mb = torch.cat([score_pos, *score_negs], dim=1)
-
-                scores.append(scores_mb)
-
-            scores = torch.cat(scores, dim=0)
-            recall_at_ks = [
-                r.cpu().data[0] if args.gpu else r.data[0]
-                for r in recall_at_k(scores)
-            ]
-
-            print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
-                  .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))
+    print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+          .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
     save_model(model, 'ccn_lstm')

@@ -30,8 +30,8 @@ def custom_tokenizer(text):
         res = res.replace(p, PATH_TOK)
 
     # Tokenize
-    return twokenize.tokenize(res)
-    # return res.split()
+    # return twokenize.tokenize(res)
+    return res.split()
 
 
 class UDC:
@@ -69,7 +69,7 @@ class UDC:
         self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
-            lower=True, tokenize=custom_tokenizer,
+            lower=True, tokenize=custom_tokenizer, fix_length=max_seq_len,
             unk_token='__unk__', pad_token='__pad__', batch_first=True
         )
         self.LABEL = data.Field(
@@ -81,6 +81,7 @@ class UDC:
 
         # Only take data with max length 160
         f = lambda ex: len(ex.context) <= max_seq_len and len(ex.response)
+        # f = None
 
         self.train = data.TabularDataset(
             path='{}/{}'.format(path, train_file), format=file_format, skip_header=True,

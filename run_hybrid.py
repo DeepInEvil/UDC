@@ -8,10 +8,11 @@ from torch.autograd import Variable
 
 from hybrid_model import HybridModel
 from data import UDC
-from evaluation import recall_at_k
+from evaluation import recall_at_k, eval_hybrid_model
 from util import save_model
 
 import argparse
+from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(
@@ -22,8 +23,14 @@ parser.add_argument('--gpu', default=False, action='store_true',
                     help='whether to run in the GPU')
 parser.add_argument('--emb_dim', type=int, default=100, metavar='',
                     help='embedding dimension (default: 100)')
-parser.add_argument('--mb_size', type=int, default=32, metavar='',
-                    help='size of minibatch (default: 32)')
+parser.add_argument('--h_dim', type=int, default=100, metavar='',
+                    help='hidden dimension (default: 100)')
+parser.add_argument('--z_dim', type=int, default=100, metavar='',
+                    help='latent dimension (default: 100)')
+parser.add_argument('--lr', type=float, default=1e-3, metavar='',
+                    help='learning rate (default: 1e-3)')
+parser.add_argument('--mb_size', type=int, default=128, metavar='',
+                    help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
 parser.add_argument('--toy_data', default=False, action='store_true',
@@ -33,8 +40,8 @@ args = parser.parse_args()
 
 max_seq_len = 160
 k = 1
-h_dim = 256
-z_dim = 256
+h_dim = args.h_dim
+z_dim = args.z_dim
 
 if args.toy_data:
     dataset = UDC(
@@ -53,10 +60,16 @@ model = HybridModel(dataset.embed_dim, dataset.vocab_size, h_dim, z_dim, dataset
 solver = optim.Adam(model.parameters(), lr=1e-3)
 
 for epoch in range(args.n_epoch):
-    print('\nEpoch-{}'.format(epoch))
+    print('\n\n-------------------------------------------')
+    print('Epoch-{}'.format(epoch))
     print('-------------------------------------------')
 
-    for it, mb in enumerate(dataset.train_iter()):
+    model.train()
+
+    train_iter = tqdm(enumerate(dataset.train_iter()))
+    train_iter.set_description_str('Training')
+
+    for it, mb in train_iter:
         model.train()
 
         out_retrieval, out_generative = model(mb.context, mb.response)
@@ -71,30 +84,10 @@ for epoch in range(args.n_epoch):
         solver.step()
         solver.zero_grad()
 
-        if it % 99999 == 0:
-            model.eval()
-            scores = []
+    # Validation
+    recall_at_ks = eval_hybrid_model(model, dataset, args.gpu)
 
-            for mb in dataset.valid_iter():
-                # Get score for positive/ground-truth response
-                score_pos = model(mb.context, mb.positive)[0].unsqueeze(1)
-                # Get scores for negative samples
-                score_negs = [
-                    model(mb.context, getattr(mb, 'negative_{}'.format(i)))[0].unsqueeze(1)
-                    for i in range(1, 10)
-                ]
-                # Total scores, positives at position zero
-                scores_mb = torch.cat([score_pos, *score_negs], dim=1)
-
-                scores.append(scores_mb)
-
-            scores = torch.cat(scores, dim=0)
-            recall_at_ks = [
-                r.cpu().data[0] if args.gpu else r.data[0]
-                for r in recall_at_k(scores)
-            ]
-
-            print('Iter-{}; loss: {:.3f}; recall@1: {:.3f}; recall@3: {:.3f}; recall@5: {:.3f}'
-                  .format(it, loss.data[0], recall_at_ks[0], recall_at_ks[2], recall_at_ks[4]))
+    print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+          .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
     save_model(model, 'hybrid')

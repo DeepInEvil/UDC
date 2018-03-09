@@ -116,9 +116,9 @@ class LSTMDualEncoder(nn.Module):
         c, r: tensor of (batch_size, h_dim)
         """
         # (batch_size x 1 x h_dim)
-        o = torch.mm(c.squeeze(), self.M).unsqueeze(1)
+        o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
-        o = torch.bmm(o, r.squeeze().unsqueeze(2))
+        o = torch.bmm(o, r.unsqueeze(2))
 
         return o
 
