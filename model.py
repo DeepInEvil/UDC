@@ -17,6 +17,7 @@ class CNNDualEncoder(nn.Module):
         self.conv4 = nn.Conv2d(1, 100, (4, emb_dim))
         self.conv5 = nn.Conv2d(1, 100, (5, emb_dim))
         self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(300, 300)))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
 
         if gpu:
             self.cuda()
@@ -42,6 +43,7 @@ class CNNDualEncoder(nn.Module):
         o = torch.mm(c1, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, c2)
+        o = o + self.b
 
         return o.view(-1)
 
@@ -78,6 +80,7 @@ class LSTMDualEncoder(nn.Module):
         )
 
         self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(h_dim, h_dim)))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
 
         if gpu:
             self.cuda()
@@ -119,6 +122,7 @@ class LSTMDualEncoder(nn.Module):
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
 
         return o
 
