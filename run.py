@@ -31,6 +31,10 @@ parser.add_argument('--mb_size', type=int, default=128, metavar='',
                     help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
+parser.add_argument('--max_context_len', type=int, default=160, metavar='',
+                    help='max sequence length for context (default: 160)')
+parser.add_argument('--max_response_len', type=int, default=80, metavar='',
+                    help='max sequence length for response (default: 80)')
 parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
 
@@ -42,12 +46,12 @@ h_dim = args.h_dim
 
 if args.toy_data:
     dataset = UDC(
-        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
+        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv', vocab_file='vocabulary.txt',
         embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
     )
 else:
     dataset = UDC(
-        train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
+        train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt',
         embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
     )
 
@@ -68,11 +72,15 @@ for epoch in range(args.n_epoch):
     train_iter.set_description_str('Training')
 
     for it, mb in train_iter:
-        output = model(mb.context, mb.response)
+        # Truncate input
+        context = mb.context[:, :args.max_context_len]
+        response = mb.response[:, :args.max_response_len]
+
+        output = model(context, response)
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
-        grad_norm = nn.utils.clip_grad_norm(model.parameters(), 10)
+        # grad_norm = nn.utils.clip_grad_norm(model.parameters(), 10)
         solver.step()
         solver.zero_grad()
 

@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 
 
@@ -30,10 +31,10 @@ def eval_model(model, dataset, gpu=False):
 
     for mb in valid_iter:
         # Get score for positive/ground-truth response
-        score_pos = model(mb.context, mb.positive).unsqueeze(1)
+        score_pos = F.sigmoid(model(mb.context, mb.positive).unsqueeze(1))
         # Get scores for negative samples
         score_negs = [
-            model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1)
+            F.sigmoid(model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1))
             for i in range(1, 10)
         ]
         # Total scores, positives at position zero

@@ -1,8 +1,9 @@
 from torchtext import data
-from torchtext.vocab import GloVe
+from torchtext.vocab import Vocab, GloVe
 import torch
 import re
 import twokenize
+from collections import OrderedDict, Counter
 
 
 URL_TOK = '__url__'
@@ -63,13 +64,13 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=160, gpu=False):
+    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=160, gpu=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
-            lower=True, tokenize=custom_tokenizer,
+            lower=True, #tokenize=custom_tokenizer,
             unk_token='__unk__', pad_token='__pad__', batch_first=True
         )
         self.LABEL = data.Field(
@@ -80,8 +81,8 @@ class UDC:
         file_format = train_file[-3:]
 
         # Only take data with max length 160
-        f = lambda ex: len(ex.context) <= max_seq_len and len(ex.response)
-        # f = None
+        # f = lambda ex: len(ex.context) <= max_seq_len and len(ex.response)
+        f = None
 
         self.train = data.TabularDataset(
             path='{}/{}'.format(path, train_file), format=file_format, skip_header=True,
@@ -100,10 +101,25 @@ class UDC:
                     ('negative_9', self.TEXT)]
         )
 
-        self.TEXT.build_vocab(
-            self.train, max_size=max_vocab_size, min_freq=min_freq,
-            vectors=GloVe('6B', dim=embed_dim)
-        )
+        if vocab_file is None:
+            self.TEXT.build_vocab(
+                self.train, max_size=max_vocab_size, min_freq=min_freq,
+                vectors=GloVe('6B', dim=embed_dim)
+            )
+        else:
+            specials = list(OrderedDict.fromkeys(
+                tok for tok in [self.TEXT.unk_token, self.TEXT.pad_token,
+                                self.TEXT.init_token, self.TEXT.eos_token]
+                if tok is not None))
+
+            with open(f'{path}/{vocab_file}', 'r') as f:
+                counter = Counter(f.read().split('\n'))
+
+            vocab = Vocab(counter, specials=specials,
+                          vectors=GloVe('6B', dim=embed_dim))
+
+            self.TEXT.vocab = vocab
+
         self.LABEL.build_vocab(self.train)
 
         self.dataset_size = len(self.train.examples)
