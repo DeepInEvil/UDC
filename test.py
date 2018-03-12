@@ -1,18 +1,14 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.autograd as autograd
-import torch.optim as optim
-import numpy as np
-from torch.autograd import Variable
-
-from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
 from data import UDC
-from evaluation import recall_at_k, eval_model
-from util import save_model, clip_gradient_threshold
+from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
+from util import load_model
+
+import torch
+import torch.nn.functional as F
 
 import argparse
 from tqdm import tqdm
+
+import pandas as pd
 
 
 parser = argparse.ArgumentParser(
@@ -37,8 +33,11 @@ parser.add_argument('--max_response_len', type=int, default=80, metavar='',
                     help='max sequence length for response (default: 80)')
 parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
+parser.add_argument('--model_name', metavar='',
+                    help='name of model file to be loaded e.g. `ccn_lstm` corresponds to `models/ccn_lstm.bin`')
 
 args = parser.parse_args()
+
 
 max_seq_len = 160
 k = 1
@@ -59,35 +58,49 @@ else:
 model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
-solver = optim.Adam(model.parameters(), lr=args.lr)
+model = load_model(model, args.model_name, gpu=args.gpu)
 
-for epoch in range(args.n_epoch):
-    print('\n\n-------------------------------------------')
-    print('Epoch-{}'.format(epoch))
-    print('-------------------------------------------')
+model.eval()
+scores = []
 
-    model.train()
+valid_iter = tqdm(dataset.valid_iter())
+valid_iter.set_description_str('Validation')
 
-    train_iter = tqdm(enumerate(dataset.train_iter()))
-    train_iter.set_description_str('Training')
+for mb in tqdm(valid_iter):
+    context = mb.context[:, :args.max_context_len]
 
-    for it, mb in train_iter:
-        # Truncate input
-        context = mb.context[:, :args.max_context_len]
-        response = mb.response[:, :args.max_response_len]
+    # Get score for positive/ground-truth response
+    score_pos = F.sigmoid(model(context, mb.positive[:, :args.max_response_len]).unsqueeze(1))
+    # Get scores for negative samples
+    score_negs = [
+        F.sigmoid(model(context, getattr(mb, 'negative_{}'.format(i))[:, :args.max_response_len]).unsqueeze(1))
+        for i in range(1, 10)
+    ]
+    # Total scores, positives at position zero
+    scores_mb = torch.cat([score_pos, *score_negs], dim=1)
 
-        output = model(context, response)
-        loss = F.binary_cross_entropy_with_logits(output, mb.label)
+    scores.append(scores_mb)
 
-        loss.backward()
-        clip_gradient_threshold(model, -10, 10)
-        solver.step()
-        solver.zero_grad()
+scores = torch.cat(scores, dim=0)
 
-    # Validation
-    recall_at_ks = eval_model(model, dataset, args.max_context_len, args.max_response_len, args.gpu)
+print(scores.size())
 
-    print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-          .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+_, sorted_idxs = torch.sort(scores, dim=1, descending=True)
+_, ranks = (sorted_idxs == 0).max(1)
 
-    save_model(model, 'ccn_lstm')
+failures = []
+
+for i, r in enumerate(ranks):
+    # Rank > 5 => failure case
+    if r.data[0] > 5:
+        d = dict(
+            context=' '.join(dataset.valid.examples[i].context),
+            response=' '.join(dataset.valid.examples[i].positive)
+        )
+
+        failures.append(d)
+
+print(len(failures))
+
+df = pd.DataFrame(failures)
+df.to_csv('failure_cases.csv', index=False)

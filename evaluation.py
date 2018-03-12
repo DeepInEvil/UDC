@@ -22,7 +22,7 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     return recalls
 
 
-def eval_model(model, dataset, gpu=False):
+def eval_model(model, dataset, max_context_len, max_response_len, gpu=False):
     model.eval()
     scores = []
 
@@ -30,11 +30,13 @@ def eval_model(model, dataset, gpu=False):
     valid_iter.set_description_str('Validation')
 
     for mb in valid_iter:
+        context = mb.context[:, :max_context_len]
+
         # Get score for positive/ground-truth response
-        score_pos = F.sigmoid(model(mb.context, mb.positive).unsqueeze(1))
+        score_pos = F.sigmoid(model(context, mb.positive[:, :max_response_len]).unsqueeze(1))
         # Get scores for negative samples
         score_negs = [
-            F.sigmoid(model(mb.context, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1))
+            F.sigmoid(model(context, getattr(mb, 'negative_{}'.format(i))[:, :max_response_len]).unsqueeze(1))
             for i in range(1, 10)
         ]
         # Total scores, positives at position zero
@@ -78,4 +80,3 @@ def eval_hybrid_model(model, dataset, gpu=False):
     ]
 
     return recall_at_ks
-
