@@ -37,8 +37,17 @@ parser.add_argument('--max_response_len', type=int, default=80, metavar='',
                     help='max sequence length for response (default: 80)')
 parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
+parser.add_argument('--randseed', type=int, default=123, metavar='',
+                    help='random seed (default: 123)')
 
 args = parser.parse_args()
+
+# Set random seed
+np.random.seed(args.randseed)
+torch.manual_seed(args.randseed)
+
+if args.gpu:
+    torch.cuda.manual_seed(args.randseed)
 
 max_seq_len = 160
 k = 1
@@ -80,14 +89,15 @@ for epoch in range(args.n_epoch):
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
-        clip_gradient_threshold(model, -10, 10)
+        # clip_gradient_threshold(model, -10, 10)
         solver.step()
         solver.zero_grad()
 
-    # Validation
-    recall_at_ks = eval_model(model, dataset, args.max_context_len, args.max_response_len, args.gpu)
+        if it > 0 and it % 1000 == 0:
+            # Validation
+            recall_at_ks = eval_model(model, dataset, args.max_context_len, args.max_response_len, args.gpu)
 
-    print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-          .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+            print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+                .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
     save_model(model, 'ccn_lstm')

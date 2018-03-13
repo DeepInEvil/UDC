@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class CNNDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=300, pretrained_emb=None, gpu=False):
         super(CNNDualEncoder, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim)
@@ -13,10 +13,14 @@ class CNNDualEncoder(nn.Module):
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
 
-        self.conv3 = nn.Conv2d(1, 100, (3, emb_dim))
-        self.conv4 = nn.Conv2d(1, 100, (4, emb_dim))
-        self.conv5 = nn.Conv2d(1, 100, (5, emb_dim))
-        self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(300, 300)))
+        self.n_filter = h_dim // 3
+        self.h_dim = self.n_filter * 3
+
+        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
+        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+
+        self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(self.h_dim, self.h_dim)))
         self.b = nn.Parameter(torch.FloatTensor([0]))
 
         if gpu:
@@ -36,10 +40,10 @@ class CNNDualEncoder(nn.Module):
         emb_x2 = self.word_embed(x2)
 
         c1 = self._forward(emb_x1)
-        # (batch_size x 300 x 1)
+        # (batch_size x h_dim x 1)
         c2 = self._forward(emb_x2).unsqueeze(2)
 
-        # (batch_size x 1 x 300)
+        # (batch_size x 1 x h_dim)
         o = torch.mm(c1, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, c2)
@@ -79,11 +83,24 @@ class LSTMDualEncoder(nn.Module):
             num_layers=1, batch_first=True, dropout=0.3
         )
 
-        self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(h_dim, h_dim)))
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.fc_drop = nn.Dropout(0.5)
+
+        self.init_params_()
+
         if gpu:
             self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
 
     def forward(self, x1, x2):
         """
