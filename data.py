@@ -4,7 +4,7 @@ import torch
 import re
 import twokenize
 from collections import OrderedDict, Counter
-
+import numpy as np
 
 URL_TOK = '__url__'
 PATH_TOK = '__path__'
@@ -64,7 +64,7 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=160, gpu=False):
+    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=160, gpu=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
@@ -125,7 +125,33 @@ class UDC:
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
-        self.vectors = self.TEXT.vocab.vectors
+        self.vectors = self.load_glove_embeddings(glove_p, self.TEXT.vocab.stoi)
+        #self.vectors = self.TEXT.vocab.vectors
+
+    def load_glove(self, path):
+        """
+        creates a dictionary mapping words to vectors from a file in glove format.
+        """
+        with open(path) as f:
+            glove = {}
+            for line in f.readlines():
+                values = line.split()
+                word = values[0]
+                vector = np.array(values[1:], dtype='float32')
+                glove[word] = vector
+            return glove
+
+    def load_glove_embeddings(self, path, word2idx, embedding_dim=50):
+        with open(path) as f:
+            embeddings = np.zeros((len(word2idx), embedding_dim))
+            for line in f.readlines():
+                values = line.split()
+                word = values[0]
+                index = word2idx.get(word)
+                if index:
+                    vector = np.array(values[1:], dtype='float32')
+                    embeddings[index] = vector
+            return torch.from_numpy(embeddings).float()
 
     def train_iter(self):
         train_iter = data.BucketIterator(
