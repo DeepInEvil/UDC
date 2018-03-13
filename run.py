@@ -84,9 +84,10 @@ for epoch in range(args.n_epoch):
         # Truncate input
         context = mb.context[:, :args.max_context_len]
         response = mb.response[:, :args.max_response_len]
-        print context.size(), response.size()
+        print (context.size(), response.size())
         output = model(context, response)
-        print output
+        print (output)
+        print (output.size())
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
