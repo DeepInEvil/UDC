@@ -76,12 +76,12 @@ class LSTMDualEncoder(nn.Module):
 
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True
+            num_layers=1, batch_first=True, dropout=0.3
         )
 
         self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(h_dim, h_dim)))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-
+        self.fc_drop = nn.Dropout(0.5)
         if gpu:
             self.cuda()
 
@@ -123,6 +123,7 @@ class LSTMDualEncoder(nn.Module):
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.unsqueeze(2))
         o = o + self.b
+        o = self.fc_drop(o)
 
         return o
 
