@@ -35,7 +35,7 @@ parser.add_argument('--max_context_len', type=int, default=160, metavar='',
                     help='max sequence length for context (default: 160)')
 parser.add_argument('--max_response_len', type=int, default=80, metavar='',
                     help='max sequence length for response (default: 80)')
-parser.add_argument('--toy_data', default=True, action='store_true',
+parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
 parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
