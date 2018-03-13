@@ -35,7 +35,7 @@ parser.add_argument('--max_context_len', type=int, default=160, metavar='',
                     help='max sequence length for context (default: 160)')
 parser.add_argument('--max_response_len', type=int, default=80, metavar='',
                     help='max sequence length for response (default: 80)')
-parser.add_argument('--toy_data', default=False, action='store_true',
+parser.add_argument('--toy_data', default=True, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
 parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
@@ -84,8 +84,9 @@ for epoch in range(args.n_epoch):
         # Truncate input
         context = mb.context[:, :args.max_context_len]
         response = mb.response[:, :args.max_response_len]
-
+        print context.size(), response.size()
         output = model(context, response)
+        print output
         loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
         loss.backward()
