@@ -116,8 +116,10 @@ class UDC:
                 counter = Counter(f.read().split('\n'))
 
             if use_fasttext:
+                print ("Using fasttext")
                 vocab = Vocab(counter, specials=specials,
-                              vectors="fasttext.en.300d",)
+                              vectors="fasttext.en.300d")
+
 
             else:
                 vocab = Vocab(counter, specials=specials,
