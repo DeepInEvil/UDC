@@ -125,8 +125,8 @@ class UDC:
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
-        self.vectors = self.load_glove_embeddings(glove_p+'/glove.6B.50d.txt', self.TEXT.vocab.stoi)
-        #self.vectors = self.TEXT.vocab.vectors
+        #self.vectors = self.load_glove_embeddings(glove_p+'/glove.6B.50d.txt', self.TEXT.vocab.stoi)
+        self.vectors = self.TEXT.vocab.vectors
 
     def load_glove(self, path):
         """
