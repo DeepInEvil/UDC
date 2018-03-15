@@ -73,36 +73,54 @@ model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.ve
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
-for epoch in range(args.n_epoch):
-    print('\n\n-------------------------------------------')
-    print('Epoch-{}'.format(epoch))
-    print('-------------------------------------------')
 
-    model.train()
+def main():
+    for epoch in range(args.n_epoch):
+        print('\n\n-------------------------------------------')
+        print('Epoch-{}'.format(epoch))
+        print('-------------------------------------------')
 
-    train_iter = tqdm(enumerate(dataset.train_iter()))
-    train_iter.set_description_str('Training')
+        model.train()
 
-    for it, mb in train_iter:
-        # Truncate input
-        context = mb.context[:, :args.max_context_len]
-        response = mb.response[:, :args.max_response_len]
-        #print (context.size(), response.size())
-        output = model(context, response)
-        #print (output)
-        #print (output.size())
-        loss = F.binary_cross_entropy_with_logits(output, mb.label)
+        train_iter = tqdm(enumerate(dataset.train_iter()))
+        train_iter.set_description_str('Training')
 
-        loss.backward()
-        # clip_gradient_threshold(model, -10, 10)
-        solver.step()
-        solver.zero_grad()
+        for it, mb in train_iter:
+            # Truncate input
+            context = mb.context[:, :args.max_context_len]
+            response = mb.response[:, :args.max_response_len]
 
-        if it > 0 and it % 1000 == 0:
-            # Validation
-            recall_at_ks = eval_model(model, dataset, args.max_context_len, args.max_response_len, args.gpu)
+            output = model(context, response)
+            loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
-            print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-                .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+            loss.backward()
+            # clip_gradient_threshold(model, -10, 10)
+            solver.step()
+            solver.zero_grad()
 
-    save_model(model, 'ccn_lstm')
+            if it > 0 and it % 1000 == 0:
+                # Validation
+                recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
+
+                print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+
+        save_model(model, 'ccn_lstm')
+
+
+def eval_test():
+    print('\n\nEvaluating on test set...')
+    print('-------------------------------')
+
+    recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
+
+    print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+
+
+try:
+    main()
+    eval_test()
+except KeyboardInterrupt:
+    eval_test()
+    exit(0)

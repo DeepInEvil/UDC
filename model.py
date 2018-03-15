@@ -158,7 +158,8 @@ class CrossConvNet(nn.Module):
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
 
-        self.fc = nn.Linear(max_seq_len*k, 1)
+        self.fc1 = nn.Linear(max_seq_len*k, 1)
+        self.fc2 = nn.Linear(max_seq_len*k, 1)
 
         if gpu:
             self.cuda()
@@ -195,9 +196,10 @@ class CrossConvNet(nn.Module):
         a = a.view(-1, self.k*self.max_seq_len)
 
         # batch_size x 1
-        h = self.fc(a)
+        o1 = self.fc1(a)
+        o2 = self.fc2(a)
 
-        return h.view(-1)
+        return o1.view(-1), o2.view(-1)
 
 
 class CCN_LSTM(nn.Module):
@@ -208,7 +210,7 @@ class CCN_LSTM(nn.Module):
         self.lstm = LSTMDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb, gpu)
         self.ccn = CrossConvNet(emb_dim, n_vocab, max_seq_len, pretrained_emb, k, gpu)
 
-        self.fc = nn.Linear(2, 1)
+        self.fc = nn.Linear(3, 1)
 
         if gpu:
             self.cuda()
@@ -224,9 +226,9 @@ class CCN_LSTM(nn.Module):
         o: vector of (batch_size)
         """
         o_lstm = self.lstm(x1, x2).unsqueeze(1)
-        o_ccn = self.ccn(x1, x2).unsqueeze(1)
+        o1_ccn, o2_ccn = self.ccn(x1, x2)
 
-        inputs = torch.cat([o_lstm, o_ccn], 1)
+        inputs = torch.cat([o_lstm, o1_ccn.unsqueeze(1), o2_ccn.unsqueeze(1)], 1)
         o = self.fc(inputs)
 
         return o.view(-1)

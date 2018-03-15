@@ -22,12 +22,12 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     return recalls
 
 
-def eval_model(model, dataset, max_context_len, max_response_len, gpu=False):
+def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
     model.eval()
     scores = []
 
-    valid_iter = tqdm(dataset.valid_iter())
-    valid_iter.set_description_str('Validation')
+    valid_iter = tqdm(data_iter)
+    valid_iter.set_description_str('Evaluation')
 
     for mb in valid_iter:
         context = mb.context[:, :max_context_len]
