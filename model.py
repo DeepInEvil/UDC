@@ -203,7 +203,7 @@ class EmbMM(nn.Module):
         # Each is (1 x batch_size x h_dim)
         context_os, context_hs = self.rnn(x1_emb)
         response_os, response_hs = self.rnn(x2_emb)
-
+        print (context_hs.size(), response_hs.size())
         return context_hs, response_hs
 
     def forward_fc(self, c, r):
