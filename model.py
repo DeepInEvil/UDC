@@ -214,7 +214,7 @@ class EmbMM(nn.Module):
         #c = c[0]
         #r = r[0]
         # (batch_size x 1 x h_dim)
-        #print (len(c))
+        print (len(r))
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
             response_h = r[i].view(self.h_dim, 1)
