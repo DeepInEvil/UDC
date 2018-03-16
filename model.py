@@ -212,7 +212,7 @@ class EmbMM(nn.Module):
         """
         results = []
         # (batch_size x 1 x h_dim)
-        print len(c)
+        print (len(c))s
         for i in range(len(c)):
             context_h = c[i][-1].view(1, self.h_dim)
             response_h = r[i][-1].view(self.h_dim, 1)
@@ -222,7 +222,7 @@ class EmbMM(nn.Module):
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
-        print len(results)
+        print (len(results))
         return results
 
 
