@@ -201,10 +201,10 @@ class EmbMM(nn.Module):
         x2_emb = self.word_embed(x2)
 
         # Each is (1 x batch_size x h_dim)
-        _, (c, _) = self.rnn(x1_emb)
-        _, (r, _) = self.rnn(x2_emb)
+        context_os, context_hs = self.rnn(x1_emb)
+        response_os, response_hs = self.rnn(x2_emb)
 
-        return c.squeeze(), r.squeeze()
+        return context_hs[0], response_hs[0]
 
     def forward_fc(self, c, r):
         """
