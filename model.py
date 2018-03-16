@@ -224,7 +224,7 @@ class EmbMM(nn.Module):
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
-        print (len(results))
+        print (results)
         return results
 
 
