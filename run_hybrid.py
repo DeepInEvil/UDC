@@ -84,10 +84,25 @@ for epoch in range(args.n_epoch):
         solver.step()
         solver.zero_grad()
 
-    # Validation
-    recall_at_ks = eval_hybrid_model(model, dataset, args.gpu)
+        # Validation
+        if it > 0 and it % 1000 == 0:
+            # Validation
+            recall_at_ks = eval_hybrid_model(model, dataset.valid_iter(), args.gpu)
 
-    print('\nLoss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-          .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+            print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+                  .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+    #recall_at_ks = eval_hybrid_model(model, dataset, args.gpu)
+
+    eval_test()
 
     save_model(model, 'hybrid')
+
+
+def eval_test():
+    print('\n\nEvaluating on test set...')
+    print('-------------------------------')
+
+    recall_at_ks = eval_hybrid_model(model, dataset.test_iter(), args.gpu)
+
+    print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
