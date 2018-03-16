@@ -189,7 +189,7 @@ class EmbMM(nn.Module):
         c, r = self.forward_enc(x1, x2)
         o = self.forward_fc(c, r)
 
-        return o.view(-1)
+        return o
 
     def forward_enc(self, x1, x2):
         """
@@ -203,14 +203,16 @@ class EmbMM(nn.Module):
         # Each is (1 x batch_size x h_dim)
         context_os, context_hs = self.rnn(x1_emb)
         response_os, response_hs = self.rnn(x2_emb)
-        print (context_hs.size(), response_hs.size())
-        return context_hs, response_hs
+        print (context_hs[0].size(), response_hs[0].size())
+        return context_hs[0], response_hs[0]
 
     def forward_fc(self, c, r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
         results = []
+        c = c[0]
+        r = r[0]
         # (batch_size x 1 x h_dim)
         print (len(c))
         for i in range(len(c)):
