@@ -148,7 +148,7 @@ class EmbMM(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(EmbMM, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -196,8 +196,7 @@ class EmbMM(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        x1 = [[sent.split(17119) for sent in batch] for batch in x1]
-        print (x1.size())
+
         x1_emb = self.word_embed(x1)
         x2_emb = self.word_embed(x2)
 
