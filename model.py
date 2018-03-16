@@ -187,6 +187,7 @@ class EmbMM(nn.Module):
         o: vector of (batch_size)
         """
         c, r = self.forward_enc(x1, x2)
+        #print r
         o = self.forward_fc(c, r)
 
         return o.view(-1)
@@ -204,7 +205,7 @@ class EmbMM(nn.Module):
         context_os, context_hs = self.rnn(x1_emb)
         response_os, response_hs = self.rnn(x2_emb)
         print (context_hs[0].size(), response_hs[0].size())
-        return context_hs[0].squeeze(), response_hs[0].squeeze
+        return context_hs[0].squeeze(), response_hs[0].squeeze()
 
     def forward_fc(self, c, r):
         """
@@ -214,7 +215,7 @@ class EmbMM(nn.Module):
         #c = c[0]
         #r = r[0]
         # (batch_size x 1 x h_dim)
-        print ((r))
+        #print ((r))
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
             response_h = r[i].view(self.h_dim, 1)
