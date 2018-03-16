@@ -221,7 +221,7 @@ class EmbMM(nn.Module):
             response_h = r[i].view(self.h_dim, 1)
             ans = torch.mm(torch.mm(context_h, self.M), response_h)[0][0]
             #print (ans)
-            results.append(torch.sigmoid(ans))
+            results.append((ans))
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
