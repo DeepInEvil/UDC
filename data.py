@@ -64,13 +64,13 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=160, gpu=False, use_fasttext=False):
+    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=None, gpu=False, use_fasttext=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
-            lower=True, #tokenize=custom_tokenizer,
+            lower=True, fix_length=max_seq_len,
             unk_token='__unk__', pad_token='__pad__', batch_first=True
         )
         self.LABEL = data.Field(

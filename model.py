@@ -307,3 +307,122 @@ class CCN_LSTM(nn.Module):
         o = self.fc(inputs)
 
         return o.view(-1)
+
+
+class AttnLSTMDualEncoder(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, max_seq_len=160, conv=False, gpu=False):
+        super(AttnLSTMDualEncoder, self).__init__()
+
+        self.conv = conv
+        self.max_seq_len = 160
+        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.rnn = nn.LSTM(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True
+        )
+
+        if not conv:
+            self.attention = nn.Sequential(
+                nn.Linear(max_seq_len*h_dim, max_seq_len),
+                nn.Softmax(dim=1)
+            )
+        else:
+            self.conv3 = nn.Conv2d(1, 100, (3, h_dim))
+            self.conv4 = nn.Conv2d(1, 100, (4, h_dim))
+            self.conv5 = nn.Conv2d(1, 100, (5, h_dim))
+            self.attention = nn.Sequential(
+                nn.Linear(300, max_seq_len),
+                nn.Softmax(dim=1)
+            )
+
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+
+        self.init_params_()
+
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        c, r = self.forward_enc(x1, x2)
+        o = self.forward_fc(c, r)
+
+        return o.view(-1)
+
+    def forward_enc(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.word_embed(x1)
+        x2_emb = self.word_embed(x2)
+
+        # Each is (1 x batch_size x h_dim)
+        c_hs, _ = self.rnn(x1_emb)
+        r_hs, _ = self.rnn(x2_emb)
+
+        # Attention weights
+        if self.conv:
+            c_a = self.attention(self.forward_conv(c_hs))
+            r_a = self.attention(self.forward_conv(r_hs))
+        else:
+            c_a = self.attention(c_hs.contiguous().view(x1.size(0), -1))
+            r_a = self.attention(r_hs.contiguous().view(x2.size(0), -1))
+
+        # Apply attention to RNN outputs
+        c = torch.bmm(c_hs.transpose(1, 2), c_a.unsqueeze(2))
+        r = torch.bmm(r_hs.transpose(1, 2), r_a.unsqueeze(2))
+
+        return c.squeeze(), r.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
+
+    def forward_conv(self, inputs):
+        x = inputs.unsqueeze(1)
+
+        x3 = F.relu(self.conv3(x)).squeeze()
+        x4 = F.relu(self.conv4(x)).squeeze()
+        x5 = F.relu(self.conv5(x)).squeeze()
+
+        # Max-over-time-pool
+        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
+        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+
+        x = torch.cat([x3, x4, x5], dim=1)
+
+        return x
