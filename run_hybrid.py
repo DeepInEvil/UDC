@@ -35,6 +35,8 @@ parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
 parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
+parser.add_argument('--use_fsttext', type=bool, default=False,
+                    help='use fasttext (default: False)')
 
 args = parser.parse_args()
 
@@ -45,13 +47,13 @@ z_dim = args.z_dim
 
 if args.toy_data:
     dataset = UDC(
-        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
+        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv', vocab_file='vocabulary.txt',
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
     )
 else:
     dataset = UDC(
-        train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
+        train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt',
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
     )
 
 eou_idx = dataset.TEXT.vocab.stoi['__eou__']
