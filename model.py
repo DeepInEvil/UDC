@@ -189,7 +189,7 @@ class EmbMM(nn.Module):
         c, r = self.forward_enc(x1, x2)
         o = self.forward_fc(c, r)
 
-        return o
+        return o.view(-1)
 
     def forward_enc(self, x1, x2):
         """
