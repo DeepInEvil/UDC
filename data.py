@@ -128,7 +128,7 @@ class UDC:
             self.TEXT.vocab = vocab
 
         self.LABEL.build_vocab(self.train)
-        print (vocab.stoi['__eot__'])
+        print (vocab.stoi['think'])
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
