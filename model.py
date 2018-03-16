@@ -217,7 +217,7 @@ class EmbMM(nn.Module):
             context_h = c[i][-1].view(1, self.h_dim)
             response_h = r[i][-1].view(self.h_dim, 1)
             ans = torch.mm(torch.mm(context_h, self.M), response_h)[0][0]
-            print ans
+            print (ans)
             results.append(ans)
             #response_encodings.append(response_h)
 
