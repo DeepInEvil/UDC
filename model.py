@@ -148,7 +148,7 @@ class EmbMM(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(EmbMM, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, sparse=False, padding_idx=1)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -160,7 +160,7 @@ class EmbMM(nn.Module):
 
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-
+        self.h_dim = h_dim
         self.init_params_()
 
         if gpu:
@@ -210,14 +210,18 @@ class EmbMM(nn.Module):
         """
         c, r: tensor of (batch_size, h_dim)
         """
+        results = []
         # (batch_size x 1 x h_dim)
-        o = torch.mm(c, self.M).unsqueeze(1)
-        print (o)
-        # (batch_size x 1 x 1)
-        o = torch.bmm(o, r.unsqueeze(2))
-        o = o + self.b
+        for i in range(len(c)):
+            context_h = c[i][-1].view(1, self.h_dim)
+            response_h = r[i][-1].view(self.h_dim, 1)
+            ans = torch.mm(torch.mm(context_h, self.M), response_h)[0][0]
+            results.append(ans)
+            #response_encodings.append(response_h)
 
-        return o
+        results = torch.stack(results)
+        return results
+
 
 class CrossConvNet(nn.Module):
 
