@@ -196,7 +196,7 @@ class EmbMM(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        x1 = [[sent.split('17119') for sent in batch] for batch in x1]
+        x1 = [[sent.split(17119) for sent in batch] for batch in x1]
         print (x1)
         x1_emb = self.word_embed(x1)
         x2_emb = self.word_embed(x2)
