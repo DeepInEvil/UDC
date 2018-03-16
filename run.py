@@ -6,7 +6,7 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 
-from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
+from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDC
 from evaluation import recall_at_k, eval_model
 from util import save_model, clip_gradient_threshold
@@ -35,7 +35,7 @@ parser.add_argument('--max_context_len', type=int, default=160, metavar='',
                     help='max sequence length for context (default: 160)')
 parser.add_argument('--max_response_len', type=int, default=80, metavar='',
                     help='max sequence length for response (default: 80)')
-parser.add_argument('--toy_data', default=False, action='store_true',
+parser.add_argument('--toy_data', default=True, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
 parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
@@ -68,7 +68,8 @@ else:
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+#model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+model = EmbMM(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
