@@ -211,8 +211,8 @@ class EmbMM(nn.Module):
         c, r: tensor of (batch_size, h_dim)
         """
         results = []
-        c = c[0]
-        r = r[0]
+        #c = c[0]
+        #r = r[0]
         # (batch_size x 1 x h_dim)
         print (len(c))
         for i in range(len(c)):
