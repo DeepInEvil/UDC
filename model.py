@@ -204,7 +204,7 @@ class EmbMM(nn.Module):
         context_os, context_hs = self.rnn(x1_emb)
         response_os, response_hs = self.rnn(x2_emb)
 
-        return context_hs[0], response_hs[0]
+        return context_hs, response_hs
 
     def forward_fc(self, c, r):
         """
