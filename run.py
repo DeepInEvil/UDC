@@ -58,8 +58,8 @@ h_dim = args.h_dim
 
 if args.toy_data:
     dataset = UDC(
-        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv', vocab_file='vocabulary.txt',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
+        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv', embed_dim=args.emb_dim,
+        batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
     )
 else:
     dataset = UDC(
