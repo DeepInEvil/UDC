@@ -78,7 +78,7 @@ class LSTMDualEncoder(nn.Module):
         #print (n_vocab)
         # if pretrained_emb is not None:
         #     self.word_embed.weight.data.copy_(pretrained_emb)
-        self.word_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         #self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
