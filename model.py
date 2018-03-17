@@ -220,18 +220,18 @@ class EmbMM(nn.Module):
             context_h = c[i].view(1, self.h_dim)
             response_h = r[i].view(1, self.h_dim)
             w_mm = torch.mm(context_h, self.M)
-            print (w_mm.size(), response_h.size())
+            #print (w_mm.size(), response_h.size())
             ans = torch.dot(w_mm, response_h)
             #print (context_h.size(), w_mm.size(), response_h.size())
             #ans = torch.mm(w_mm, response_h)
-            print (ans.size())
+            #print (ans.size())
             #print (ans)
             results.append(ans)
             #response_encodings.append(response_h)
 
-        results = torch.stack(results)
-        print (results.transpose(0, 1).size())
-        o = torch.tanh(torch.mm(self.out, results))
+        o = torch.stack(results)
+        #print (results.transpose(0, 1).size())
+        #o = torch.tanh(torch.mm(self.out, results))
         #print (results)
         return o
 
