@@ -73,7 +73,7 @@ class LSTMDualEncoder(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(LSTMDualEncoder, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -148,7 +148,7 @@ class EmbMM(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(EmbMM, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, sparse=False, padding_idx=1)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, sparse=False, padding_idx=0)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -221,9 +221,9 @@ class EmbMM(nn.Module):
             response_h = r[i].view(1, self.h_dim)
             w_mm = torch.mm(context_h, self.M)
             #print (w_mm.size(), response_h.size())
-            ans = torch.dot(w_mm, response_h)
+            #ans = torch.dot(w_mm, response_h)
             #print (context_h.size(), w_mm.size(), response_h.size())
-            #ans = torch.mm(w_mm, response_h)
+            ans = torch.mm(w_mm, response_h)
             #print (ans.size())
             #print (ans)
             results.append(ans)
