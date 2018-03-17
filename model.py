@@ -73,11 +73,13 @@ class LSTMDualEncoder(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(LSTMDualEncoder, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
-        print (n_vocab)
+        self.position_enc = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+        self.position_enc.weight.data = position_encoding_init(n_vocab, emb_dim)
+        #print (n_vocab)
         # if pretrained_emb is not None:
         #     self.word_embed.weight.data.copy_(pretrained_emb)
-        self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
+        self.word_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+        #self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
@@ -122,7 +124,9 @@ class LSTMDualEncoder(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
+        x1_emb += self.position_enc
         x2_emb = self.word_embed(x2)
+        x2_emb += self.position_enc
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
