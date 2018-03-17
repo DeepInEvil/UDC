@@ -135,7 +135,6 @@ class UDC:
             self.TEXT.vocab = vocab
 
         self.LABEL.build_vocab(self.train)
-
         vocab.stoi[0] == '__pad__'
         vocab.stoi[1] == '<UNK>'
         print (vocab.stoi['__pad__'])
