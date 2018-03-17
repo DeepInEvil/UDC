@@ -71,7 +71,7 @@ class UDC:
 
         self.TEXT = data.Field(
             lower=True, fix_length=max_seq_len,
-            unk_token='__unk__', pad_token='__pad__', batch_first=True
+            pad_token='__pad__', unk_token='__unk__', batch_first=True
         )
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
@@ -119,8 +119,6 @@ class UDC:
                 print ("Using fasttext")
                 vocab = Vocab(counter, specials=specials,
                               vectors="fasttext.en.300d")
-
-
             else:
                 vocab = Vocab(counter, specials=specials,
                               vectors=GloVe('6B', dim=embed_dim))
@@ -128,7 +126,7 @@ class UDC:
             self.TEXT.vocab = vocab
 
         self.LABEL.build_vocab(self.train)
-        #print (vocab.stoi['__pad__'])
+        print (vocab.stoi['__pad__'])
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
