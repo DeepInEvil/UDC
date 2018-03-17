@@ -64,7 +64,7 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt', batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=None, gpu=False, use_fasttext=False):
+    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file=None, batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=None, gpu=False, use_fasttext=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
@@ -102,10 +102,16 @@ class UDC:
         )
 
         if vocab_file is None:
-            self.TEXT.build_vocab(
-                self.train, max_size=max_vocab_size, min_freq=min_freq,
-                vectors=GloVe('6B', dim=embed_dim)
-            )
+            if use_fasttext:
+                self.TEXT.build_vocab(
+                    self.train, max_size=max_vocab_size, min_freq=min_freq,
+                    vectors="fasttext.en.300d"
+                )
+            else:
+                self.TEXT.build_vocab(
+                    self.train, max_size=max_vocab_size, min_freq=min_freq,
+                    vectors=GloVe('6B', dim=embed_dim)
+                )
         else:
             specials = list(OrderedDict.fromkeys(
                 tok for tok in [self.TEXT.unk_token, self.TEXT.pad_token,
