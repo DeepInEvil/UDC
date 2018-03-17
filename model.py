@@ -230,7 +230,7 @@ class EmbMM(nn.Module):
 
         results = torch.stack(results)
         #print (results.size())
-        o = torch.tanh(torch.mm(results.transpose(0, 1), self.out))
+        o = torch.tanh(torch.mm(self.out, results))
         #print (results)
         return o
 
