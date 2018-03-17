@@ -108,7 +108,7 @@ def main():
 
 
         save_model(model, 'ccn_lstm')
-    eval_test()
+    #eval_test()
 
 
 def eval_test():
