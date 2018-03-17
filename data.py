@@ -102,7 +102,9 @@ class UDC:
         )
 
         if vocab_file is None:
+
             if use_fasttext:
+                print ("building vocabulary")
                 self.TEXT.build_vocab(
                     self.train, max_size=max_vocab_size, min_freq=min_freq,
                     vectors="fasttext.en.300d"
