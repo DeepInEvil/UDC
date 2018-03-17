@@ -229,6 +229,7 @@ class EmbMM(nn.Module):
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
+        print (results.size())
         o = torch.tanh(torch.mm(results, self.out))
         #print (results)
         return o
