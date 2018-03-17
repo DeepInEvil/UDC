@@ -42,7 +42,7 @@ class SelfAttention(nn.Module):
         attentions = F.softmax(F.relu(weights.squeeze()))
 
         # create mask based on the sentence lengths
-        mask = Variable(torch.ones(attentions.size())).cuda()
+        mask = torch.Variable(torch.ones(attentions.size())).cuda()
         for i, l in enumerate(lengths):  # skip the first sentence
             if l < max_len:
                 mask[i, l:] = 0
