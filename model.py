@@ -160,6 +160,7 @@ class EmbMM(nn.Module):
 
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
+        self.out = nn.Parameter(torch.FloatTensor(h_dim, 1))
         self.h_dim = h_dim
         self.init_params_()
 
@@ -217,9 +218,10 @@ class EmbMM(nn.Module):
         #print ((r))
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
-            response_h = r[i].view(self.h_dim, 1)
+            response_h = r[i].view(1, self.h_dim)
             w_mm = torch.mm(context_h, self.M)
-            print (context_h.size(), w_mm.size(), response_h.size())
+            ans = torch.dot(w_mm, response_h)
+            #print (context_h.size(), w_mm.size(), response_h.size())
             ans = torch.mm(w_mm, response_h)
             #print (ans.size())
             #print (ans)
@@ -227,8 +229,9 @@ class EmbMM(nn.Module):
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
+        o = torch.tanh(torch.mm(results, self.out))
         #print (results)
-        return results
+        return o
 
 
 class CrossConvNet(nn.Module):
