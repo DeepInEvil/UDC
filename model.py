@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data import position_encoding_init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from Deep_attention import Attention
+from Deep_attention import SelfAttention
 
 
 class CNNDualEncoder(nn.Module):
@@ -126,9 +126,8 @@ class LSTMDualEncoder(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
-        x1_emb += self.position_enc(x1)
         x2_emb = self.word_embed(x2)
-        x2_emb += self.position_enc(x2)
+
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
@@ -151,9 +150,9 @@ class LSTMDualEncoder(nn.Module):
 
 class LSTMDualEncoderDeep(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.8):
         super(LSTMDualEncoderDeep, self).__init__()
-
+        print len(n_vocab)
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         #print (n_vocab)
         if pretrained_emb is not None:
@@ -165,9 +164,12 @@ class LSTMDualEncoderDeep(nn.Module):
             num_layers=1, batch_first=True
         )
 
+        self.dropout_p = emb_drop
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
+        self.dropout = nn.Dropout(self.dropout_p)
         self.max_seq_len = max_seq_len
+        self.attn = SelfAttention(h_dim, batch_first=True)
         self.init_params_()
         #self.attn = Attention(h_dim, h_dim)
         if gpu:
@@ -204,7 +206,9 @@ class LSTMDualEncoderDeep(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
+        x1_emb = self.dropout(x1_emb)
         x2_emb = self.word_embed(x2)
+        x2_emb = self.dropout(x2_emb)
         #seq_lens = (self.max_seq_len * x1_emb.size(0))
 
         #packed_seq_x1 = pack_padded_sequence(x1_emb, lengths=seq_lens, batch_first=True)
@@ -212,6 +216,7 @@ class LSTMDualEncoderDeep(nn.Module):
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
+
         #wattn, attn_mask = self.attn(c[0][-1], c[1][-1])
         _, (r, _) = self.rnn(x2_emb)
 
