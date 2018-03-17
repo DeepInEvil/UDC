@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data import position_encoding_init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from Deep_attention import SelfAttention
+#from Deep_attention import SelfAttention
 
 
 class CNNDualEncoder(nn.Module):
@@ -169,7 +169,7 @@ class LSTMDualEncoderDeep(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.dropout = nn.Dropout(self.dropout_p)
         self.max_seq_len = max_seq_len
-        self.attn = SelfAttention(h_dim, batch_first=True)
+        #self.attn = SelfAttention(h_dim, batch_first=True)
         self.init_params_()
         #self.attn = Attention(h_dim, h_dim)
         if gpu:
