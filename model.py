@@ -493,19 +493,20 @@ class AttnLSTMDualEncoder(nn.Module):
 
         # Each is (1 x batch_size x h_dim)
         c_hs, _ = self.rnn(x1_emb)
-        r_hs, _ = self.rnn(x2_emb)
+        _, (r, _) = self.rnn(x2_emb)
 
         # Attention weights
         if self.conv:
             c_a = self.attention(self.forward_conv(c_hs))
-            r_a = self.attention(self.forward_conv(r_hs))
+            #r_a = self.attention(self.forward_conv(r_hs))
         else:
-            c_a = self.attention(c_hs.contiguous().view(x1.size(0), -1))
-            r_a = self.attention(r_hs.contiguous().view(x2.size(0), -1))
+
+            c_a = self.attention(torch.cat(c_hs.contiguous().view(x1.size(0), -1), x1_emb))
+            #r_a = self.attention(r_hs.contiguous().view(x2.size(0), -1))
 
         # Apply attention to RNN outputs
         c = torch.bmm(c_hs.transpose(1, 2), c_a.unsqueeze(2))
-        r = torch.bmm(r_hs.transpose(1, 2), r_a.unsqueeze(2))
+        #r = torch.bmm(r_hs.transpose(1, 2), r_a.unsqueeze(2))
 
         return c.squeeze(), r.squeeze()
 
