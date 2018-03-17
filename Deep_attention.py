@@ -4,58 +4,65 @@ import torch.nn.functional as F
 from torch.nn import init
 from torch.autograd import Variable
 
-class SelfAttention(nn.Module):
-    def __init__(self, hidden_size, batch_first=False):
-        super(SelfAttention, self).__init__()
 
-        self.hidden_size = hidden_size
-        self.batch_first = batch_first
+class Attention(nn.Module):
+    """
+    Attention model for Pointer-Net
+    """
 
-        self.att_weights = nn.Parameter(torch.Tensor(1, hidden_size),
-                                     requires_grad=True)
+    def __init__(self, input_dim,
+                 hidden_dim):
+        """
+        Initiate Attention
+        :param int input_dim: Input's diamention
+        :param int hidden_dim: Number of hidden units in the attention
+        """
 
-        init.xavier_uniform(self.att_weights.data)
+        super(Attention, self).__init__()
 
-    def get_mask(self):
-        pass
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
 
-    def forward(self, inputs):
+        self.input_linear = nn.Linear(input_dim, hidden_dim)
+        self.context_linear = nn.Conv1d(input_dim, hidden_dim, 1, 1)
+        self.V = Parameter(torch.FloatTensor(hidden_dim), requires_grad=True)
+        self._inf = Parameter(torch.FloatTensor([float('-inf')]), requires_grad=False)
+        self.tanh = nn.Tanh()
+        self.softmax = nn.Softmax()
 
-        if isinstance(inputs, nn.utils.rnn.PackedSequence):
-            # unpack output
-            inputs, lengths = nn.utils.rnn.pad_packed_sequence(inputs,
-                                                  batch_first=self.batch_first)
-        if self.batch_first:
-            batch_size, max_len = inputs.size()[:2]
-        else:
-            max_len, batch_size = inputs.size()[:2]
+        # Initialize vector V
+        nn.init.uniform(self.V, -1, 1)
 
-        # apply attention layer
-        weights = torch.bmm(inputs,
-                            self.att_weights  # (1, hidden_size)
-                            .permute(1, 0)  # (hidden_size, 1)
-                            .unsqueeze(0)  # (1, hidden_size, 1)
-                            .repeat(batch_size, 1, 1)
-                            # (batch_size, hidden_size, 1)
-                            )
+    def forward(self, input,
+                context,
+                mask):
+        """
+        Attention - Forward-pass
+        :param Tensor input: Hidden state h
+        :param Tensor context: Attention context
+        :param ByteTensor mask: Selection mask
+        :return: tuple of - (Attentioned hidden state, Alphas)
+        """
 
-        attentions = F.softmax(F.relu(weights.squeeze()))
+        # (batch, hidden_dim, seq_len)
+        inp = self.input_linear(input).unsqueeze(2).expand(-1, -1, context.size(1))
 
-        # create mask based on the sentence lengths
-        mask = Variable(torch.ones(attentions.size())).cuda()
-        for i, l in enumerate(lengths):  # skip the first sentence
-            if l < max_len:
-                mask[i, l:] = 0
+        # (batch, hidden_dim, seq_len)
+        context = context.permute(0, 2, 1)
+        ctx = self.context_linear(context)
 
-        # apply mask and renormalize attention scores (weights)
-        masked = attentions * mask
-        _sums = masked.sum(-1).expand_as(attentions)  # sums per row
-        attentions = masked.div(_sums)
+        # (batch, 1, hidden_dim)
+        V = self.V.unsqueeze(0).expand(context.size(0), -1).unsqueeze(1)
 
-        # apply attention weights
-        weighted = torch.mul(inputs, attentions.unsqueeze(-1).expand_as(inputs))
+        # (batch, seq_len)
+        att = torch.bmm(V, self.tanh(inp + ctx)).squeeze(1)
+        if len(att[mask]) > 0:
+            att[mask] = self.inf[mask]
+        alpha = self.softmax(att)
 
-        # get the final fixed vector representations of the sentences
-        representations = weighted.sum(1).squeeze()
+        hidden_state = torch.bmm(ctx, alpha.unsqueeze(2)).squeeze(2)
 
-        return representations, attentions
+        return hidden_state, alpha
+
+    def init_inf(self, mask_size):
+        self.inf = self._inf.unsqueeze(1).expand(*mask_size)

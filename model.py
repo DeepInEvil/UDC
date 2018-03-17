@@ -3,7 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data import position_encoding_init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from Deep_attention import SelfAttention
+from Deep_attention import Attention
+
+
 class CNNDualEncoder(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=300, pretrained_emb=None, gpu=False):
@@ -167,7 +169,7 @@ class LSTMDualEncoderDeep(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.max_seq_len = max_seq_len
         self.init_params_()
-        self.attn = SelfAttention(h_dim, batch_first=True)
+        self.attn = Attention(h_dim, h_dim)
         if gpu:
             self.cuda()
 
@@ -209,11 +211,11 @@ class LSTMDualEncoderDeep(nn.Module):
         #packed_seq_x2 = pack_padded_sequence(x2_emb, lengths=seq_lens, batch_first=True)
 
         # Each is (1 x batch_size x h_dim)
-        _, (c, _) = self.rnn(x1_emb)
-        attn, resp = self.attn(c)
+        _, c = self.rnn(x1_emb)
+        wattn, attn_mask = self.attn(c[0][-1], c[1][-1])
         _, (r, _) = self.rnn(x2_emb)
 
-        return attn, r.squeeze()
+        return wattn, r.squeeze()
 
     def forward_fc(self, c, r):
         """
