@@ -212,10 +212,10 @@ class LSTMDualEncoderDeep(nn.Module):
 
         # Each is (1 x batch_size x h_dim)
         _, c = self.rnn(x1_emb)
-        wattn, attn_mask = self.attn(c[0][-1], c[1][-1])
+        #wattn, attn_mask = self.attn(c[0][-1], c[1][-1])
         _, (r, _) = self.rnn(x2_emb)
 
-        return wattn, r.squeeze()
+        return c.squeeze(), r.squeeze()
 
     def forward_fc(self, c, r):
         """
