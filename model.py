@@ -203,14 +203,14 @@ class LSTMDualEncoderDeep(nn.Module):
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
         x2_emb = self.word_embed(x2)
-        seq_lens = (self.max_seq_len * x1_emb.size(0))
+        #seq_lens = (self.max_seq_len * x1_emb.size(0))
 
-        packed_seq_x1 = pack_padded_sequence(x1_emb, lengths=seq_lens, batch_first=True)
-        packed_seq_x2 = pack_padded_sequence(x2_emb, lengths=seq_lens, batch_first=True)
+        #packed_seq_x1 = pack_padded_sequence(x1_emb, lengths=seq_lens, batch_first=True)
+        #packed_seq_x2 = pack_padded_sequence(x2_emb, lengths=seq_lens, batch_first=True)
 
         # Each is (1 x batch_size x h_dim)
-        _, (c, _) = self.rnn(packed_seq_x1)
-        _, (r, _) = self.rnn(packed_seq_x2)
+        _, (c, _) = self.rnn(x1_emb)
+        _, (r, _) = self.rnn(x2_emb)
 
         return c.squeeze(), r.squeeze()
 
