@@ -152,7 +152,7 @@ class LSTMDualEncoderDeep(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.8):
         super(LSTMDualEncoderDeep, self).__init__()
-        print len(n_vocab)
+        print (n_vocab)
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         #print (n_vocab)
         if pretrained_emb is not None:
