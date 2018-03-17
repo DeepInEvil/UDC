@@ -71,7 +71,7 @@ class UDC:
 
         self.TEXT = data.Field(
             lower=True, fix_length=max_seq_len,
-            pad_token='__pad__', unk_token='__unk__', batch_first=True
+            pad_token='__pad__', unk_token='<UNK>', batch_first=True
         )
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
@@ -136,6 +136,7 @@ class UDC:
 
         self.LABEL.build_vocab(self.train)
         print (vocab.stoi['__pad__'])
+        print (vocab.itos[0])
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
