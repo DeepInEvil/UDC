@@ -169,7 +169,7 @@ class LSTMDualEncoderDeep(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.max_seq_len = max_seq_len
         self.init_params_()
-        self.attn = Attention(h_dim, h_dim)
+        #self.attn = Attention(h_dim, h_dim)
         if gpu:
             self.cuda()
 
@@ -211,7 +211,7 @@ class LSTMDualEncoderDeep(nn.Module):
         #packed_seq_x2 = pack_padded_sequence(x2_emb, lengths=seq_lens, batch_first=True)
 
         # Each is (1 x batch_size x h_dim)
-        _, c = self.rnn(x1_emb)
+        _, (c, _) = self.rnn(x1_emb)
         #wattn, attn_mask = self.attn(c[0][-1], c[1][-1])
         _, (r, _) = self.rnn(x2_emb)
 
