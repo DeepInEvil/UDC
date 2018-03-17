@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from data import position_encoding_init
 
 class CNNDualEncoder(nn.Module):
 
@@ -75,9 +75,9 @@ class LSTMDualEncoder(nn.Module):
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         print (n_vocab)
-        if pretrained_emb is not None:
-            self.word_embed.weight.data.copy_(pretrained_emb)
-
+        # if pretrained_emb is not None:
+        #     self.word_embed.weight.data.copy_(pretrained_emb)
+        self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True

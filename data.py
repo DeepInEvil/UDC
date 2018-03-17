@@ -34,6 +34,18 @@ def custom_tokenizer(text):
     # return twokenize.tokenize(res)
     return res.split()
 
+def position_encoding_init(n_position, d_pos_vec):
+    ''' Init the sinusoid position encoding table '''
+
+    # keep dim 0 for padding token position encoding zero vector
+    position_enc = np.array([
+        [pos / np.power(10000, 2 * (j // 2) / d_pos_vec) for j in range(d_pos_vec)]
+        if pos != 0 else np.zeros(d_pos_vec) for pos in range(n_position)])
+
+    position_enc[1:, 0::2] = np.sin(position_enc[1:, 0::2]) # dim 2i
+    position_enc[1:, 1::2] = np.cos(position_enc[1:, 1::2]) # dim 2i+1
+    return torch.from_numpy(position_enc).type(torch.FloatTensor)
+
 
 class UDC:
     """
@@ -105,9 +117,12 @@ class UDC:
 
             if use_fasttext:
                 print ("building vocabulary")
+                # self.TEXT.build_vocab(
+                #     self.train, max_size=max_vocab_size, min_freq=3,
+                #     vectors="fasttext.en.300d"
+                # )
                 self.TEXT.build_vocab(
-                    self.train, max_size=max_vocab_size, min_freq=min_freq,
-                    vectors="fasttext.en.300d"
+                    self.train, max_size=max_vocab_size, min_freq=3
                 )
             else:
                 self.TEXT.build_vocab(
@@ -141,7 +156,7 @@ class UDC:
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
         #self.vectors = self.load_glove_embeddings(glove_p+'/glove.6B.50d.txt', self.TEXT.vocab.stoi)
-        self.vectors = self.TEXT.vocab.vectors
+        #self.vectors = self.TEXT.vocab.vectors
 
     def load_glove(self, path):
         """
