@@ -187,7 +187,7 @@ class EmbMM(nn.Module):
         o: vector of (batch_size)
         """
         c, r = self.forward_enc(x1, x2)
-        #print r
+
         o = self.forward_fc(c, r)
 
         return o.view(-1)
@@ -202,26 +202,28 @@ class EmbMM(nn.Module):
         x2_emb = self.word_embed(x2)
 
         # Each is (1 x batch_size x h_dim)
-        context_os, context_hs = self.rnn(x1_emb)
-        response_os, response_hs = self.rnn(x2_emb)
-        #print (context_hs[0].size(), response_hs[0].size())
-        return context_hs[0].squeeze(), response_hs[0].squeeze()
+        _, (c, _) = self.rnn(x1_emb)
+        _, (r, _) = self.rnn(x2_emb)
+
+        return c.squeeze(), r.squeeze()
 
     def forward_fc(self, c, r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
         results = []
-        #c = c[0]
-        #r = r[0]
+
         # (batch_size x 1 x h_dim)
         #print ((r))
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
             response_h = r[i].view(self.h_dim, 1)
-            ans = torch.mm(torch.mm(context_h, self.M), response_h)[0][0]
+            w_mm = torch.mm(context_h, self.M)
+            print (w_mm.size())
+            ans = torch.mm(w_mm, response_h)
+            print (ans.size())
             #print (ans)
-            results.append((ans))
+            results.append(ans)
             #response_encodings.append(response_h)
 
         results = torch.stack(results)
