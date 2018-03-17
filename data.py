@@ -142,7 +142,7 @@ class UDC:
                 #     vectors="fasttext.en.300d"
                 # )
                 self.TEXT.build_vocab(
-                    self.train, max_size=max_vocab_size, min_freq=3
+                    self.train, max_size=max_vocab_size, min_freq=5
                 )
             else:
                 self.TEXT.build_vocab(
