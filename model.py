@@ -124,9 +124,9 @@ class LSTMDualEncoder(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
-        x1_emb += self.position_enc
+        x1_emb += self.position_enc(x1)
         x2_emb = self.word_embed(x2)
-        x2_emb += self.position_enc
+        x2_emb += self.position_enc(x2)
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
