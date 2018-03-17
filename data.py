@@ -105,15 +105,16 @@ class UDC:
 
             if use_fasttext:
                 print ("building vocabulary")
-                self.TEXT.build_vocab(
+                vocab = self.TEXT.build_vocab(
                     self.train, max_size=max_vocab_size, min_freq=min_freq,
                     vectors="fasttext.en.300d"
                 )
             else:
-                self.TEXT.build_vocab(
+                vocab = self.TEXT.build_vocab(
                     self.train, max_size=max_vocab_size, min_freq=min_freq,
                     vectors=GloVe('6B', dim=embed_dim)
                 )
+            self.TEXT.vocab = vocab
         else:
             specials = list(OrderedDict.fromkeys(
                 tok for tok in [self.TEXT.unk_token, self.TEXT.pad_token,
