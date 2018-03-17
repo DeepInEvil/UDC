@@ -222,7 +222,7 @@ class EmbMM(nn.Module):
             w_mm = torch.mm(context_h, self.M)
             ans = torch.dot(w_mm, response_h)
             #print (context_h.size(), w_mm.size(), response_h.size())
-            ans = torch.mm(w_mm, response_h)
+            #ans = torch.mm(w_mm, response_h)
             #print (ans.size())
             #print (ans)
             results.append(ans)
