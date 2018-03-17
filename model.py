@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from data import position_encoding_init
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class CNNDualEncoder(nn.Module):
 
@@ -148,15 +149,14 @@ class LSTMDualEncoder(nn.Module):
 
 class LSTMDualEncoderDeep(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160):
         super(LSTMDualEncoderDeep, self).__init__()
 
-        self.position_enc = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
-        self.position_enc.weight.data = position_encoding_init(n_vocab, emb_dim)
-        #print (n_vocab)
-        # if pretrained_emb is not None:
-        #     self.word_embed.weight.data.copy_(pretrained_emb)
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+        #print (n_vocab)
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
         #self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
@@ -165,7 +165,7 @@ class LSTMDualEncoderDeep(nn.Module):
 
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-
+        self.max_seq_len = max_seq_len
         self.init_params_()
 
         if gpu:
@@ -202,13 +202,13 @@ class LSTMDualEncoderDeep(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
-        x1_emb += self.position_enc(x1)
         x2_emb = self.word_embed(x2)
-        x2_emb += self.position_enc(x2)
+
+        packed_seq = pad_packed_sequence(x1_emb, self.max_seq_len, batch_first=True)
 
         # Each is (1 x batch_size x h_dim)
-        _, (c, _) = self.rnn(x1_emb)
-        _, (r, _) = self.rnn(x2_emb)
+        _, (c, _) = self.rnn(packed_seq)
+        _, (r, _) = self.rnn(packed_seq)
 
         return c.squeeze(), r.squeeze()
 

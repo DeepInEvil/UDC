@@ -10,6 +10,18 @@ URL_TOK = '__url__'
 PATH_TOK = '__path__'
 
 
+def position_encoding_init(n_position, d_pos_vec):
+    ''' Init the sinusoid position encoding table '''
+
+    # keep dim 0 for padding token position encoding zero vector
+    position_enc = np.array([
+        [pos / np.power(10000, 2 * (j // 2) / d_pos_vec) for j in range(d_pos_vec)]
+        if pos != 0 else np.zeros(d_pos_vec) for pos in range(n_position)])
+
+    position_enc[1:, 0::2] = np.sin(position_enc[1:, 0::2]) # dim 2i
+    position_enc[1:, 1::2] = np.cos(position_enc[1:, 1::2]) # dim 2i+1
+    return torch.from_numpy(position_enc).type(torch.FloatTensor)
+
 def custom_tokenizer(text):
     """
     Preprocess and tokenize a text:
@@ -34,18 +46,26 @@ def custom_tokenizer(text):
     # return twokenize.tokenize(res)
     return res.split()
 
-def position_encoding_init(n_position, d_pos_vec):
-    ''' Init the sinusoid position encoding table '''
 
-    # keep dim 0 for padding token position encoding zero vector
-    position_enc = np.array([
-        [pos / np.power(10000, 2 * (j // 2) / d_pos_vec) for j in range(d_pos_vec)]
-        if pos != 0 else np.zeros(d_pos_vec) for pos in range(n_position)])
-
-    position_enc[1:, 0::2] = np.sin(position_enc[1:, 0::2]) # dim 2i
-    position_enc[1:, 1::2] = np.cos(position_enc[1:, 1::2]) # dim 2i+1
-    return torch.from_numpy(position_enc).type(torch.FloatTensor)
-
+def clean_str(string):
+    """
+    Tokenization/string cleaning for all datasets except for SST.
+    Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
+    """
+    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+    string = re.sub(r"\'s", " \'s", string)
+    string = re.sub(r"\'ve", " \'ve", string)
+    string = re.sub(r"n\'t", " n\'t", string)
+    string = re.sub(r"\'re", " \'re", string)
+    string = re.sub(r"\'d", " \'d", string)
+    string = re.sub(r"\'ll", " \'ll", string)
+    string = re.sub(r",", " , ", string)
+    string = re.sub(r"!", " ! ", string)
+    string = re.sub(r"\(", " \( ", string)
+    string = re.sub(r"\)", " \) ", string)
+    string = re.sub(r"\?", " \? ", string)
+    string = re.sub(r"\s{2,}", " ", string)
+    return string.strip().lower().split()
 
 class UDC:
     """
@@ -83,7 +103,7 @@ class UDC:
 
         self.TEXT = data.Field(
             lower=True, fix_length=max_seq_len,
-            pad_token='__pad__', unk_token='<UNK>', batch_first=True
+            pad_token='__pad__', unk_token='<UNK>', batch_first=True, sequential=False, tokenize=clean_str()
         )
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
@@ -156,7 +176,7 @@ class UDC:
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
         #self.vectors = self.load_glove_embeddings(glove_p+'/glove.6B.50d.txt', self.TEXT.vocab.stoi)
-        #self.vectors = self.TEXT.vocab.vectors
+        self.vectors = self.TEXT.vocab.vectors
 
     def load_glove(self, path):
         """

@@ -6,7 +6,7 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 
-from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
+from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM, LSTMDualEncoderDeep
 from data import UDC
 from evaluation import recall_at_k, eval_model
 from util import save_model, clip_gradient_threshold
@@ -68,8 +68,8 @@ else:
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = LSTMDualEncoder(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, h_dim=h_dim, gpu= args.gpu)
-#model = EmbMM(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+#model = LSTMDualEncoder(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, h_dim=h_dim, gpu= args.gpu)
+model = LSTMDualEncoderDeep(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
