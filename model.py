@@ -326,7 +326,7 @@ class EmbMM(nn.Module):
             w_mm = torch.mm(context_h, self.M)
             #print (w_mm.size())
             ans = w_mm * response_h
-            #print (ans.size())
+            print (ans.size())
             results.append(self.maxpool(ans))
 
         o = torch.stack(results)
