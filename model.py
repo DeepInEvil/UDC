@@ -314,10 +314,12 @@ class EmbMM(nn.Module):
         # (batch_size x 1 x h_dim)
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
-            response_h = r[i].view(self.h_dim, 1)
+            #response_h = r[i].view(self.h_dim, 1)
+            response_h = r[i].view(1, self.h_dim)
             w_mm = torch.mm(context_h, self.M)
             print (w_mm.size())
-            ans = torch.mm(w_mm, response_h)
+            ans = torch.cat(w_mm, response_h, dim=1)
+            print ans.size()
             results.append(ans)
 
         o = torch.stack(results)
