@@ -324,13 +324,13 @@ class EmbMM(nn.Module):
             #response_h = r[i].view(self.h_dim, 1)
             response_h = r[i]
             w_mm = torch.mm(context_h, self.M).squeeze()
-            print (w_mm.size())
+            #print (w_mm.size())
             ans = w_mm * response_h
-            print (ans.size())
+            #print (ans.size())
             results.append(torch.max(ans))
 
         o = torch.stack(results)
-        print (o.size())
+        #print (o.size())
         return o.squeeze()
 
 
