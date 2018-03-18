@@ -329,7 +329,7 @@ class EmbMM(nn.Module):
 
         o = torch.stack(results)
         #print (o.size())
-        return o.squeze()
+        return o.squeeze()
 
 
 class CrossConvNet(nn.Module):
