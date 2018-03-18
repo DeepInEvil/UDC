@@ -319,7 +319,7 @@ class EmbMM(nn.Module):
             w_mm = torch.mm(context_h, self.M)
             print (w_mm.size())
             ans = torch.cat(w_mm, response_h, dim=1)
-            print ans.size()
+            print (ans.size())
             results.append(ans)
 
         o = torch.stack(results)
