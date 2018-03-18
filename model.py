@@ -255,7 +255,7 @@ class EmbMM(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.dropout = nn.Dropout(self.dropout_p)
         self.max_seq_len = max_seq_len
-        self.out_h = nn.Linear(2*h_dim, 1)
+        #self.out_h = nn.Linear(2*h_dim, 1)
 
         self.init_params_()
 
@@ -287,9 +287,9 @@ class EmbMM(nn.Module):
 
         o = self.forward_fc(c, r)
         #print (o.size())
-        f_o = self.out_h(o)
-        #return o.view(-1)
-        return f_o.squeeze()
+        #f_o = self.out_h(o)
+        return o.view(-1)
+        #return f_o.squeeze()
 
     def forward_enc(self, x1, x2):
         """
@@ -319,17 +319,18 @@ class EmbMM(nn.Module):
         # (batch_size x 1 x h_dim)
         for i in range(len(c)):
             #print (c[i].size())
-            context_h = c[i].view(1, self.h_dim)
+            #context_h = c[i].view(1, self.h_dim)
+            context_h = c[i]
             #response_h = r[i].view(self.h_dim, 1)
-            response_h = r[i].view(1, self.h_dim)
+            response_h = r[i]
             w_mm = torch.mm(context_h, self.M)
             #print (w_mm.size())
-            ans = torch.cat((w_mm, response_h), dim=1)
+            ans = w_mm * response_h
             #print (ans.size())
-            results.append(ans)
+            results.append(torch.nn.MaxPool1d(ans))
 
         o = torch.stack(results)
-        #print (o.size())
+        print (o.size())
         return o.squeeze()
 
 
