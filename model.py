@@ -256,7 +256,7 @@ class EmbMM(nn.Module):
         self.dropout = nn.Dropout(self.dropout_p)
         self.max_seq_len = max_seq_len
         #self.out_h = nn.Linear(2*h_dim, 1)
-
+        self.maxpool = nn.MaxPool1d(128, stride=1)
         self.init_params_()
 
 
@@ -327,7 +327,7 @@ class EmbMM(nn.Module):
             print (w_mm.size())
             ans = w_mm * response_h
             #print (ans.size())
-            results.append(torch.nn.MaxPool1d(ans))
+            results.append(self.maxpool(ans))
 
         o = torch.stack(results)
         print (o.size())
