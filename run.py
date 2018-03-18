@@ -68,7 +68,7 @@ else:
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = LSTMDualEncoderDeep(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
+model = EmbMM(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
 #model = AttnLSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 

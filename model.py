@@ -236,7 +236,7 @@ class LSTMDualEncoderDeep(nn.Module):
 
 class EmbMM(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.6):
         super(EmbMM, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, sparse=False, padding_idx=0)
@@ -249,10 +249,12 @@ class EmbMM(nn.Module):
             num_layers=1, batch_first=True
         )
 
+        self.h_dim = h_dim
+        self.dropout_p = emb_drop
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.out = nn.Parameter(torch.FloatTensor(h_dim, 1))
-        self.h_dim = h_dim
+        self.dropout = nn.Dropout(self.dropout_p)
+        self.max_seq_len = max_seq_len
         self.init_params_()
 
         if gpu:
@@ -291,7 +293,9 @@ class EmbMM(nn.Module):
         # Both are (batch_size, seq_len, emb_dim)
 
         x1_emb = self.word_embed(x1)
+        x1_emb = self.dropout(x1_emb)
         x2_emb = self.word_embed(x2)
+        x2_emb = self.dropout(x2_emb)
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
@@ -306,24 +310,15 @@ class EmbMM(nn.Module):
         results = []
 
         # (batch_size x 1 x h_dim)
-        #print ((r))
         for i in range(len(c)):
             context_h = c[i].view(1, self.h_dim)
-            response_h = r[i].view(1, self.h_dim)
+            response_h = r[i].view(self.h_dim, 1)
             w_mm = torch.mm(context_h, self.M)
-            #print (w_mm.size(), response_h.size())
-            #ans = torch.dot(w_mm, response_h)
-            #print (context_h.size(), w_mm.size(), response_h.size())
             ans = torch.mm(w_mm, response_h)
-            #print (ans.size())
-            #print (ans)
             results.append(ans)
-            #response_encodings.append(response_h)
 
         o = torch.stack(results)
-        #print (results.transpose(0, 1).size())
-        #o = torch.tanh(torch.mm(self.out, results))
-        #print (results)
+
         return o
 
 
