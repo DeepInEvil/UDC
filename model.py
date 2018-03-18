@@ -316,6 +316,7 @@ class EmbMM(nn.Module):
             context_h = c[i].view(1, self.h_dim)
             response_h = r[i].view(self.h_dim, 1)
             w_mm = torch.mm(context_h, self.M)
+            print (w_mm.size())
             ans = torch.mm(w_mm, response_h)
             results.append(ans)
 
