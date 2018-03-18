@@ -319,12 +319,12 @@ class EmbMM(nn.Module):
         # (batch_size x 1 x h_dim)
         for i in range(len(c)):
             #print (c[i].size())
-            #context_h = c[i].view(1, self.h_dim)
-            context_h = c[i]
+            context_h = c[i].view(1, self.h_dim)
+            #context_h = c[i]
             #response_h = r[i].view(self.h_dim, 1)
             response_h = r[i]
             w_mm = torch.mm(context_h, self.M)
-            #print (w_mm.size())
+            print (w_mm.size())
             ans = w_mm * response_h
             #print (ans.size())
             results.append(torch.nn.MaxPool1d(ans))
