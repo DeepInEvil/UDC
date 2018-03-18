@@ -286,7 +286,7 @@ class EmbMM(nn.Module):
         c, r = self.forward_enc(x1, x2)
 
         o = self.forward_fc(c, r)
-        print (o.size())
+        #print (o.size())
         f_o = self.out_h(o)
         #return o.view(-1)
         return f_o.squeeze()
@@ -318,6 +318,7 @@ class EmbMM(nn.Module):
 
         # (batch_size x 1 x h_dim)
         for i in range(len(c)):
+            print (c[i].size())
             context_h = c[i].view(1, self.h_dim)
             #response_h = r[i].view(self.h_dim, 1)
             response_h = r[i].view(1, self.h_dim)
