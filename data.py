@@ -101,11 +101,14 @@ class UDC:
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
 
-        self.TEXT = data.Field(
-            lower=True, fix_length=max_seq_len,
-            pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
-        )
+        # self.TEXT = data.Field(
+        #     lower=True, fix_length=max_seq_len,
+        #     pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
+        # )
 
+        self.TEXT = data.ReversibleField(sequential=True, lower=True, include_lengths=True,
+                                         tokenize=clean_str, batch_first=True
+        )
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
             batch_first=True
