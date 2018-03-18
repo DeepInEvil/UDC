@@ -288,7 +288,8 @@ class EmbMM(nn.Module):
         o = self.forward_fc(c, r)
         print (o.size())
         f_o = self.out_h(o)
-        return o.view(-1)
+        #return o.view(-1)
+        return f_o
 
     def forward_enc(self, x1, x2):
         """
