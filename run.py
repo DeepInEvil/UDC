@@ -88,10 +88,10 @@ def main():
 
         for it, mb in train_iter:
             # Truncate input
-            context = mb.context[:, :args.max_context_len]
-            response = mb.response[:, :args.max_response_len]
-
-            output = model(context, response)
+            #context = mb.context[:, :args.max_context_len]
+            #response = mb.response[:, :args.max_response_len]
+            print (mb.context.size(), mb.response.size())
+            output = model(mb.context, mb.response)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()

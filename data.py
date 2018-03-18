@@ -103,7 +103,7 @@ class UDC:
 
         self.TEXT = data.Field(
             lower=True, fix_length=max_seq_len,
-            pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
+            pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str, sequential=False
         )
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
