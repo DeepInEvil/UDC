@@ -323,7 +323,7 @@ class EmbMM(nn.Module):
             results.append(ans)
 
         o = torch.stack(results)
-
+        print (o.size())
         return o
 
 
