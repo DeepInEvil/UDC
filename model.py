@@ -255,7 +255,10 @@ class EmbMM(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.dropout = nn.Dropout(self.dropout_p)
         self.max_seq_len = max_seq_len
+        self.out_h = nn.Linear(2*h_dim, 1)
+
         self.init_params_()
+
 
         if gpu:
             self.cuda()
@@ -283,7 +286,8 @@ class EmbMM(nn.Module):
         c, r = self.forward_enc(x1, x2)
 
         o = self.forward_fc(c, r)
-
+        print (o.size())
+        f_o = self.out_h(o)
         return o.view(-1)
 
     def forward_enc(self, x1, x2):
@@ -319,12 +323,12 @@ class EmbMM(nn.Module):
             w_mm = torch.mm(context_h, self.M)
             #print (w_mm.size())
             ans = torch.cat((w_mm, response_h), dim=1)
-            print (ans.size())
+            #print (ans.size())
             results.append(ans)
 
         o = torch.stack(results)
-        print (o.size())
-        return o
+        #print (o.size())
+        return o.squeze()
 
 
 class CrossConvNet(nn.Module):
