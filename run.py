@@ -88,7 +88,7 @@ def main():
 
         for it, mb in train_iter:
             # Truncate input
-            print (mb.context.lenghts, mb.context)
+            print (mb.context.lengths, mb.context)
             #context = mb.context[:, :args.max_context_len]
             #response = mb.response[:, :args.max_response_len]
             #print (context)
