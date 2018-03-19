@@ -102,7 +102,7 @@ class UDC:
         self.sort_key = lambda x: len(x.context)
 
         self.TEXT = data.Field(
-            lower=True, fix_length=max_seq_len,
+            lower=True, fix_length=max_seq_len, include_lengths=True, sequential=True,
             pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
         )
 

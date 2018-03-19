@@ -148,6 +148,86 @@ class LSTMDualEncoder(nn.Module):
         return o
 
 
+class LSTMDualEncPack(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
+        super(LSTMDualEncPack, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+        #print (n_vocab)
+        if pretrained_emb is not None:
+             self.word_embed.weight.data.copy_(pretrained_emb)
+
+        #self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
+        self.rnn = nn.LSTM(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True
+        )
+
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+
+        self.init_params_()
+
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x1_l, x2, x2_l):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        c, r = self.forward_enc(x1, x1_l, x2, x2_l)
+        o = self.forward_fc(c, r)
+
+        return o.view(-1)
+
+    def forward_enc(self, x1, x1_l, x2, x2_l):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.word_embed(x1)
+        x2_emb = self.word_embed(x2)
+        x1_pack = pack_padded_sequence(x1_emb, x1_l, batch_first=True)
+        x2_pack = pack_padded_sequence(x2_emb, x2_l, batch_first=True)
+
+        # Each is (1 x batch_size x h_dim)
+        pack_c, (h, _) = self.rnn(x1_emb)
+        pack_r, (h, _) = self.rnn(x2_emb)
+        c, _ = pad_packed_sequence(pack_c, batch_first=True)
+        r, _ = pad_packed_sequence(pack_r, batch_first=True)
+
+        return c.squeeze(), r.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
+
+
 class LSTMDualEncoderDeep(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.6):

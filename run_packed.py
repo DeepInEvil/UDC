@@ -6,11 +6,11 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 
-from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM, LSTMDualEncoderDeep, AttnLSTMDualEncoder
+from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM, LSTMDualEncoderDeep, AttnLSTMDualEncoder, LSTMDualEncPack
 from data import UDC
 from evaluation import recall_at_k, eval_model
 from util import save_model, clip_gradient_threshold
-
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import argparse
 from tqdm import tqdm
 
@@ -68,7 +68,7 @@ else:
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = EmbMM(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
+model = LSTMDualEncPack(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
 #model = AttnLSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
@@ -87,12 +87,16 @@ def main():
         train_iter.set_description_str('Training')
 
         for it, mb in train_iter:
+            context = mb.context[0]
+            response = mb.response[0]
+            cntx_l = mb.context[1]
+            rspns_l = mb.response[1]
             # Truncate input
             #print (mb.context.lengths, mb.context)
-            context = mb.context[:, :args.max_context_len]
-            response = mb.response[:, :args.max_response_len]
+            context = context[:, :args.max_context_len]
+            response = response[:, :args.max_response_len]
             #print (context)
-            output = model(context, response)
+            output = model(mb.context, mb.response)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
