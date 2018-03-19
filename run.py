@@ -96,7 +96,7 @@ def main():
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
-            # clip_gradient_threshold(model, -10, 10)
+            clip_gradient_threshold(model, -10, 10)
             solver.step()
             solver.zero_grad()
 
