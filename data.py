@@ -143,7 +143,7 @@ class UDC:
                 #     vectors="fasttext.en.300d"
                 # )
                 self.TEXT.build_vocab(
-                    self.train, max_size=max_vocab_size, min_freq=6,
+                    self.train, max_size=max_vocab_size, min_freq=1,
                     vectors = "fasttext.en.300d"
                 )
             else:
@@ -208,20 +208,20 @@ class UDC:
     def train_iter(self):
         train_iter = data.BucketIterator(
             self.train, batch_size=self.batch_size, device=self.device,
-            shuffle=True, sort_key=self.sort_key, train=True, repeat=False
+            shuffle=True, sort_key=self.sort_key, train=True, repeat=False, sort_within_batch=False
         )
         return iter(train_iter)
 
     def valid_iter(self):
         valid_iter = data.BucketIterator(
             self.valid, batch_size=self.batch_size, device=self.device,
-            sort_key=self.sort_key, shuffle=False, train=False, repeat=False
+            sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
         )
         return iter(valid_iter)
 
     def test_iter(self):
         test_iter = data.BucketIterator(
             self.test, batch_size=self.batch_size, device=self.device,
-            sort_key=self.sort_key, shuffle=False, train=False, repeat=False
+            sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
         )
         return iter(test_iter)
