@@ -243,7 +243,7 @@ class EmbMM(nn.Module):
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
-        self.word_embed.weight.requires_grad = False
+        self.word_embed = torch.autograd.Variable(self.word_embed)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
