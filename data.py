@@ -100,7 +100,7 @@ class UDC:
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
-        print (self.sort_key)
+        #print (self.sort_key)
 
         self.TEXT = data.Field(
             lower=True, include_lengths=True, sequential=True,
@@ -208,21 +208,42 @@ class UDC:
 
     def train_iter(self):
         train_iter = data.BucketIterator(
-            self.train, batch_size=self.batch_size, device=self.device, sort=False,
-            shuffle=True, sort_key=self.sort_key, train=True, repeat=False, sort_within_batch=False
+            self.train, batch_size=self.batch_size, device=self.device, sort=True,
+            shuffle=True, train=True, repeat=False, sort_within_batch=False
         )
         return iter(train_iter)
 
     def valid_iter(self):
         valid_iter = data.BucketIterator(
-            self.valid, batch_size=self.batch_size, device=self.device,
-            sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
+            self.valid, batch_size=self.batch_size, device=self.device, sort=True,
+            shuffle=False, train=False, repeat=False, sort_within_batch=False
         )
         return iter(valid_iter)
 
     def test_iter(self):
         test_iter = data.BucketIterator(
-            self.test, batch_size=self.batch_size, device=self.device,
-            sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
+            self.test, batch_size=self.batch_size, device=self.device, sort=True,
+            shuffle=False, train=False, repeat=False, sort_within_batch=False
         )
         return iter(test_iter)
+
+    # def train_iter(self):
+    #     train_iter = data.BucketIterator(
+    #         self.train, batch_size=self.batch_size, device=self.device, sort=False,
+    #         shuffle=True, sort_key=self.sort_key, train=True, repeat=False, sort_within_batch=False
+    #     )
+    #     return iter(train_iter)
+    #
+    # def valid_iter(self):
+    #     valid_iter = data.BucketIterator(
+    #         self.valid, batch_size=self.batch_size, device=self.device,
+    #         sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
+    #     )
+    #     return iter(valid_iter)
+    #
+    # def test_iter(self):
+    #     test_iter = data.BucketIterator(
+    #         self.test, batch_size=self.batch_size, device=self.device,
+    #         sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
+    #     )
+    #     return iter(test_iter)
