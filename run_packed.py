@@ -90,13 +90,14 @@ def main():
             context = mb.context[0]
             response = mb.response[0]
             cntx_l = mb.context[1]
+            print (cntx_l)
             rspns_l = mb.response[1]
             # Truncate input
             #print (mb.context.lengths, mb.context)
             context = context[:, :args.max_context_len]
             response = response[:, :args.max_response_len]
             #print (context)
-            output = model(mb.context, mb.response)
+            output = model(context, cntx_l, response, rspns_l)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
