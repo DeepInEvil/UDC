@@ -208,21 +208,21 @@ class UDC:
 
     def train_iter(self):
         train_iter = data.BucketIterator(
-            self.train, batch_size=self.batch_size, device=self.device, sort=True,
+            self.train, batch_size=self.batch_size, device=self.device, sort=False,
             shuffle=True, train=True, sort_key=self.sort_key, repeat=False, sort_within_batch=False
         )
         return iter(train_iter)
 
     def valid_iter(self):
         valid_iter = data.BucketIterator(
-            self.valid, batch_size=self.batch_size, device=self.device, sort=True,
+            self.valid, batch_size=self.batch_size, device=self.device, sort=False,
             shuffle=False, train=False, sort_key=self.sort_key, repeat=False, sort_within_batch=False
         )
         return iter(valid_iter)
 
     def test_iter(self):
         test_iter = data.BucketIterator(
-            self.test, batch_size=self.batch_size, device=self.device, sort=True,
+            self.test, batch_size=self.batch_size, device=self.device, sort=False,
             shuffle=False, train=False, sort_key=self.sort_key, repeat=False, sort_within_batch=False
         )
         return iter(test_iter)
