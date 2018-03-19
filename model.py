@@ -243,7 +243,7 @@ class EmbMM(nn.Module):
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
-
+        self.word_embed.weight.requires_grad = False
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
@@ -257,6 +257,7 @@ class EmbMM(nn.Module):
         self.max_seq_len = max_seq_len
         self.out_h = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.2)
+        self.nl = nn.Tanh()
         #self.maxpool = nn.MaxPool1d(128, stride=1)
         self.init_params_()
 
@@ -326,7 +327,7 @@ class EmbMM(nn.Module):
             response_h = r[i]
             w_mm = torch.mm(context_h, self.M).squeeze()
             #print (w_mm.size())
-            ans = w_mm * response_h
+            ans = self.nl(w_mm * response_h)
             #print (ans.size())
             results.append(self.out_drop(self.out_h(ans)))
 
