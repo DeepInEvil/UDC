@@ -90,7 +90,7 @@ def main():
             context = mb.context[0]
             response = mb.response[0]
             cntx_l = mb.context[1]
-            #print (cntx_l)
+            print (cntx_l)
             rspns_l = mb.response[1]
             # Truncate input
             #print (mb.context.lengths, mb.context)
