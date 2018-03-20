@@ -103,6 +103,7 @@ def train_pad():
             #response = response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
             output = model(context, cntx_l, response, rspns_l)
+            print (output)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
