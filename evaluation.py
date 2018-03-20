@@ -53,6 +53,40 @@ def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
     return recall_at_ks
 
 
+def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=False):
+    model.eval()
+    scores = []
+
+    valid_iter = tqdm(data_iter)
+    valid_iter.set_description_str('Evaluation')
+
+    for mb in valid_iter:
+        context = mb.context[0]
+        pos = mb.positive[0]
+        # print (context)
+        cntx_l = mb.context[1]
+
+        pos_l = mb.response[1]
+        score_pos = F.sigmoid(model(context, cntx_l, pos.unsqueeze(1), pos_l))
+        # Get scores for negative samples
+        score_negs = [
+            F.sigmoid(model(context, cntx_l, getattr(mb, 'negative_{}'.format(i))).unsqueeze(1))
+            for i in range(1, 10)
+        ]
+        # Total scores, positives at position zero
+        scores_mb = torch.cat([score_pos, *score_negs], dim=1)
+
+        scores.append(scores_mb)
+
+    scores = torch.cat(scores, dim=0)
+    recall_at_ks = [
+        r.cpu().data[0] if gpu else r.data[0]
+        for r in recall_at_k(scores)
+    ]
+
+    return recall_at_ks
+
+
 def eval_hybrid_model(model, dataset, gpu=False):
     model.eval()
     scores = []

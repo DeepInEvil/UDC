@@ -192,7 +192,9 @@ class LSTMDualEncPack(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        c, r = self.forward_enc(x1, x1_l, x2, x2_l)
+        x1_l, x1_p_idx = x1_l.sort(0, descending=True)
+        x2_l, x2_p_idx = x2_l.sort(0, descending=True)
+        c, r = self.forward_enc(x1[x1_p_idx], x1_l, x2[x2_p_idx], x2_l)
         o = self.forward_fc(c, r)
 
         return o.view(-1)

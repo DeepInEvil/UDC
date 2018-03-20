@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM, LSTMDualEncoderDeep, AttnLSTMDualEncoder, LSTMDualEncPack
 from data import UDC
-from evaluation import recall_at_k, eval_model
+from evaluation import recall_at_k, eval_model, eval_pack_model
 from util import save_model, clip_gradient_threshold
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import argparse
@@ -90,15 +90,14 @@ def main():
             context = mb.context[0]
             response = mb.response[0]
             #print (context)
-            cntx_l, perm_idx = mb.context[1].sort(0, descending=True)
-
-            rspns_l, perm_idx = mb.response[1].sort(0, descending=True)
+            cntx_l = mb.context[1]
+            rspns_l = mb.response[1]
             # Truncate input
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
             #response = response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
-            output = model(context[perm_idx], cntx_l, response[perm_idx], rspns_l)
+            output = model(context, cntx_l, response, rspns_l)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
@@ -108,7 +107,7 @@ def main():
 
             if it > 0 and it % 1000 == 0:
                 # Validation
-                recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
+                recall_at_ks = eval_pack_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
                 print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
                       .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
@@ -122,7 +121,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
+    recall_at_ks = eval_pack_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
           .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
