@@ -76,6 +76,8 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
             model(context, cntx_l, neg_dat[i], neg_lenghts[i] ).unsqueeze(1)
             for i in range(0, 9)
         ]
+        print (score_pos)
+        print (score_negs)
         # Total scores, positives at position zero
         scores_mb = torch.cat([score_pos, *score_negs], dim=1)
 
