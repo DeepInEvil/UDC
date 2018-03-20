@@ -207,12 +207,15 @@ class LSTMDualEncPack(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
+        x1_emb = self.dropout(x1_emb)
         x2_emb = self.word_embed(x2)
+        x2_emb = self.dropout(x2_emb)
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().numpy(), batch_first=True)
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().numpy(), batch_first=True)
         #print (x1_pack)
         # Each is (1 x batch_size x h_dim)
         pack_c, (h, _) = self.rnn(x1_pack)
+
         pack_r, (h, _) = self.rnn(x2_pack)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
