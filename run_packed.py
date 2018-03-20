@@ -41,6 +41,8 @@ parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
 parser.add_argument('--use_fsttext', type=bool, default=False,
                     help='use fasttext (default: False)')
+parser.add_argument('--use_pad_seq', type=bool, default=False,
+                    help='use padded sequences in RNN (default: False)')
 
 
 args = parser.parse_args()
@@ -59,16 +61,19 @@ h_dim = args.h_dim
 if args.toy_data:
     dataset = UDC(
         train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext, padded=args.use_pad_seq
     )
 else:
     dataset = UDC(
         train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
+        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext, padded=args.use_pad_seq
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = LSTMDualEncPack(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
+if args.use_pad_seq:
+    model = LSTMDualEncPack(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
+else:
+    model = LSTMDualEncoder(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu=args.gpu)
 #model = AttnLSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 

@@ -96,16 +96,22 @@ class UDC:
     ```
     """
 
-    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file=None, batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=None, gpu=False, use_fasttext=False):
+    def __init__(self, path='data', glove_p='glove', train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file=None, batch_size=32, embed_dim=100, max_vocab_size=None, min_freq=1, max_seq_len=None, gpu=False, use_fasttext=False, padded=False):
         self.batch_size = batch_size
         self.device = 0 if gpu else -1
         self.sort_key = lambda x: len(x.context)
         #print (self.sort_key)
 
-        self.TEXT = data.Field(
-            lower=True, include_lengths=True,
-            unk_token='<UNK>', batch_first=True, tokenize=clean_str
-        )
+        if padded:
+            self.TEXT = data.Field(
+                lower=True, pad_token='__pad__',
+                unk_token='<UNK>', batch_first=True, tokenize=clean_str
+            )
+        else:
+            self.TEXT = data.Field(
+                lower=True, include_lengths=True,
+                unk_token='<UNK>', batch_first=True, tokenize=clean_str
+            )
 
         self.LABEL = data.Field(
             sequential=False, tensor_type=torch.FloatTensor, unk_token=None,
