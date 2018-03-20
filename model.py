@@ -191,9 +191,9 @@ class LSTMDualEncPack(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        print (x1_l)
+        #print (x1_l)
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
-        print (x1_l)
+        print (type(x1_p_idx))
         #print (x1_p_idx)
         orig_idx = reversed([i for i in range(128)])
         print (orig_idx)
