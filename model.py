@@ -204,7 +204,7 @@ class LSTMDualEncPack(nn.Module):
         x2 = x2[x2_p_idx]
 
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
-        print (c.size())
+        print (c)
         c = c[orig_idx]
         print (c)
         o = self.forward_fc(c, r[orig_idx])
@@ -238,7 +238,7 @@ class LSTMDualEncPack(nn.Module):
         """
         c, r: tensor of (batch_size, h_dim)
         """
-        print (c)
+        #print (c)
         # (batch_size x 1 x h_dim)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
