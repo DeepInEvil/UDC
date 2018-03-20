@@ -150,7 +150,7 @@ class LSTMDualEncoder(nn.Module):
 
 class LSTMDualEncPack(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_context_len=None, max_resp_len=None):
         super(LSTMDualEncPack, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
@@ -163,7 +163,8 @@ class LSTMDualEncPack(nn.Module):
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
         )
-
+        self.max_context_len = max_context_len
+        self.max_resp_len = max_resp_len
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
 
@@ -194,8 +195,8 @@ class LSTMDualEncPack(nn.Module):
         """
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
-        x1 = x1[x1_p_idx]
-        x2 = x2[x2_p_idx]
+        x1 = x1[x1_p_idx][:, :self.max_context_len]
+        x2 = x2[x2_p_idx][:, :self.max_resp_len]
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
         o = self.forward_fc(c, r)
 
