@@ -104,7 +104,7 @@ class UDC:
 
         if not padded:
             self.TEXT = data.Field(
-                lower=True, pad_token='__pad__',
+                lower=True, pad_token='__pad__', sequential=False,
                 unk_token='<UNK>', batch_first=True, tokenize=clean_str
             )
         else:
