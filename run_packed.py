@@ -102,6 +102,7 @@ def train_pad():
             rspns_l = torch.clamp(mb.response[1], max=args.max_response_len )
             # Truncate input
             print (cntx_l.size())
+            print (mb.label.size())
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
             #response = response[:, :args.max_response_len]
