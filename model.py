@@ -198,7 +198,7 @@ class LSTMDualEncPack(nn.Module):
         x1 = x1[x1_p_idx]
         x2 = x2[x2_p_idx]
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
-        o = self.forward_fc(c, r)
+        o = self.forward_fc(c[x1_p_idx.sort(0)[0]], r[x2_p_idx.sort(0)[0]])
 
         return o.view(-1)
 
