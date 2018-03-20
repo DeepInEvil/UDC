@@ -210,6 +210,7 @@ class LSTMDualEncPack(nn.Module):
         x2_emb = self.word_embed(x2)
         #x2_emb = self.dropout(x2_emb)
         print (x1_emb)
+        print (x1_l.cpu().numpy())
         #print (x1_l)
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().numpy(), batch_first=True)
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().numpy(), batch_first=True)
