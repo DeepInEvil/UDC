@@ -136,8 +136,8 @@ def train():
 
             # Truncate input
             #print (mb.context.lengths, mb.context)
-            context = context[:, :args.max_context_len]
-            response = response[:, :args.max_response_len]
+            context = mb.context[:, :args.max_context_len]
+            response = mb.response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
             output = model(context, response)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
