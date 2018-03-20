@@ -243,6 +243,7 @@ class LSTMDualEncPack(nn.Module):
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.unsqueeze(2))
+        print (o.size())
         o = o + self.b
 
         return o
