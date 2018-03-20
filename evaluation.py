@@ -73,11 +73,11 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         score_pos = F.sigmoid(model(context, cntx_l, pos, pos_l)).unsqueeze(1)
         # Get scores for negative samples
         score_negs = [
-            model(context, cntx_l, neg_dat[i], neg_lenghts[i] ).unsqueeze(1)
+            F.sigmoid(model(context, cntx_l, neg_dat[i], neg_lenghts[i] ).unsqueeze(1))
             for i in range(0, 9)
         ]
         # Total scores, positives at position zero
-        scores_mb = torch.cat([*score_negs, score_pos], dim=1)
+        scores_mb = torch.cat([*score_negs, F.sigmoid], dim=1)
         #print (scores_mb)
         scores.append(scores_mb)
 
