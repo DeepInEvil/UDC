@@ -216,12 +216,13 @@ class LSTMDualEncPack(nn.Module):
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().numpy(), batch_first=True)
         #print (x1_pack)
         # Each is (1 x batch_size x h_dim)
-        pack_c, _ = self.rnn(x1_pack)
+        pack_c, (ht, ct) = self.rnn(x1_pack)
 
-        pack_r, _ = self.rnn(x2_pack)
+        pack_r, (ht, ct)  = self.rnn(x2_pack)
         print (pack_r)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
+        print (c)
         #return c.squeeze(), r.squeeze()
         return c[:, -1], r[:, -1]
 
