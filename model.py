@@ -234,6 +234,7 @@ class LSTMDualEncPack(nn.Module):
         """
         c, r: tensor of (batch_size, h_dim)
         """
+        print (c)
         # (batch_size x 1 x h_dim)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
