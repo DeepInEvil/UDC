@@ -98,7 +98,7 @@ def train_pad():
             #cntx_l = torch.FloatTensor([(args.max_context_len if l > args.max_context_len else l) for l in mb.context[1]]).cuda()
             #rspns_l = torch.FloatTensor([(args.max_response_len if l > args.max_response_len else l) for l in mb.context[1]]).cuda()
             cntx_l = torch.clamp(mb.context[1], max=args.max_context_len)
-            rspns_l = torch.clamp(mb.response[1], max=args.max_response_len)
+            rspns_l = torch.clamp(mb.response[1], max=args.max_response_len )
             # Truncate input
             #print (cntx_l)
             #print (mb.context.lengths, mb.context)
@@ -110,7 +110,7 @@ def train_pad():
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
-            clip_gradient_threshold(model, -10, 10)
+            #clip_gradient_threshold(model, -10, 10)
             solver.step()
             solver.zero_grad()
 
