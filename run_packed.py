@@ -92,7 +92,7 @@ def train_pad():
         train_iter.set_description_str('Training')
 
         for it, mb in train_iter:
-            print (mb.context.size())
+            #print (mb.context.size())
             context = mb.context[0][:, :args.max_context_len]
             response = mb.response[0][:, :args.max_response_len]
             #print (context)
@@ -101,7 +101,7 @@ def train_pad():
             cntx_l = torch.clamp(mb.context[1], max=args.max_context_len)
             rspns_l = torch.clamp(mb.response[1], max=args.max_response_len )
             # Truncate input
-            #print (cntx_l)
+            print (cntx_l.size())
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
             #response = response[:, :args.max_response_len]
