@@ -196,7 +196,7 @@ class LSTMDualEncPack(nn.Module):
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
         print (type(x1_p_idx))
         #print (x1_p_idx)
-        _, orig_idx = torch.LongTensor([i for i in range(128)]).sort(0, descending=True)
+        _, orig_idx = torch.LongTensor([i for i in range(128)]).cuda()s.sort(0, descending=True)
         print (orig_idx)
 
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
