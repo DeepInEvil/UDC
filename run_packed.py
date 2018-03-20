@@ -92,6 +92,7 @@ def train_pad():
         train_iter.set_description_str('Training')
 
         for it, mb in train_iter:
+            print (len(mb))
             context = mb.context[0][:, :args.max_context_len]
             response = mb.response[0][:, :args.max_response_len]
             #print (context)
