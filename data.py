@@ -102,7 +102,7 @@ class UDC:
         self.sort_key = lambda x: len(x.context)
         #print (self.sort_key)
 
-        if padded:
+        if not padded:
             self.TEXT = data.Field(
                 lower=True, pad_token='__pad__',
                 unk_token='<UNK>', batch_first=True, tokenize=clean_str

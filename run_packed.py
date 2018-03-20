@@ -121,6 +121,7 @@ def train_pad():
         save_model(model, 'ccn_lstm')
     #eval_test()
 
+
 def train():
     for epoch in range(args.n_epoch):
         print('\n\n-------------------------------------------')
@@ -136,7 +137,7 @@ def train():
 
             # Truncate input
             #print (mb.context.lengths, mb.context)
-            print (mb.context)
+            #print (mb.context)
             context = mb.context[:, :args.max_context_len]
             response = mb.response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
