@@ -109,7 +109,7 @@ class UDC:
             )
         else:
             self.TEXT = data.Field(
-                lower=True, include_lengths=True, sequential=False,
+                lower=True, include_lengths=True,
                 unk_token='<UNK>', batch_first=True, tokenize=clean_str
             )
 
