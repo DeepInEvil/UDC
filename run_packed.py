@@ -71,7 +71,7 @@ else:
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 if args.use_pad_seq:
-    model = LSTMDualEncPack(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu=args.gpu, max_context_len=args.max_context_len, max_resp_len=args.max_response_len)
+    model = LSTMDualEncPack(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu=args.gpu)
 else:
     model = LSTMDualEncoder(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu=args.gpu)
 #model = AttnLSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
