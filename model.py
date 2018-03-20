@@ -192,7 +192,6 @@ class LSTMDualEncPack(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        print (x2_l)
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
         x1 = x1[x1_p_idx]
@@ -207,7 +206,6 @@ class LSTMDualEncPack(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        print (x2, x2_l)
         x1_emb = self.word_embed(x1)
         x2_emb = self.word_embed(x2)
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().numpy(), batch_first=True)
@@ -218,7 +216,6 @@ class LSTMDualEncPack(nn.Module):
         pack_r, (h, _) = self.rnn(x2_pack)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
-        print (c[:, -1].size(), r.size())
         #return c.squeeze(), r.squeeze()
         return c[:, -1], r[:, -1]
 
