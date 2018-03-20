@@ -95,16 +95,11 @@ def train_pad():
             #print (mb.context.size())
             context = mb.context[0][:, :args.max_context_len]
             response = mb.response[0][:, :args.max_response_len]
-            #print (context)
-            #cntx_l = torch.FloatTensor([(args.max_context_len if l > args.max_context_len else l) for l in mb.context[1]]).cuda()
-            #rspns_l = torch.FloatTensor([(args.max_response_len if l > args.max_response_len else l) for l in mb.context[1]]).cuda()
+
             cntx_l = torch.clamp(mb.context[1], max=args.max_context_len)
-            rspns_l = torch.clamp(mb.response[1], max=args.max_response_len )
+            rspns_l = torch.clamp(mb.response[1], max=args.max_response_len)
             # Truncate input
-            #print (mb.context.lengths, mb.context)
-            #context = context[:, :args.max_context_len]
-            #response = response[:, :args.max_response_len]
-            #print (context[perm_idx], cntx_l)
+
             output = model(context, cntx_l, response, rspns_l)
 
             loss = F.binary_cross_entropy_with_logits(output, mb.label)

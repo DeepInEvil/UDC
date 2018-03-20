@@ -40,7 +40,7 @@ def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
             for i in range(1, 10)
         ]
         # Total scores, positives at position zero
-        scores_mb = torch.cat([*score_negs, score_pos], dim=1)
+        scores_mb = torch.cat([score_pos, *score_negs], dim=1)
         print (scores_mb)
         scores.append(scores_mb)
 
