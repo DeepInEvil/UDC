@@ -219,7 +219,7 @@ class LSTMDualEncPack(nn.Module):
         pack_c, _ = self.rnn(x1_pack)
 
         pack_r, _ = self.rnn(x2_pack)
-        print (pack_r.size())
+        print (pack_r)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
         #return c.squeeze(), r.squeeze()
