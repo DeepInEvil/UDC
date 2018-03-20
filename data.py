@@ -104,7 +104,7 @@ class UDC:
 
         self.TEXT = data.Field(
             lower=True, include_lengths=True,
-            pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
+            unk_token='<UNK>', batch_first=True, tokenize=clean_str
         )
 
         self.LABEL = data.Field(

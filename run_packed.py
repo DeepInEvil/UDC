@@ -89,7 +89,7 @@ def main():
         for it, mb in train_iter:
             context = mb.context[0]
             response = mb.response[0]
-            print (context)
+            #print (context)
             cntx_l, perm_idx = mb.context[1].sort(0, descending=True)
 
             rspns_l, perm_idx = mb.response[1].sort(0, descending=True)
@@ -97,7 +97,7 @@ def main():
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
             #response = response[:, :args.max_response_len]
-            print (context[perm_idx], cntx_l)
+            #print (context[perm_idx], cntx_l)
             output = model(context[perm_idx], cntx_l, response[perm_idx], rspns_l)
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
