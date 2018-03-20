@@ -101,14 +101,12 @@ def train_pad():
             cntx_l = torch.clamp(mb.context[1], max=args.max_context_len)
             rspns_l = torch.clamp(mb.response[1], max=args.max_response_len )
             # Truncate input
-            print (cntx_l.size())
-            print (mb.label.size())
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
             #response = response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
             output = model(context, cntx_l, response, rspns_l)
-            print (output.size())
+
             loss = F.binary_cross_entropy_with_logits(output, mb.label)
 
             loss.backward()
