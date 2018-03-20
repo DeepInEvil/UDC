@@ -202,6 +202,7 @@ class LSTMDualEncPack(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
+        print (x1, x1_l)
         x1_emb = self.word_embed(x1)
         x2_emb = self.word_embed(x2)
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().data.numpy(), batch_first=True)
