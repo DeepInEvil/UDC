@@ -95,8 +95,8 @@ def train_pad():
             context = mb.context[0][:, :args.max_context_len]
             response = mb.response[0][:, :args.max_response_len]
             #print (context)
-            cntx_l = torch.FloatTensor([(args.max_context_len if l > args.max_context_len else l) for l in mb.context[1]])
-            rspns_l = torch.FloatTensor([(args.max_response_len if l > args.max_response_len else l) for l in mb.context[1]])
+            cntx_l = torch.FloatTensor([(args.max_context_len if l > args.max_context_len else l) for l in mb.context[1]]).cuda()
+            rspns_l = torch.FloatTensor([(args.max_response_len if l > args.max_response_len else l) for l in mb.context[1]]).cuda()
             # Truncate input
             #print (cntx_l)
             #print (mb.context.lengths, mb.context)
