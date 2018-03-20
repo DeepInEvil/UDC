@@ -329,6 +329,7 @@ class LSTMDualEncoderDeep(nn.Module):
         # (batch_size x 1 x h_dim)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
+        print (o.size(), r.size())
         o = torch.bmm(o, r.unsqueeze(2))
         o = o + self.b
 
