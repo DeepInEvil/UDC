@@ -70,7 +70,7 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         score_pos = F.sigmoid(model(context, cntx_l, pos, pos_l))
         # Get scores for negative samples
         score_negs = [
-            F.sigmoid(model(context, cntx_l, getattr(mb, 'negative_{}[0]'.format(i),'negative_{}[1]'.format(i) )))
+            F.sigmoid(model(context, cntx_l, mb.negative[0][i], mb.negative[1][i]))
             for i in range(1, 10)
         ]
         # Total scores, positives at position zero
