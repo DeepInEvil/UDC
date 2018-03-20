@@ -96,7 +96,7 @@ def train_pad():
             response = mb.response[0][:, :args.max_response_len]
             #print (context)
             cntx_l = [(args.max_context_len if l > args.max_context_len else l) for l in mb.context[1]]
-            rspns_l = [(args.max_responsne_len if l > args.max_response_len else l) for l in mb.context[1]]
+            rspns_l = [(args.max_response_len if l > args.max_response_len else l) for l in mb.context[1]]
             # Truncate input
             #print (mb.context.lengths, mb.context)
             #context = context[:, :args.max_context_len]
