@@ -208,8 +208,8 @@ class LSTMDualEncPack(nn.Module):
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().data.numpy(), batch_first=True)
 
         # Each is (1 x batch_size x h_dim)
-        pack_c, (h, _) = self.rnn(x1_emb)
-        pack_r, (h, _) = self.rnn(x2_emb)
+        pack_c, (h, _) = self.rnn(x1_pack)
+        pack_r, (h, _) = self.rnn(x2_pack)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
 
