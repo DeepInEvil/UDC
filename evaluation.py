@@ -70,7 +70,7 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         neg_dat = [getattr(mb, 'negative_{}'.format(i))[0] for i in range(1,10) ]
         neg_lenghts = [getattr(mb, 'negative_{}'.format(i))[1] for i in range(1,10) ]
         #print (neg_dat)
-        score_pos = F.sigmoid(model(context, cntx_l, pos, pos_l))
+        score_pos = F.sigmoid(model(context, cntx_l, pos, pos_l)).unsqueeze(1)
         # Get scores for negative samples
         score_negs = [
             model(context, cntx_l, neg_dat[i], neg_lenghts[i] ).unsqueeze(1)
