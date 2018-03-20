@@ -80,7 +80,7 @@ else:
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
 
-def main():
+def train_pad():
     for epoch in range(args.n_epoch):
         print('\n\n-------------------------------------------')
         print('Epoch-{}'.format(epoch))
@@ -121,8 +121,45 @@ def main():
         save_model(model, 'ccn_lstm')
     #eval_test()
 
+def train():
+    for epoch in range(args.n_epoch):
+        print('\n\n-------------------------------------------')
+        print('Epoch-{}'.format(epoch))
+        print('-------------------------------------------')
 
-def eval_test():
+        model.train()
+
+        train_iter = tqdm(enumerate(dataset.train_iter()))
+        train_iter.set_description_str('Training')
+
+        for it, mb in train_iter:
+
+            # Truncate input
+            #print (mb.context.lengths, mb.context)
+            context = context[:, :args.max_context_len]
+            response = response[:, :args.max_response_len]
+            #print (context[perm_idx], cntx_l)
+            output = model(context, response)
+            loss = F.binary_cross_entropy_with_logits(output, mb.label)
+
+            loss.backward()
+            #clip_gradient_threshold(model, -10, 10)
+            solver.step()
+            solver.zero_grad()
+
+            if it > 0 and it % 1000 == 0:
+                # Validation
+                recall_at_ks = eval_pack_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
+
+                print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+
+
+        save_model(model, 'ccn_lstm')
+    #eval_test()
+
+
+def eval_test_packed():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
@@ -132,9 +169,27 @@ def eval_test():
           .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
 
-try:
-    main()
-    eval_test()
-except KeyboardInterrupt:
-    eval_test()
-    exit(0)
+def eval_test():
+    print('\n\nEvaluating on test set...')
+    print('-------------------------------')
+
+    recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
+
+    print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
+          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+
+
+if __name__ == '__main__':
+    try:
+        if args.use_pad_seq:
+            train_pad()
+            eval_test_packed()
+        else:
+            train()
+            eval_test()
+    except KeyboardInterrupt:
+        if args.use_pad_seq:
+            eval_test_packed()
+        else:
+            eval_test()
+
