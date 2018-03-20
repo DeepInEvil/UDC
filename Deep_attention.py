@@ -3,66 +3,53 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 from torch.autograd import Variable
+import math
 
 
 class Attention(nn.Module):
-    """
-    Attention model for Pointer-Net
-    """
-
-    def __init__(self, input_dim,
-                 hidden_dim):
-        """
-        Initiate Attention
-        :param int input_dim: Input's diamention
-        :param int hidden_dim: Number of hidden units in the attention
-        """
-
+    def __init__(self, hidden_size, use_tanh=False, c=10, name='Bahdanau', use_cuda=None):
         super(Attention, self).__init__()
 
-        self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
+        self.use_tanh = use_tanh
+        self.C = c
+        self.name = name
 
-        self.input_linear = nn.Linear(input_dim, hidden_dim)
-        self.context_linear = nn.Conv1d(input_dim, hidden_dim, 1, 1)
-        self.V = nn.Parameter(torch.FloatTensor(hidden_dim), requires_grad=True)
-        self._inf = nn.Parameter(torch.FloatTensor([float('-inf')]), requires_grad=False)
-        self.tanh = nn.Tanh()
-        self.softmax = nn.Softmax()
+        if name == 'Bahdanau':
+            self.W_query = nn.Linear(hidden_size, hidden_size)
+            #self.W_ref = nn.Conv1d(hidden_size, hidden_size, 1, 1)
 
-        # Initialize vector V
-        nn.init.uniform(self.V, -1, 1)
+            V = torch.FloatTensor(hidden_size)
+            if use_cuda:
+                V = V.cuda()
+            self.V = nn.Parameter(V)
+            self.V.data.uniform_(-(1. / math.sqrt(hidden_size)), 1. / math.sqrt(hidden_size))
 
-    def forward(self, input,
-                context,
-                mask):
+    def forward(self, input):
         """
-        Attention - Forward-pass
-        :param Tensor input: Hidden state h
-        :param Tensor context: Attention context
-        :param ByteTensor mask: Selection mask
-        :return: tuple of - (Attentioned hidden state, Alphas)
+        Args:
+            query: [batch_size x hidden_size]
+            ref:   ]batch_size x seq_len x hidden_size]
         """
 
-        # (batch, hidden_dim, seq_len)
-        inp = self.input_linear(input).unsqueeze(2).expand(-1, -1, context.size(1))
+        batch_size = input.size(0)
 
-        # (batch, hidden_dim, seq_len)
-        context = context.permute(0, 2, 1)
-        ctx = self.context_linear(context)
+        if self.name == 'Bahdanau':
+            query = self.W_query(input).unsqueeze(2)  # [batch_size x hidden_size x 1]
+            ref = self.W_ref(ref)  # [batch_size x hidden_size x seq_len]
+            expanded_query = query.repeat(1, 1, seq_len)  # [batch_size x hidden_size x seq_len]
+            V = self.V.unsqueeze(0).unsqueeze(0).repeat(batch_size, 1, 1)  # [batch_size x 1 x hidden_size]
+            logits = torch.bmm(V, F.tanh(expanded_query + ref)).squeeze(1)
 
-        # (batch, 1, hidden_dim)
-        V = self.V.unsqueeze(0).expand(context.size(0), -1).unsqueeze(1)
+        elif self.name == 'Dot':
+            query = query.unsqueeze(2)
+            logits = torch.bmm(ref, query).squeeze(2)  # [batch_size x seq_len x 1]
+            ref = ref.permute(0, 2, 1)
 
-        # (batch, seq_len)
-        att = torch.bmm(V, self.tanh(inp + ctx)).squeeze(1)
-        if len(att[mask]) > 0:
-            att[mask] = self.inf[mask]
-        alpha = self.softmax(att)
+        else:
+            raise NotImplementedError
 
-        hidden_state = torch.bmm(ctx, alpha.unsqueeze(2)).squeeze(2)
-
-        return hidden_state, alpha
-
-    def init_inf(self, mask_size):
-        self.inf = self._inf.unsqueeze(1).expand(*mask_size)
+        if self.use_tanh:
+            logits = self.C * F.tanh(logits)
+        else:
+            logits = logits
+        return ref, logits
