@@ -195,7 +195,7 @@ class LSTMDualEncPack(nn.Module):
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
         print (type(x1_p_idx))
         #print (x1_p_idx)
-        orig_idx = reversed([i for i in range(128)])
+        orig_idx = torch.LongTensor([i for i in range(128)]).cuda()
         print (orig_idx)
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
         x1 = x1[x1_p_idx]
