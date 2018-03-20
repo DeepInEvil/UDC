@@ -193,7 +193,7 @@ class LSTMDualEncPack(nn.Module):
         """
 
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
-        print (x1_p_idx)
+        #print (x1_p_idx)
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
         x1 = x1[x1_p_idx]
         x2 = x2[x2_p_idx]
@@ -215,15 +215,15 @@ class LSTMDualEncPack(nn.Module):
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().numpy(), batch_first=True)
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().numpy(), batch_first=True)
         # Each is (1 x batch_size x h_dim)
-        pack_c, (ht, ct) = self.rnn(x1_pack)
+        pack_c, (c, ct) = self.rnn(x1_pack)
 
-        pack_r, (ht, ct) = self.rnn(x2_pack)
+        pack_r, (r, ct) = self.rnn(x2_pack)
 
-        c, _ = pad_packed_sequence(pack_c, batch_first=True)
-        r, _ = pad_packed_sequence(pack_r, batch_first=True)
+        #c, _ = pad_packed_sequence(pack_c, batch_first=True)
+        #r, _ = pad_packed_sequence(pack_r, batch_first=True)
         #print (r)
         #return c.squeeze(), r.squeeze()
-        return c[:, -1], r[:, -1]
+        return c, r
 
     def forward_fc(self, c, r):
         """
