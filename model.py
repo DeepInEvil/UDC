@@ -163,6 +163,7 @@ class LSTMDualEncPack(nn.Module):
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
         )
+
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
 
