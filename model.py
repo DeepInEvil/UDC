@@ -193,7 +193,8 @@ class LSTMDualEncPack(nn.Module):
         """
 
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
-        #print (x1_p_idx)
+        print (x1_p_idx)
+        print (x1_p_idx.sort(0)[0])
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
         x1 = x1[x1_p_idx]
         x2 = x2[x2_p_idx]
