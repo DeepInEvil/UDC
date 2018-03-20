@@ -89,6 +89,7 @@ def main():
         for it, mb in train_iter:
             context = mb.context[0]
             response = mb.response[0]
+            print (context)
             cntx_l, perm_idx = mb.context[1].sort(0, descending=True)
 
             rspns_l, perm_idx = mb.response[1].sort(0, descending=True)
