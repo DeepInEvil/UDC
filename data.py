@@ -103,7 +103,7 @@ class UDC:
         #print (self.sort_key)
 
         self.TEXT = data.Field(
-            lower=True, include_lengths=True, sequential=True,
+            lower=True, include_lengths=True, sequential=False,
             pad_token='__pad__', unk_token='<UNK>', batch_first=True, tokenize=clean_str
         )
 
