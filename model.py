@@ -222,7 +222,7 @@ class LSTMDualEncPack(nn.Module):
         print (pack_r)
         c, _ = pad_packed_sequence(pack_c, batch_first=True)
         r, _ = pad_packed_sequence(pack_r, batch_first=True)
-        print (c)
+        print (r)
         #return c.squeeze(), r.squeeze()
         return c[:, -1], r[:, -1]
 
