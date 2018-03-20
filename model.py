@@ -228,10 +228,10 @@ class LSTMDualEncPack(nn.Module):
 
         pack_r, (r, ct) = self.rnn(x2_pack)
 
-        #c, _ = pad_packed_sequence(pack_c, batch_first=True)
-        #r, _ = pad_packed_sequence(pack_r, batch_first=True)
+        c, _ = pad_packed_sequence(pack_c, batch_first=True)
+        r, _ = pad_packed_sequence(pack_r, batch_first=True)
         #print (r)
-        return c.squeeze(), r.squeeze()
+        return c[:, -1].squeeze(), r[:, -1].squeeze()
         #return c, r
 
     def forward_fc(self, c, r):
