@@ -204,6 +204,7 @@ class LSTMDualEncPack(nn.Module):
         x2 = x2[x2_p_idx]
 
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
+        print (c.size())
         c = c[orig_idx]
         print (c)
         o = self.forward_fc(c, r[orig_idx])
