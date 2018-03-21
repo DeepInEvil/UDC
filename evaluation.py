@@ -8,7 +8,9 @@ def evaluate_recall(y, k=1):
     num_examples = float(y.size(0))
     _, sorted_idxs = torch.sort(y, dim=1, descending=True)
     num_correct = 0
-    for predictions in sorted_idxs:
+    print (sorted_idxs)
+    for i in range(sorted_idxs.size(0)):
+        predictions = sorted_idxs[i]
         if 0 in predictions[:k]:
             num_correct += 1
     return num_correct/num_examples
