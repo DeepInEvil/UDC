@@ -14,7 +14,7 @@ def evaluate_recall(y, k=1):
     for i in range(sorted_idxs.size(0)):
         predictions = sorted_idxs[i]
         print (predictions)
-        if 0 in predictions[:k].cpu().data.numpy():
+        if 0 in predictions[:k].cpu().data:
             num_correct += 1
     return num_correct/num_examples
 
