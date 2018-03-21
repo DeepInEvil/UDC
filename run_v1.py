@@ -55,7 +55,9 @@ udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size,
 model = EmbMM(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-
+if args.gpu:
+    print ("cuda model")
+    model.cuda()
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
 
