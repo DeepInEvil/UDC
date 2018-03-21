@@ -46,7 +46,7 @@ if args.gpu:
 
 max_seq_len = 160
 
-udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask =True,
+udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
 model = LSTMDualEncoder(
@@ -71,7 +71,7 @@ def main():
             train_iter.set_description_str('Training')
 
         for it, mb in train_iter:
-            context, response, y, c_m, r_m = mb
+            context, response, y = mb
 
             output = model(context, response)
             loss = F.binary_cross_entropy_with_logits(output, y)
