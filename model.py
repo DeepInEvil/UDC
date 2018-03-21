@@ -115,6 +115,7 @@ class LSTMDualEncoder(nn.Module):
         --------
         o: vector of (batch_size)
         """
+        print (x1)
         c, r = self.forward_enc(x1, x2)
         o = self.forward_fc(c, r)
 

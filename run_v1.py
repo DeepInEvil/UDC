@@ -72,7 +72,7 @@ def main():
 
         for it, mb in train_iter:
             context, response, y = mb
-            print (context)
+            #print (context)
             output = model(context, response)
             loss = F.binary_cross_entropy_with_logits(output, y)
 
