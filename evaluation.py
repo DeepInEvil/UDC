@@ -3,6 +3,17 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 
+def evaluate_recall(y, k=1):
+
+    num_examples = float(y.shape(0))
+    _, sorted_idxs = torch.sort(y, dim=1, descending=True)
+    num_correct = 0
+    for predictions in sorted_idxs:
+        if 0 in predictions[:k]:
+            num_correct += 1
+    return num_correct/num_examples
+
+
 def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     """
     Inputs:
@@ -14,6 +25,7 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     --------
     recalls: list of recall@k / hits@k for k = 1...ks
     """
+
     _, sorted_idxs = torch.sort(scores, dim=1, descending=True)
     print (sorted_idxs[0])
     _, ranks = (sorted_idxs == 0).max(1)
@@ -50,7 +62,8 @@ def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
     recall_at_ks = [
         r.cpu().data[0] if gpu else r.data[0]
         for r in recall_at_k(scores)
-    ]
+
+    print (evaluate_recall(scores))
 
     return recall_at_ks
 
