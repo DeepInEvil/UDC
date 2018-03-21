@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 def evaluate_recall(y, k=1):
 
-    num_examples = float(y.shape(0))
+    num_examples = float(y.size(0))
     _, sorted_idxs = torch.sort(y, dim=1, descending=True)
     num_correct = 0
     for predictions in sorted_idxs:
