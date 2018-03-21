@@ -194,7 +194,7 @@ class LSTMDualEncPack(nn.Module):
         """
         #print (x1_l)
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
-        _, orig_idx = torch.LongTensor([i for i in range(x1.size(0))]).cuda().sort(0, descending=True)
+        orig_idx = range(x1.size(0))[::-1]
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
         #shuffling through the batch
         x1 = x1[x1_p_idx]
@@ -212,14 +212,13 @@ class LSTMDualEncPack(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
+
         x1_emb = self.word_embed(x1)
-        #x1_emb = self.dropout(x1_emb)
+        x1_emb = self.dropout(x1_emb)
         x2_emb = self.word_embed(x2)
-        #x2_emb = self.dropout(x2_emb)
-        print (x1_l[0])
-        print (x1_emb[0])
+        x2_emb = self.dropout(x2_emb)
+
         x1_pack = pack_padded_sequence(x1_emb, x1_l.cpu().numpy(), batch_first=True)
-        print (x1_pack[0])
         x2_pack = pack_padded_sequence(x2_emb, x2_l.cpu().numpy(), batch_first=True)
         # Each is (1 x batch_size x h_dim)
         pack_c, (c, ct) = self.rnn(x1_pack)
@@ -229,7 +228,7 @@ class LSTMDualEncPack(nn.Module):
         #c, _ = pad_packed_sequence(pack_c, batch_first=True)
         #r, _ = pad_packed_sequence(pack_r, batch_first=True)
         #print (r)
-        return c.squeeze(), r.squeeze()
+        return c[-1], r[-1]
         #return c, r
 
     def forward_fc(self, c, r):
