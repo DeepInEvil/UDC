@@ -6,11 +6,13 @@ from tqdm import tqdm
 def evaluate_recall(y, k=1):
 
     num_examples = float(y.size(0))
+    print (y[0])
     _, sorted_idxs = torch.sort(y, dim=1, descending=True)
     num_correct = 0
-    print (sorted_idxs)
+    print (sorted_idxs[0])
     for i in range(sorted_idxs.size(0)):
         predictions = sorted_idxs[i]
+        print (predictions)
         if 0 in predictions[:k]:
             num_correct += 1
     return num_correct/num_examples
