@@ -68,7 +68,7 @@ def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
         r.cpu().data[0] if gpu else r.data[0]
         for r in recall_at_k(scores)]
 
-    recalls = (evaluate_recall(scores))
+    recalls = (evaluate_recall(scores, 5))
     print (recalls)
     return recall_at_ks
 
