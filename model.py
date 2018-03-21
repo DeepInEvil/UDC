@@ -337,7 +337,7 @@ class LSTMDualEncoderDeep(nn.Module):
 
 class EmbMM(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.5):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=True, max_seq_len=160, emb_drop=0.5):
         super(EmbMM, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, sparse=False, padding_idx=0)
