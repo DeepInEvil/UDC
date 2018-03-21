@@ -289,13 +289,10 @@ class UDCv1:
                 yield c, r, y
 
     def _load_batch(self, c, r, y, size):
-        # c_arr = np.zeros([size, self.max_seq_len], np.int)
-        # r_arr = np.zeros([size, self.max_seq_len], np.int)
-        # y_arr = np.zeros(size, np.float32)
 
-        c_arr = torch.IntTensor(size, self.max_seq_len).zero_()
-        r_arr = torch.IntTensor(size, self.max_seq_len).zero_()
-        y_arr = torch.FloatTensor(size).zero_()
+        c_arr = np.zeros([size, self.max_seq_len], np.int)
+        r_arr = np.zeros([size, self.max_seq_len], np.int)
+        y_arr = np.zeros(size, np.float32)
 
         c_mask = np.zeros([size, self.max_seq_len], np.float32)
         r_mask = np.zeros([size, self.max_seq_len], np.float32)
@@ -313,9 +310,9 @@ class UDCv1:
             r_mask[j, :len(row_r)] = 1
 
         # Convert to PyTorch tensor
-        c = c_arr
-        r = r_arr
-        y = y_arr
+        c = Variable(torch.from_numpy(c_arr).type(torch.IntTensor))
+        r = Variable(torch.from_numpy(r_arr).type(torch.IntTensor))
+        y = Variable(torch.from_numpy(y_arr).type(torch.IntTensor))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
 
