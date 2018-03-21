@@ -310,8 +310,8 @@ class UDCv1:
             r_mask[j, :len(row_r)] = 1
 
         # Convert to PyTorch tensor
-        c = Variable(torch.from_numpy(c_arr).type(torch.LongTensor))
-        r = Variable(torch.from_numpy(r_arr).type(torch.LongTensor))
+        c = Variable(torch.from_numpy(c_arr))
+        r = Variable(torch.from_numpy(r_arr))
         y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
