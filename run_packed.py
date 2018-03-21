@@ -114,7 +114,7 @@ def train_pad():
                 recall_at_ks = eval_pack_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
                 print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[2]))
 
 
         save_model(model, 'ccn_lstm')
@@ -153,7 +153,7 @@ def train():
                 recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
                 print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+                      .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[2]))
 
 
         save_model(model, 'ccn_lstm')
@@ -167,7 +167,7 @@ def eval_test_packed():
     recall_at_ks = eval_pack_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[2]))
 
 
 def eval_test():
@@ -177,7 +177,7 @@ def eval_test():
     recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
-          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
+          .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[2]))
 
 
 if __name__ == '__main__':

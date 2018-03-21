@@ -64,14 +64,10 @@ def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
         scores.append(scores_mb)
 
     scores = torch.cat(scores, dim=0)
-    print (scores[0])
-    recall_at_ks = [
-        r.cpu().data[0] if gpu else r.data[0]
-        for r in recall_at_k(scores)]
 
-    recalls = [(evaluate_recall(scores, i)) for i in [1, 2, 5]]
-    print (recalls)
-    return recall_at_ks
+    recalls_at_k = [(evaluate_recall(scores, i)) for i in [1, 2, 5]]
+
+    return recalls_at_k
 
 
 def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=False):
@@ -103,13 +99,13 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         scores.append(scores_mb)
 
     scores = torch.cat(scores, dim=0)
-    print (scores[0])
-    recall_at_ks = [
-        r.cpu().data[0] if gpu else r.data[0]
-        for r in recall_at_k(scores)
-    ]
 
-    return recall_at_ks
+    # recall_at_ks = [
+    #     r.cpu().data[0] if gpu else r.data[0]
+    #     for r in recall_at_k(scores)
+    # ]
+    recalls_at_k = [(evaluate_recall(scores, i)) for i in [1, 2, 5]]
+    return recall_at_k
 
 
 def eval_hybrid_model(model, dataset, gpu=False):
