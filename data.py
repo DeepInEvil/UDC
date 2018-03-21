@@ -249,9 +249,10 @@ class UDCv1:
     Everything has been preprocessed and converted to numerical indexes.
     """
 
-    def __init__(self, path, batch_size=256, max_seq_len=160, gpu=True):
+    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True):
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
+        self.use_mask = use_mask
         self.gpu = gpu
 
         with open(f'{path}/dataset.pkl', 'rb') as f:
@@ -280,12 +281,20 @@ class UDCv1:
             r = dataset['r'][i:i+self.batch_size]
             y = dataset['y'][i:i+self.batch_size]
 
-            yield self._load_batch(c, r, y, self.batch_size)
+            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, self.batch_size)
+
+            if self.use_mask:
+                yield c, r, y, c_mask, r_mask
+            else:
+                yield c, r, y
 
     def _load_batch(self, c, r, y, size):
         c_arr = np.zeros([size, self.max_seq_len], np.int)
         r_arr = np.zeros([size, self.max_seq_len], np.int)
         y_arr = np.zeros(size, np.float32)
+
+        c_mask = np.zeros([size, self.max_seq_len], np.float32)
+        r_mask = np.zeros([size, self.max_seq_len], np.float32)
 
         for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
             # Truncate
@@ -296,13 +305,19 @@ class UDCv1:
             r_arr[j, :len(row_r)] = row_r
             y_arr[j] = float(row_y)
 
+            c_mask[j, :len(row_c)] = 1
+            r_mask[j, :len(row_r)] = 1
+
         # Convert to PyTorch tensor
         c = Variable(torch.from_numpy(c_arr))
         r = Variable(torch.from_numpy(r_arr))
         y = Variable(torch.from_numpy(y_arr))
+        c_mask = Variable(torch.from_numpy(c_mask))
+        r_mask = Variable(torch.from_numpy(r_mask))
 
         # Load to GPU
         if self.gpu:
             c, r, y = c.cuda(), r.cuda(), y.cuda()
+            c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
 
-        return c, r, y
+        return c, r, y, c_mask, r_mask
