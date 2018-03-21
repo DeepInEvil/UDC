@@ -202,7 +202,6 @@ class LSTMDualEncPack(nn.Module):
 
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
 
-
         o = self.forward_fc(c[orig_idx], r[orig_idx])
 
         return o.view(-1)
@@ -248,7 +247,7 @@ class LSTMDualEncPack(nn.Module):
 
 class LSTMDualEncoderDeep(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.6):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, max_seq_len=160, emb_drop=0.5):
         super(LSTMDualEncoderDeep, self).__init__()
         print (n_vocab)
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
