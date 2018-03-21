@@ -15,8 +15,9 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     recalls: list of recall@k / hits@k for k = 1...ks
     """
     _, sorted_idxs = torch.sort(scores, dim=1, descending=True)
+    print (sorted_idxs)
     _, ranks = (sorted_idxs == 0).max(1)
-
+    print (ranks)
     recalls = [((ranks + 1) <= k).float().mean() for k in ks]
 
     return recalls
@@ -83,6 +84,7 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         scores.append(scores_mb)
 
     scores = torch.cat(scores, dim=0)
+    print (scores)
     recall_at_ks = [
         r.cpu().data[0] if gpu else r.data[0]
         for r in recall_at_k(scores)
