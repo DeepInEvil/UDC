@@ -153,7 +153,7 @@ class LSTMDualEncPack(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(LSTMDualEncPack, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
         #print (n_vocab)
         if pretrained_emb is not None:
              self.word_embed.weight.data.copy_(pretrained_emb)
