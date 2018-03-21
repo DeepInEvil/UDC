@@ -312,7 +312,7 @@ class UDCv1:
         # Convert to PyTorch tensor
         c = Variable(torch.from_numpy(c_arr).type(torch.IntTensor))
         r = Variable(torch.from_numpy(r_arr).type(torch.IntTensor))
-        y = Variable(torch.from_numpy(y_arr).type(torch.IntTensor))
+        y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
 
