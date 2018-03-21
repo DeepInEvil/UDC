@@ -166,7 +166,7 @@ class LSTMDualEncPack(nn.Module):
 
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-
+        self.dropout = nn.Dropout(0.5)
         self.init_params_()
 
         if gpu:
