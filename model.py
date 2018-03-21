@@ -153,7 +153,7 @@ class LSTMDualEncPack(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):
         super(LSTMDualEncPack, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=1)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         #print (n_vocab)
         if pretrained_emb is not None:
              self.word_embed.weight.data.copy_(pretrained_emb)
@@ -194,20 +194,16 @@ class LSTMDualEncPack(nn.Module):
         """
         #print (x1_l)
         x1_l, x1_p_idx = x1_l.sort(0, descending=True)
-        #print (type(x1_p_idx))
-        #print (x1_p_idx)
         _, orig_idx = torch.LongTensor([i for i in range(x1.size(0))]).cuda().sort(0, descending=True)
-        #print (orig_idx)
-
         x2_l, x2_p_idx = x2_l.sort(0, descending=True)
+        #shuffling through the batch
         x1 = x1[x1_p_idx]
         x2 = x2[x2_p_idx]
 
         c, r = self.forward_enc(x1, x1_l, x2, x2_l)
-        #print (c)
-        c = c[orig_idx]
-        #print (c)
-        o = self.forward_fc(c, r[orig_idx])
+
+
+        o = self.forward_fc(c[orig_idx], r[orig_idx])
 
         return o.view(-1)
 

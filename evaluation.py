@@ -84,13 +84,13 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
         cntx_l = mb.context[1]
 
         pos_l = mb.positive[1]
-        neg_dat = [getattr(mb, 'negative_{}'.format(i))[0] for i in range(1,10) ]
-        neg_lenghts = [getattr(mb, 'negative_{}'.format(i))[1] for i in range(1,10) ]
+        neg_dat = [getattr(mb, 'negative_{}'.format(i))[0] for i in range(1,10)]
+        neg_lenghts = [getattr(mb, 'negative_{}'.format(i))[1] for i in range(1,10)]
         #print (neg_dat)
         score_pos = F.sigmoid(model(context, cntx_l, pos, pos_l)).unsqueeze(1)
         # Get scores for negative samples
         score_negs = [
-            F.sigmoid(model(context, cntx_l, neg_dat[i], neg_lenghts[i] ).unsqueeze(1))
+            F.sigmoid(model(context, cntx_l, neg_dat[i], neg_lenghts[i]).unsqueeze(1))
             for i in range(0, 9)
         ]
         # Total scores, positives at position zero
@@ -105,7 +105,7 @@ def eval_pack_model(model, data_iter, max_context_len, max_response_len, gpu=Fal
     #     for r in recall_at_k(scores)
     # ]
     recalls_at_k = [(evaluate_recall(scores, i)) for i in [1, 2, 5]]
-    return recall_at_k
+    return recalls_at_k
 
 
 def eval_hybrid_model(model, dataset, gpu=False):
