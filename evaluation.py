@@ -6,8 +6,8 @@ from tqdm import tqdm
 def evaluate_recall(y_pred, k=1):
     """
     Get a batch of scores and compute the recalls
-    :param y_pred:
-    :param k:
+    :param y_pred: predicted batch of candidates batch_size x 10
+    :param k: recall test value
     :return:
     """
     num_examples = float(y_pred.size(0))
