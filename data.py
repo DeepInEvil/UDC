@@ -180,7 +180,7 @@ class UDC:
 
         self.LABEL.build_vocab(self.train)
         print (vocab.stoi['__pad__'])
-        print (vocab.itos[0])
+        print (vocab.itos[1])
         self.dataset_size = len(self.train.examples)
         self.vocab_size = len(self.TEXT.vocab.itos)
         self.embed_dim = embed_dim
