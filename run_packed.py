@@ -150,7 +150,7 @@ def train():
 
             if it > 0 and it % 1000 == 0:
                 # Validation
-                recall_at_ks = eval_pack_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
+                recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
 
                 print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
                       .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
