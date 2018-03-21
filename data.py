@@ -1,10 +1,12 @@
 from torchtext import data
 from torchtext.vocab import Vocab, GloVe
 import torch
+from torch.autograd import Variable
 import re
 import twokenize
 from collections import OrderedDict, Counter
 import numpy as np
+import pickle
 
 URL_TOK = '__url__'
 PATH_TOK = '__path__'
@@ -142,6 +144,7 @@ class UDC:
         )
 
         if vocab_file is None:
+<<<<<<< Updated upstream
 
             if use_fasttext:
                 print ("building vocabulary")
@@ -159,6 +162,12 @@ class UDC:
                     vectors=GloVe('6B', dim=embed_dim)
                 )
             vocab = self.TEXT.vocab
+=======
+            self.TEXT.build_vocab(
+                self.train, max_size=max_vocab_size, min_freq=min_freq,
+                vectors=GloVe('840B', dim=embed_dim)
+            )
+>>>>>>> Stashed changes
         else:
             specials = list(OrderedDict.fromkeys(
                 tok for tok in [self.TEXT.unk_token, self.TEXT.pad_token,
@@ -233,23 +242,67 @@ class UDC:
         )
         return iter(test_iter)
 
-    # def train_iter(self):
-    #     train_iter = data.BucketIterator(
-    #         self.train, batch_size=self.batch_size, device=self.device, sort=False,
-    #         shuffle=True, sort_key=self.sort_key, train=True, repeat=False, sort_within_batch=False
-    #     )
-    #     return iter(train_iter)
-    #
-    # def valid_iter(self):
-    #     valid_iter = data.BucketIterator(
-    #         self.valid, batch_size=self.batch_size, device=self.device,
-    #         sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
-    #     )
-    #     return iter(valid_iter)
-    #
-    # def test_iter(self):
-    #     test_iter = data.BucketIterator(
-    #         self.test, batch_size=self.batch_size, device=self.device,
-    #         sort_key=self.sort_key, shuffle=False, train=False, repeat=False, sort_within_batch=False
-    #     )
-    #     return iter(test_iter)
+
+class UDCv1:
+    """
+    Wrapper for UDCv1 taken from: http://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/.
+    Everything has been preprocessed and converted to numerical indexes.
+    """
+
+    def __init__(self, path, batch_size=256, max_seq_len=160, gpu=True):
+        self.batch_size = batch_size
+        self.max_seq_len = max_seq_len
+        self.gpu = gpu
+
+        with open(f'{path}/dataset.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
+
+        with open(f'{path}/W.pkl', 'rb') as f:
+            vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+
+        print('Finished loading dataset!')
+
+        self.vectors = torch.from_numpy(vectors.astype(np.float32))
+        self.vocab_size = self.vectors.size(0)
+        self.emb_dim = self.vectors.size(1)
+
+    def get_iter(self, dataset='train'):
+        if dataset == 'train':
+            dataset = self.train
+        elif dataset == 'valid':
+            dataset = self.valid
+        else:
+            dataset = self.test
+
+        for i in range(0, len(dataset['y']), self.batch_size):
+            c = dataset['c'][i:i+self.batch_size]
+            r = dataset['r'][i:i+self.batch_size]
+            y = dataset['y'][i:i+self.batch_size]
+
+            yield self._load_batch(c, r, y, self.batch_size)
+
+    def _load_batch(self, c, r, y, size):
+        c_arr = np.zeros([size, self.max_seq_len], np.int)
+        r_arr = np.zeros([size, self.max_seq_len], np.int)
+        y_arr = np.zeros(size, np.float32)
+
+        for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
+            # Truncate
+            row_c = row_c[:self.max_seq_len]
+            row_r = row_r[:self.max_seq_len]
+
+            c_arr[j, :len(row_c)] = row_c
+            r_arr[j, :len(row_r)] = row_r
+            y_arr[j] = float(row_y)
+
+        # Convert to PyTorch tensor
+        c = Variable(torch.from_numpy(c_arr))
+        r = Variable(torch.from_numpy(r_arr))
+        y = Variable(torch.from_numpy(y_arr))
+
+        # Load to GPU
+        if self.gpu:
+            c, r, y = c.cuda(), r.cuda(), y.cuda()
+
+        return c, r, y

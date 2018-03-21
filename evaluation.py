@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+import numpy as np
+import scipy.stats as st
 from tqdm import tqdm
 
 
@@ -41,14 +43,22 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     return recalls
 
 
-def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False):
+def recall_at_k_np(scores, ks=[1, 2, 3, 4, 5]):
+    sorted_idxs = np.argsort(-scores, axis=1)
+    ranks = (sorted_idxs == 0).argmax(1)
+    recalls = [np.mean(ranks+1 <= k) for k in ks]
+    return recalls
+
+
+def eval_model(model, data_iter, max_context_len, max_response_len, gpu=False, no_tqdm=False):
     model.eval()
     scores = []
 
-    valid_iter = tqdm(data_iter)
-    valid_iter.set_description_str('Evaluation')
+    if not no_tqdm:
+        data_iter = tqdm(data_iter)
+        data_iter.set_description_str('Evaluation')
 
-    for mb in valid_iter:
+    for mb in data_iter:
         context = mb.context[:, :max_context_len]
 
         # Get score for positive/ground-truth response
@@ -135,5 +145,29 @@ def eval_hybrid_model(model, dataset, gpu=False):
         r.cpu().data[0] if gpu else r.data[0]
         for r in recall_at_k(scores)
     ]
+
+    return recall_at_ks
+
+
+def eval_model_v1(model, data_iter, gpu=False, no_tqdm=False):
+    model.eval()
+    scores = []
+
+    if not no_tqdm:
+        data_iter = tqdm(data_iter)
+        data_iter.set_description_str('Evaluation')
+
+    for mb in data_iter:
+        context, response, y = mb
+
+        # Get scores
+        scores_mb = F.sigmoid(model(context, response))
+        scores_mb = scores_mb.cpu() if gpu else scores_mb
+        scores.append(scores_mb.data.numpy())
+
+    scores = np.concatenate(scores)
+    scores = scores[:-(scores.shape[0] % 10)]
+    scores = scores.reshape(-1, 10)  # 1 in 10
+    recall_at_ks = [r for r in recall_at_k_np(scores)]
 
     return recall_at_ks

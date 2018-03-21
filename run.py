@@ -33,14 +33,16 @@ parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
 parser.add_argument('--max_context_len', type=int, default=160, metavar='',
                     help='max sequence length for context (default: 160)')
-parser.add_argument('--max_response_len', type=int, default=80, metavar='',
-                    help='max sequence length for response (default: 80)')
+parser.add_argument('--max_response_len', type=int, default=160, metavar='',
+                    help='max sequence length for response (default: 160)')
 parser.add_argument('--toy_data', default=False, action='store_true',
                     help='whether to use toy dataset (10k instead of 1m)')
 parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
 parser.add_argument('--use_fsttext', type=bool, default=False,
                     help='use fasttext (default: False)')
+parser.add_argument('--no_tqdm', default=False, action='store_true',
+                    help='disable tqdm progress bar')
 
 
 args = parser.parse_args()
@@ -63,13 +65,13 @@ if args.toy_data:
     )
 else:
     dataset = UDC(
-        train_file='train.csv', valid_file='valid.csv', test_file='test.csv',
+        train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary_lowe.txt',
         embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=args.use_fsttext
     )
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = EmbMM(emb_dim=dataset.embed_dim, n_vocab=dataset.vocab_size, pretrained_emb=dataset.vectors, h_dim=h_dim, gpu= args.gpu)
-#model = AttnLSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+# model = EmbMM(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
@@ -83,8 +85,11 @@ def main():
 
         model.train()
 
-        train_iter = tqdm(enumerate(dataset.train_iter()))
-        train_iter.set_description_str('Training')
+        train_iter = enumerate(dataset.train_iter())
+
+        if not args.no_tqdm:
+            train_iter = tqdm(train_iter)
+            train_iter.set_description_str('Training')
 
         for it, mb in train_iter:
             # Truncate input
@@ -102,11 +107,10 @@ def main():
 
             if it > 0 and it % 1000 == 0:
                 # Validation
-                recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu)
+                recall_at_ks = eval_model(model, dataset.valid_iter(), args.max_context_len, args.max_response_len, args.gpu, args.no_tqdm)
 
                 print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
                       .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
-
 
         save_model(model, 'ccn_lstm')
     #eval_test()
@@ -116,7 +120,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu)
+    recall_at_ks = eval_model(model, dataset.test_iter(), args.max_context_len, args.max_response_len, args.gpu, args.no_tqdm)
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
           .format(recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
