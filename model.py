@@ -73,7 +73,7 @@ class CNNDualEncoder(nn.Module):
 
 class LSTMDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.5):
         super(LSTMDualEncoder, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -89,7 +89,7 @@ class LSTMDualEncoder(nn.Module):
 
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-
+        self.dropout = nn.Dropout(emb_drop)
         self.init_params_()
 
         if gpu:
@@ -127,7 +127,9 @@ class LSTMDualEncoder(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.word_embed(x1)
+        x1_emb = self.dropout(x1_emb)
         x2_emb = self.word_embed(x2)
+        x2_emb = self.dropout(x2_emb)
 
 
         # Each is (1 x batch_size x h_dim)
