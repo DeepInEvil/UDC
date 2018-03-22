@@ -149,13 +149,19 @@ def eval_hybrid_model(model, dataset, gpu=False):
     return recall_at_ks
 
 
-def eval_model_v1(model, data_iter, gpu=False, no_tqdm=False):
+def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     model.eval()
     scores = []
+
+    assert mode in ['valid', 'test']
+
+    data_iter = dataset.get_iter(mode)
 
     if not no_tqdm:
         data_iter = tqdm(data_iter)
         data_iter.set_description_str('Evaluation')
+        n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
+        data_iter.total = n_data // dataset.batch_size
 
     for mb in data_iter:
         context, response, y = mb

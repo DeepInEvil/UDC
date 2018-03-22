@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from data import position_encoding_init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-#from Deep_attention import SelfAttention
 
 
 class CNNDualEncoder(nn.Module):
@@ -79,17 +77,17 @@ class LSTMDualEncoder(nn.Module):
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
-             self.word_embed.weight.data.copy_(pretrained_emb)
+            self.word_embed.weight.data.copy_(pretrained_emb)
 
-        #self.word_embed.weight.data = position_encoding_init(n_vocab, emb_dim)
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
         )
 
+        self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.dropout = nn.Dropout(emb_drop)
+
         self.init_params_()
 
         if gpu:
@@ -115,7 +113,6 @@ class LSTMDualEncoder(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        #print (x1)
         c, r = self.forward_enc(x1, x2)
         o = self.forward_fc(c, r)
 
@@ -126,11 +123,8 @@ class LSTMDualEncoder(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        x1_emb = self.word_embed(x1)
-        x1_emb = self.dropout(x1_emb)
-        x2_emb = self.word_embed(x2)
-        x2_emb = self.dropout(x2_emb)
-
+        x1_emb = self.emb_drop(self.word_embed(x1))
+        x2_emb = self.emb_drop(self.word_embed(x2))
 
         # Each is (1 x batch_size x h_dim)
         _, (c, _) = self.rnn(x1_emb)
