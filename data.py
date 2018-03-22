@@ -249,7 +249,7 @@ class UDCv1:
     Everything has been preprocessed and converted to numerical indexes.
     """
 
-    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True):
+    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
         self.use_mask = use_mask
@@ -259,15 +259,17 @@ class UDCv1:
             dataset = pickle.load(f, encoding='ISO-8859-1')
             self.train, self.valid, self.test = dataset
 
-        # with open(f'{path}/W.pkl', 'rb') as f:
-        #     vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+        if use_fasttext:
+            vectors = np.load(f'{path}/fst_text.npy')
+        else:
+        with open(f'{path}/W.pkl', 'rb') as f:
+            vectors, _ = pickle.load(f, encoding='ISO-8859-1')
 
         print('Finished loading dataset!')
 
         self.n_train = len(self.train['y'])
         self.n_valid = len(self.valid['y'])
         self.n_test = len(self.test['y'])
-        vectors = np.load(f'{path}/fst_text.npy')
         self.vectors = torch.from_numpy(vectors.astype(np.float32))
 
         self.vocab_size = self.vectors.size(0)
