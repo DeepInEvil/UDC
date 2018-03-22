@@ -133,6 +133,11 @@ class LSTMPAttn(nn.Module):
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
+        #self.max_seq_len = max_seq_len
+        self.out_h = nn.Linear(h_dim, 1)
+        self.out_drop = nn.Dropout(0.2)
+        self.nl = nn.Tanh()
+        self.h_dim = h_dim
 
         if gpu:
             self.cuda()
