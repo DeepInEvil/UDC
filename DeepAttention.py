@@ -92,7 +92,6 @@ class LSTMDualAttnEnc(nn.Module):
         print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
 
-
         return weighted_attn.squeeze()
 
     def forward_fc(self, c, r):
