@@ -72,7 +72,7 @@ class LSTMDualAttnEnc(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear((h_dim, h_dim))
+        self.attn = nn.Linear(h_dim, h_dim)
         self.attn_out = nn.Parameter(torch.Tensor(h_dim, 1))
         self.softmax = nn.Softmax()
         self.init_params_()
