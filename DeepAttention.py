@@ -101,7 +101,7 @@ class LSTMDualAttnEnc(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        c_attn = self.forward_attn(sc, c)
+        c_attn = self.forward_attn(sc, r)
         o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
