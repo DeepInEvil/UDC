@@ -55,6 +55,8 @@ model = LSTMDualEncoder(
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
+if args.gpu:
+    model.cuda()
 
 def main():
     for epoch in range(args.n_epoch):
