@@ -139,6 +139,7 @@ def train():
             #print (mb.context.lengths, mb.context)
             #print (mb.context)
             context = mb.context[:, :args.max_context_len]
+
             response = mb.response[:, :args.max_response_len]
             #print (context[perm_idx], cntx_l)
             output = model(context, response)
