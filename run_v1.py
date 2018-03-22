@@ -49,15 +49,10 @@ max_seq_len = 160
 udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
-# model = LSTMDualEncoder(
-#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-# )
-model = EmbMM(
+model = LSTMDualEncoder(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-if args.gpu:
-    print ("cuda model")
-    model.cuda()
+
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
 
@@ -74,6 +69,7 @@ def main():
         if not args.no_tqdm:
             train_iter = tqdm(train_iter)
             train_iter.set_description_str('Training')
+            train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
             context, response, y = mb
@@ -88,7 +84,7 @@ def main():
 
         # Validation
         recall_at_ks = eval_model_v1(
-            model, udc.get_iter('valid'), gpu=args.gpu, no_tqdm=args.no_tqdm
+            model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
@@ -104,7 +100,7 @@ def eval_test():
     print('-------------------------------')
 
     recall_at_ks = eval_model_v1(
-        model, udc.get_iter('test'), gpu=args.gpu, no_tqdm=args.no_tqdm
+        model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'

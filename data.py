@@ -264,6 +264,10 @@ class UDCv1:
 
         print('Finished loading dataset!')
 
+        self.n_train = len(self.train['y'])
+        self.n_valid = len(self.valid['y'])
+        self.n_test = len(self.test['y'])
+
         self.vectors = torch.from_numpy(vectors.astype(np.float32))
         self.vocab_size = self.vectors.size(0)
         self.emb_dim = self.vectors.size(1)
