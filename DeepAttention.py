@@ -24,7 +24,7 @@ class LSTMDualAttnEnc(nn.Module):
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, 160))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(h_dim, h_dim)
         #self.attn_out = nn.Linear(h_dim, 1)
@@ -85,7 +85,7 @@ class LSTMDualAttnEnc(nn.Module):
 
         x = x.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,T
-        attn = attn.view(b_size, -1)
+        attn = attn.view(b_size, max_len, -1)
         print (attn.size(), x.size())
         alpha = F.softmax(attn, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
@@ -126,7 +126,7 @@ class LSTMPAttn(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(h_dim, 160)
+        self.attn = nn.Linear(h_dim, h_dim)
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
