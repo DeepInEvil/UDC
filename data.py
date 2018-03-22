@@ -255,12 +255,12 @@ class UDCv1:
         self.use_mask = use_mask
         self.gpu = gpu
         #
-        # with open(f'{path}/dataset.pkl', 'rb') as f:
-        #     dataset = pickle.load(f, encoding='ISO-8859-1')
-        #     self.train, self.valid, self.test = dataset
+        with open(f'{path}/dataset.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
 
-        with open(f'{path}/W.pkl', 'rb') as f:
-            vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+        # with open(f'{path}/W.pkl', 'rb') as f:
+        #     vectors, _ = pickle.load(f, encoding='ISO-8859-1')
 
         print('Finished loading dataset!')
 
