@@ -49,12 +49,12 @@ max_seq_len = 160
 udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
-# model = LSTMDualEncoder(
-#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-# )
-model = EmbMM(
+model = LSTMDualEncoder(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
+# model = EmbMM(
+#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+# )
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 

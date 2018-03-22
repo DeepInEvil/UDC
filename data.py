@@ -254,10 +254,10 @@ class UDCv1:
         self.max_seq_len = max_seq_len
         self.use_mask = use_mask
         self.gpu = gpu
-
-        with open(f'{path}/dataset.pkl', 'rb') as f:
-            dataset = pickle.load(f, encoding='ISO-8859-1')
-            self.train, self.valid, self.test = dataset
+        #
+        # with open(f'{path}/dataset.pkl', 'rb') as f:
+        #     dataset = pickle.load(f, encoding='ISO-8859-1')
+        #     self.train, self.valid, self.test = dataset
 
         with open(f'{path}/W.pkl', 'rb') as f:
             vectors, _ = pickle.load(f, encoding='ISO-8859-1')
@@ -267,8 +267,9 @@ class UDCv1:
         self.n_train = len(self.train['y'])
         self.n_valid = len(self.valid['y'])
         self.n_test = len(self.test['y'])
-
+        vectors = np.load(f'{path}/fst_text.npy')
         self.vectors = torch.from_numpy(vectors.astype(np.float32))
+
         self.vocab_size = self.vectors.size(0)
         self.emb_dim = self.vectors.size(1)
 
