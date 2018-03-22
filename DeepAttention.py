@@ -129,6 +129,7 @@ class LSTMDualAttnEnc(nn.Module):
         max_len = x1.size(1)
         b_size = x1.size(0)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
+        print (attn.size(), x.size())
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         alpha = F.softmax(attn_energies)  # B,T
