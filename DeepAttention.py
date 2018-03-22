@@ -72,7 +72,7 @@ class LSTMDualAttnEnc(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(torch.FloatTensor(h_dim, h_dim))
+        self.attn = nn.Linear((h_dim, h_dim))
         self.attn_out = nn.Parameter(torch.Tensor(h_dim, 1))
         self.softmax = nn.Softmax()
         self.init_params_()
@@ -89,8 +89,6 @@ class LSTMDualAttnEnc(nn.Module):
 
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
-        self.attn.data.uniform_(-0.1, 0.1)
-        self.attn_out.data.uniform_(-0.1, 0.1)
 
     def forward(self, x1, x2):
         """
