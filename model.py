@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from data import position_encoding_init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
@@ -85,9 +84,9 @@ class LSTMDualEncoder(nn.Module):
             num_layers=1, batch_first=True
         )
 
+        self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.emb_drop = nn.Dropout(emb_drop)
 
         self.init_params_()
 
