@@ -47,7 +47,7 @@ if args.gpu:
 
 max_seq_len = 160
 
-udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size,
+udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
 model = LSTMDualAttnEnc(
@@ -61,6 +61,7 @@ solver = optim.Adam(model.parameters(), lr=args.lr)
 
 if args.gpu:
     model.cuda()
+
 
 def main():
     for epoch in range(args.n_epoch):
@@ -78,13 +79,13 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y = mb
+            context, response, y, cm, rm = mb
 
-            output = model(context, response)
+            output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
 
             loss.backward()
-            clip_gradient_threshold(model, -10, 10)
+            #clip_gradient_threshold(model, -10, 10)
             solver.step()
             solver.zero_grad()
 
@@ -96,9 +97,7 @@ def main():
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
-        save_model(model, 'dualencoder')
-
-    eval_test()
+        save_model(model, 'attnEncoder')
 
 
 def eval_test():

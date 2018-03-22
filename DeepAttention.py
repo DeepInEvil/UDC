@@ -90,7 +90,7 @@ class LSTMDualAttnEnc(nn.Module):
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
 
-    def forward(self, x1, x2):
+    def forward(self, x1, x2, x1mask):
         """
         Inputs:
         -------
@@ -101,7 +101,7 @@ class LSTMDualAttnEnc(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        c_attn = self.forward_attn(sc, r)
+        c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
@@ -120,7 +120,7 @@ class LSTMDualAttnEnc(nn.Module):
 
         return sc, c, r.squeeze()
 
-    def forward_attn(self, x1, x):
+    def forward_attn(self, x1, x, mask):
         """
         attention
         :param x1: batch X seq_len X dim
@@ -135,10 +135,12 @@ class LSTMDualAttnEnc(nn.Module):
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         #print (attn_energies.size())
+        attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         #alpha = alpha.unsqueeze(1)  # B,1,T
         #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
+
 
         return weighted_attn.squeeze()
 
