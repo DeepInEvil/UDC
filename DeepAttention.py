@@ -73,7 +73,7 @@ class LSTMDualAttnEnc(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(h_dim, h_dim)
-        self.attn_out = nn.Parameter(torch.Tensor(h_dim, 1))
+        #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
 
@@ -100,8 +100,8 @@ class LSTMDualAttnEnc(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        c, r = self.forward_enc(x1, x2)
-        c_attn = self.forward_attn(c)
+        sc, c, r = self.forward_enc(x1, x2)
+        c_attn = self.forward_attn(sc, c)
         o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
@@ -115,12 +115,12 @@ class LSTMDualAttnEnc(nn.Module):
         x2_emb = self.emb_drop(self.word_embed(x2))
 
         # Each is (1 x batch_size x h_dim)
-        c, _ = self.rnn(x1_emb)
+        sc, (c, _) = self.rnn(x1_emb)
         _, (r, _) = self.rnn(x2_emb)
 
-        return c, r.squeeze()
+        return sc, c, r.squeeze()
 
-    def forward_attn(self, x1):
+    def forward_attn(self, x1, x):
         """
         attention
         :param x1: batch X seq_len X dim
@@ -130,7 +130,7 @@ class LSTMDualAttnEnc(nn.Module):
         b_size = x1.size(0)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
-        attn_energies = attn.bmm(self.attn_out).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         alpha = F.softmax(attn_energies)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
         weighted_attn = alpha.bmm(x1)
