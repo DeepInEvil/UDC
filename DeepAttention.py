@@ -60,7 +60,7 @@ class LSTMDualAttnEnc(nn.Module):
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
         #o = self.forward_fc(c_attn, r)
-        print (c_attn.size())
+        #print (c_attn.size())
         o = F.tanh(self.out_hidden(c_attn))
         return o.view(-1)
 
