@@ -28,7 +28,7 @@ class LSTMDualAttnEnc(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
-        self.out_hidden = nn.Linear(max_seq_len, 1)
+        self.out_hidden = nn.Linear(h_dim, 1)
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
@@ -96,7 +96,7 @@ class LSTMDualAttnEnc(nn.Module):
         attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
-        print (alpha.size(), x1.size())
+        #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
 
         return weighted_attn.squeeze()
