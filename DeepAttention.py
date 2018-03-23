@@ -64,6 +64,7 @@ class LSTMDualAttnEnc(nn.Module):
         #print (c_attn.size())
 
         o = F.tanh(self.out_hidden(torch.cat((c_attn, r), -1)))
+        o = self.out_drop(o)
         return o.view(-1)
 
     def forward_enc(self, x1, x2):
