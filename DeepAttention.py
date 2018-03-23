@@ -61,11 +61,11 @@ class LSTMDualAttnEnc(nn.Module):
         """
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        #o = self.forward_fc(c_attn, r)
+        o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
 
-        o = F.tanh(self.out_hidden(c_attn))
-        o = self.out_drop(o)
+        #o = F.tanh(self.out_hidden(c_attn))
+        #o = self.out_drop(o)
         return o.view(-1)
 
     def forward_enc(self, x1, x2):
@@ -80,7 +80,7 @@ class LSTMDualAttnEnc(nn.Module):
         sc, (c, _) = self.rnn(x1_emb)
         _, (r, _) = self.rnn(x2_emb)
 
-        return sc, c, r.squeeze()
+        return sc, c.squeeze(), r.squeeze()
 
     def forward_attn(self, x1, x, mask):
         """
