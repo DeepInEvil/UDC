@@ -28,6 +28,7 @@ class LSTMDualAttnEnc(nn.Module):
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
+        self.out_hidden = nn.Linear(max_seq_len, 1)
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
@@ -58,8 +59,8 @@ class LSTMDualAttnEnc(nn.Module):
         """
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        o = self.forward_fc(c_attn, r)
-
+        #o = self.forward_fc(c_attn, r)
+        o = F.tanh(self.out_hidden(c_attn))
         return o.view(-1)
 
     def forward_enc(self, x1, x2):
