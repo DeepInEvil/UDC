@@ -8,9 +8,10 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import math
 
+
 class LSTMDualAttnEnc(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.5, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.3, max_seq_len=160):
         super(LSTMDualAttnEnc, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -20,7 +21,7 @@ class LSTMDualAttnEnc(nn.Module):
 
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True, dropout=0.2
+            num_layers=1, batch_first=True
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
