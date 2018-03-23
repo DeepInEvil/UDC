@@ -20,7 +20,7 @@ class LSTMDualAttnEnc(nn.Module):
 
         self.rnn = nn.LSTM(
             input_size=emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True
+            num_layers=1, batch_first=True, dropout=0.2
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
@@ -31,6 +31,7 @@ class LSTMDualAttnEnc(nn.Module):
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
+        #self.bn = nn.BatchN
 
         if gpu:
             self.cuda()
