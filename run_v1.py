@@ -45,7 +45,7 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 160
+max_seq_len = 200
 
 udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
             max_seq_len=max_seq_len, gpu=args.gpu)
