@@ -50,12 +50,12 @@ max_seq_len = 200
 udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
-# model = LSTMDualAttnEnc(
-#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-# )
-model = LSTMPAttn(
+model = LSTMDualAttnEnc(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
+# model = LSTMPAttn(
+#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+# )
 # model = EmbMM(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
