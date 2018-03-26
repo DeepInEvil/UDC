@@ -321,8 +321,8 @@ class GRUDualAttnEnc(nn.Module):
         x2_emb = self.emb_drop(self.word_embed(x2))
 
         # Each is (1 x batch_size x h_dim)
-        sc, (c, _) = self.rnn(x1_emb)
-        _, (r, _) = self.rnn(x2_emb)
+        sc, c = self.rnn(x1_emb)
+        _, r = self.rnn(x2_emb)
 
         return sc, c.squeeze(), r.squeeze()
 
