@@ -10,7 +10,7 @@ from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1
 from evaluation import eval_model_v1
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc
 
 import argparse
 from tqdm import tqdm
@@ -50,7 +50,7 @@ max_seq_len = 200
 udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
             max_seq_len=max_seq_len, gpu=args.gpu)
 
-model = LSTMDualAttnEnc(
+model = GRUDualAttnEnc(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 # model = LSTMPAttn(
