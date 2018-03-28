@@ -100,8 +100,10 @@ class LSTMDualAttnEnc(nn.Module):
         attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
+        print (alpha[0])
         #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
+
 
         return weighted_attn.squeeze()
 
@@ -304,7 +306,7 @@ class GRUDualAttnEnc(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        c_attn = self.forward_attn(sc, r, x1mask)
+        c_attn = self.forward_attn(sc, c, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
 
@@ -344,11 +346,11 @@ class GRUDualAttnEnc(nn.Module):
         attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
+        print (alpha[0])
         #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
 
         return weighted_attn.squeeze()
-
 
     def forward_fc(self, c, r):
         """
