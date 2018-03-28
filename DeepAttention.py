@@ -296,7 +296,7 @@ class GRUDualAttnEnc(nn.Module):
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
 
-        init.xavier_uniform(self.attn.data)
+        #init.xavier_uniform(self.attn.data)
 
     def forward(self, x1, x2, x1mask):
         """
