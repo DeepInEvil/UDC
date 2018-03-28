@@ -354,7 +354,7 @@ class GRUDualAttnEnc(nn.Module):
         alpha = F.softmax(attn_energies, dim=-1)
         alpha = alpha.unsqueeze(1)  # B,1,T
         print (alpha.size())
-        _sums = alpha.sum(-1).expand_as(attn_energies)
+        _sums = alpha.sum(-1)
         print (_sums.size())
         alpha = alpha.div(_sums)
         print (alpha.size())
