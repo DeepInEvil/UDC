@@ -7,6 +7,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 import math
+import torch.nn.init as init
 
 
 class LSTMDualAttnEnc(nn.Module):
@@ -273,7 +274,7 @@ class GRUDualAttnEnc(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(h_dim, h_dim)
+        self.attn = nn.Parameter(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -294,6 +295,8 @@ class GRUDualAttnEnc(nn.Module):
 
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+        init.xavier_uniform(self.attn.data)
 
     def forward(self, x1, x2, x1mask):
         """
@@ -343,12 +346,14 @@ class GRUDualAttnEnc(nn.Module):
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         #print (attn_energies.size())
-        #attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
+        attn_energies = attn_energies.squeeze(1).masked_fill(mask, -float('inf'))
         print (attn_energies.size(), mask.size())
-        attn_energies = attn_energies.squeeze(1) * mask
-        alpha = F.softmax(attn_energies, dim=-1)  # B,T
+        #attn_energies = attn_energies.squeeze(1) * mask
+        alpha = F.softmax(attn_energies, dim=-1)
         alpha = alpha.unsqueeze(1)  # B,1,T
-        print (alpha[0])
+        _sums = alpha.sum(-1).expand_as(attn_energies)
+        alpha = alpha.div(_sums)
+        #print (alpha[0])
         #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
 

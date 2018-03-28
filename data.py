@@ -320,8 +320,8 @@ class UDCv1:
         c = Variable(torch.from_numpy(c_arr))
         r = Variable(torch.from_numpy(r_arr))
         y = Variable(torch.from_numpy(y_arr))
-        c_mask = Variable(torch.from_numpy(c_mask))
-        r_mask = Variable(torch.from_numpy(r_mask))
+        c_mask = Variable(torch.from_numpy(c_mask).type(torch.ByteTensor))
+        r_mask = Variable(torch.from_numpy(r_mask).type(torch.ByteTensor))
 
         # Load to GPU
         if self.gpu:
