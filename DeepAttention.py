@@ -274,7 +274,7 @@ class GRUDualAttnEnc(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Parameter(h_dim, h_dim)
+        self.attn = nn.Linear(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
