@@ -343,7 +343,9 @@ class GRUDualAttnEnc(nn.Module):
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         #print (attn_energies.size())
-        attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
+        #attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
+        print (attn_energies.size(), mask.size())
+        attn_energies = attn_energies.squeeze(1) * mask
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
         print (alpha[0])
