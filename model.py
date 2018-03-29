@@ -6,10 +6,10 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class CNNDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=300, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=300, pretrained_emb=None, gpu=False, emb_drop=0.3, pad_idx=0):
         super(CNNDualEncoder, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -21,6 +21,7 @@ class CNNDualEncoder(nn.Module):
         self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
+        self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(nn.init.xavier_normal(torch.FloatTensor(self.h_dim, self.h_dim)))
         self.b = nn.Parameter(torch.FloatTensor([0]))
 
@@ -37,8 +38,8 @@ class CNNDualEncoder(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        emb_x1 = self.word_embed(x1)
-        emb_x2 = self.word_embed(x2)
+        emb_x1 = self.emb_drop(self.word_embed(x1))
+        emb_x2 = self.emb_drop(self.word_embed(x2))
 
         c1 = self._forward(emb_x1)
         # (batch_size x h_dim x 1)
@@ -71,7 +72,7 @@ class CNNDualEncoder(nn.Module):
 
 class LSTMDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.5):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.5, pad_idx=0):
         super(LSTMDualEncoder, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -433,7 +434,7 @@ class EmbMM(nn.Module):
 
 class CrossConvNet(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, max_seq_len, pretrained_emb=None, k=1, gpu=False):
+    def __init__(self, emb_dim, n_vocab, max_seq_len, pretrained_emb=None, k=1, gpu=False, emb_drop=0.2, pad_idx=0):
         super(CrossConvNet, self).__init__()
 
         self.n_vocab = n_vocab
@@ -441,11 +442,12 @@ class CrossConvNet(nn.Module):
         self.k = k
         self.max_seq_len = max_seq_len
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
 
+        self.emb_drop = nn.Dropout(emb_drop)
         self.fc1 = nn.Linear(max_seq_len*k, 1)
         self.fc2 = nn.Linear(max_seq_len*k, 1)
 
@@ -463,8 +465,8 @@ class CrossConvNet(nn.Module):
         h: vector of (batch_size)
         """
         # Both are (batch_size, emb_dim, seq_len)
-        x1_emb = self.word_embed(x1).transpose(1, 2)
-        x2_emb = self.word_embed(x2).transpose(1, 2)
+        x1_emb = self.emb_drop(self.word_embed(x1)).transpose(1, 2)
+        x2_emb = self.emb_drop(self.word_embed(x2)).transpose(1, 2)
 
         # Pad into (batch_size, emb_dim, max_seq_len)
         x1_seq_len = x1_emb.size(-1)
@@ -492,11 +494,11 @@ class CrossConvNet(nn.Module):
 
 class CCN_LSTM(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, max_seq_len=160, k=1, pretrained_emb=None, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, max_seq_len=160, k=1, pretrained_emb=None, gpu=False, pad_idx=0, emb_drop=0.2):
         super(CCN_LSTM, self).__init__()
 
-        self.lstm = LSTMDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb, gpu)
-        self.ccn = CrossConvNet(emb_dim, n_vocab, max_seq_len, pretrained_emb, k, gpu)
+        self.lstm = LSTMDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb, pad_idx, gpu, emb_drop)
+        self.ccn = CrossConvNet(emb_dim, n_vocab, max_seq_len, pretrained_emb, k, gpu, pad_idx, emb_drop)
 
         self.fc = nn.Linear(3, 1)
 
@@ -759,3 +761,103 @@ class AttnLstmDeep(nn.Module):
         x = torch.cat([x3, x4, x5], dim=1)
 
         return x
+
+
+class LSTMDualEncoderKB(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.5, pad_idx=0):
+        super(LSTMDualEncoder, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.kb_encoder = nn.GRU(input_size=emb_dim, hidden_size=h_dim)
+        self.kb_combine = nn.Linear(2*h_dim, h_dim)
+
+        self.rnn = nn.LSTM(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True
+        )
+
+        self.emb_drop = nn.Dropout(emb_drop)
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+
+        self.init_params_()
+
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        c, r = self.forward_enc(x1, x2)
+        o = self.forward_fc(c, r)
+
+        return o.view(-1)
+
+    def forward_enc(self, x1, x2, mask1, mask2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.emb_drop(self.word_embed(x1))
+        x2_emb = self.emb_drop(self.word_embed(x2))
+
+        # Each is (1 x batch_size x h_dim)
+        _, (c, _) = self.rnn(x1_emb)
+        _, (r, _) = self.rnn(x2_emb)
+
+        # Take KB term
+        # First, for context
+        x1_descs = None  # lookup
+        c_descs = self.forward_kb_enc(x1_descs)
+
+        # Second, for response
+        x2_descs = None  # lookup
+        r_descs = self.forward_kb_enc(x2_descs)
+
+        # Combine context, response summary with KB vectors
+        c = self.kb_combine(torch.cat([c.squeeze(1), c_descs], 1))
+        r = self.kb_combine(torch.cat([r.squeeze(1), r_descs], 1))
+
+        return c.squeeze(), r.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
+
+    def forward_kb_enc(self, x):
+        """
+        Encode description returned by KB, size: (seq_len, batch_size)
+        """
+        x_emb = self.emb_drop(self.word_embed(x))
+        _, h = self.gru(x_emb)
+        return h
