@@ -435,12 +435,9 @@ class GRUAttenmitIntent(nn.Module):
         o: vector of (batch_size)
         """
         intent = self.getIntent(x1)
-        print (intent)
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        print (type(c_attn))
         c_out = torch.cat([c_attn, intent], dim=-1)
-        print (c_out[0])
         o = self.forward_fc(c_out, r)
         #print (c_attn.size())
 
