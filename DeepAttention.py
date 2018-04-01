@@ -422,7 +422,7 @@ class GRUAttenmitIntent(nn.Module):
                 if ids in self.queries:
                     inte_vec[i] = 1
 
-        return inte_vec
+        return inte_vec.cuda()
 
     def forward(self, x1, x2, x1mask):
         """
