@@ -438,8 +438,8 @@ class GRUAttenmitIntent(nn.Module):
         print (intent)
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        print (c_attn.size())
-        c_out = torch.cat((c_attn, intent), dim=-1)
+        print (type(c_attn))
+        c_out = torch.cat([c_attn, intent], dim=-1)
         o = self.forward_fc(c_out, r)
         #print (c_attn.size())
 
