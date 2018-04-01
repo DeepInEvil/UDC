@@ -416,7 +416,7 @@ class GRUAttenmitIntent(nn.Module):
     def getIntent(self, context):
         inte_vec = torch.zeros(context.size(0))
         for i in range(context.size(0)):
-            last_utr = context[i].split(63346)[-1].cpu().numpy()
+            last_utr = context[i].split(63346)[-1].cpu().data.numpy()
             #print (last_utr, self.queries)
             for ids in last_utr:
                 if ids in self.queries:
