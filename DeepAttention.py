@@ -395,7 +395,7 @@ class GRUAttenmitIntent(nn.Module):
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
-        self.queries = np.load('data/queries.npy')
+        self.queries = torch.from_numpy(np.load('data/queries.npy'))
         #self.bn = nn.BatchN
 
         if gpu:
