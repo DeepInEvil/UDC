@@ -395,7 +395,7 @@ class GRUAttenmitIntent(nn.Module):
         #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
-        self.queries = torch.from_numpy(np.load('data/queries.npy'))
+        self.queries = np.load('data/queries.npy')
         #self.bn = nn.BatchN
 
         if gpu:
@@ -416,8 +416,8 @@ class GRUAttenmitIntent(nn.Module):
     def getIntent(self, context):
         inte_vec = torch.zeros(context.size(0))
         for i in range(context.size(0)):
-            last_utr = context[i].split(63346)[-1]
-            print (last_utr, self.queries)
+            last_utr = context[i].split(63346)[-1].numpy()
+            #print (last_utr, self.queries)
             for ids in last_utr:
                 if ids in self.queries:
                     inte_vec[i] = 1
