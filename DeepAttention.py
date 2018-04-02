@@ -397,7 +397,7 @@ class GRUAttnmitKey(nn.Module):
         self.init_params_()
         #self.bn = nn.BatchN
         self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
-        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict.npy').item()
+        self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
 
         if gpu:
             self.cuda()
