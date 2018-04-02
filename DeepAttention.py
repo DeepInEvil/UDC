@@ -343,13 +343,8 @@ class GRUDualAttnEnc(nn.Module):
 
         x = x.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
-        #print (attn.size(), x.size())
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
-        #print (attn_energies.size())
-        #attn_energies = attn_energies.squeeze(1).masked_fill(mask, -float('inf'))
-        #attn_energies = attn_energies * mask
-        #print (attn_energies.size(), mask.size())
         attn_energies = attn_energies.squeeze(1) * mask  # B, T
         alpha = F.softmax(attn_energies, dim=-1)  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
@@ -396,7 +391,7 @@ class GRUAttnmitKey(nn.Module):
         self.softmax = nn.Softmax()
         self.init_params_()
         #self.bn = nn.BatchN
-        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
+        self.ubuntu_cmd_vec = np.load('udc_out.npy').item()
         self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
 
         if gpu:
@@ -441,6 +436,7 @@ class GRUAttnmitKey(nn.Module):
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
+                #torch_val = torch.zeros(200)
                 if word in self.ubuntu_cmd_vec.keys():
                     key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
         return Variable(key_emb.cuda())
