@@ -372,7 +372,7 @@ class GRUDualAttnEnc(nn.Module):
 
 class GRUAttnmitKey(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.7, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttnmitKey, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -425,9 +425,9 @@ class GRUAttnmitKey(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        key_emb_c = self.forward_key(x1)
-        key_emb_r = self.forward_key(x2)
-        sc = torch.cat([sc, key_emb_c], dim=-1)
+        #key_emb_c = self.forward_key(x1)
+        #key_emb_r = self.forward_key(x2)
+        #sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
@@ -443,7 +443,6 @@ class GRUAttnmitKey(nn.Module):
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
                     key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
-
         return Variable(key_emb.cuda())
 
     def check_key(self, context):
@@ -461,11 +460,13 @@ class GRUAttnmitKey(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
+        key_emb_c = self.forward_key(x1)
+        key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         #print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
