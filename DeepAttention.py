@@ -381,7 +381,7 @@ class GRUAttnmitKey(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=2*emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
         )
 
@@ -447,11 +447,13 @@ class GRUAttnmitKey(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        key_emb = self.forward_key(x1)
+        key_emb_c = self.forward_key(x1)
+        key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        x1_emb = torch.cat([x1_emb, key_emb], dim=-1)
-        print (x1_emb[0])
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        #print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
