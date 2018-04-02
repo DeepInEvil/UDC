@@ -381,14 +381,14 @@ class GRUAttnmitKey(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(h_dim, h_dim)
+        self.attn = nn.Linear(h_dim+200, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -396,7 +396,8 @@ class GRUAttnmitKey(nn.Module):
         self.softmax = nn.Softmax()
         self.init_params_()
         #self.bn = nn.BatchN
-        self.ubuntu_cmds = np.load('ubuntu_data/man_dict_vec.npy').item()
+        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
+        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict.npy').item()
 
         if gpu:
             self.cuda()
@@ -424,6 +425,9 @@ class GRUAttnmitKey(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
+        key_emb_c = self.forward_key(x1)
+        key_emb_r = self.forward_key(x2)
+        sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
@@ -437,8 +441,18 @@ class GRUAttnmitKey(nn.Module):
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
-                if word in self.ubuntu_cmds.keys():
+                if word in self.ubuntu_cmd_vec.keys():
                     key_emb[i][j] = torch.from_numpy(self.ubuntu_cmds[word])
+
+        return Variable(key_emb.cuda())
+
+    def check_key(self, context):
+        key_emb = torch.zeros(context.size(0))
+        for i in range(context.size(0)):
+            utrncs = context[i].cpu().data.numpy()
+            for j, word in enumerate(utrncs):
+                if word in self.ubuntu_cmd_vec.keys():
+                    key_emb[i] = 1
 
         return Variable(key_emb.cuda())
 
@@ -447,13 +461,11 @@ class GRUAttnmitKey(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        key_emb_c = self.forward_key(x1)
-        key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         #print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
