@@ -442,7 +442,7 @@ class GRUAttnmitKey(nn.Module):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
-                    key_emb[i][j] = torch.from_numpy(self.ubuntu_cmds[word])
+                    key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
 
         return Variable(key_emb.cuda())
 
