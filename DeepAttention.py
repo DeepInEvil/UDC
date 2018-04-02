@@ -450,6 +450,7 @@ class GRUAttnmitKey(nn.Module):
         key_emb = self.forward_key(x1)
         x1_emb = self.emb_drop(self.word_embed(x1))
         x1_emb = torch.cat([x1_emb, key_emb], dim=-1)
+        print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
 
         # Each is (1 x batch_size x h_dim)
