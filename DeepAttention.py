@@ -428,7 +428,9 @@ class GRUAttnmitKey(nn.Module):
         key_emb_c = self.forward_key(x1)
         key_emb_r = self.forward_key(x2)
         sc = torch.cat([sc, key_emb_c], dim=-1)
+        print (sc.size())
         c_attn = self.forward_attn(sc, r, x1mask)
+        print (c_attn.size())
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
 
