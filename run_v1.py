@@ -45,9 +45,9 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 200
+max_seq_len = 300
 
-udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask=True,
+udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUAttnmitKey(
