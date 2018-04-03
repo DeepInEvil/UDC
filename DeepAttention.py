@@ -515,7 +515,7 @@ class LSTMKeyAttn(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = LSTMKECell(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=h_dim,
             topic_size=200
         )
 
