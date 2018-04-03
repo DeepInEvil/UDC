@@ -559,6 +559,7 @@ class LSTMKeyAttn(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
+        print (sc.size(), c.size(), r.size())
         #key_emb_c = self.forward_key(x1)
         #key_emb_r = self.forward_key(x2)
         #sc = torch.cat([sc, key_emb_c], dim=-1)
