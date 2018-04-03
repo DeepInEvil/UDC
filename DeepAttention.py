@@ -530,7 +530,7 @@ class LSTMKeyAttn(nn.Module):
         self.softmax = nn.Softmax()
         self.init_params_()
         #self.bn = nn.BatchN
-        self.ubuntu_cmd_vec = np.load('udc_out.npy').item()
+        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
         self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
         self.h_dim = h_dim
         if gpu:
