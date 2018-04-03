@@ -572,13 +572,13 @@ class LSTMKeyAttn(nn.Module):
         return o.view(-1)
 
     def forward_key(self, context):
-        key_emb = torch.zeros(context.size(0), 200)
+        key_emb = torch.zeros(context.size(0), context.size(1), 200)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 #torch_val = torch.zeros(200)
                 if word in self.ubuntu_cmd_vec.keys():
-                    key_emb[i] = torch.from_numpy(self.ubuntu_cmd_vec[word])
+                    key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
         return Variable(key_emb.cuda())
 
     def check_key(self, context):
@@ -612,11 +612,11 @@ class LSTMKeyAttn(nn.Module):
         sc = []
         r = []
         for j in range(x1_emb.size(1)):
-            hxc, cxc = self.rnn(torch.squeeze(x1_emb[:, j: j+1], 1), key_emb_c, (hxc, cxc))
+            hxc, cxc = self.rnn(torch.squeeze(x1_emb[:, j: j+1], 1), torch.squeeze(key_emb_c[:, j: j+1], 1), (hxc, cxc))
             sc.append(hxc)
 
         for j in range(x2_emb.size(1)):
-            hxr, cxr = self.rnn(torch.squeeze(x2_emb[:, j: j+1], 1), key_emb_r, (hxr, cxr))
+            hxr, cxr = self.rnn(torch.squeeze(x2_emb[:, j: j+1], 1), torch.squeeze(key_emb_r[:, j: j+1], 1), (hxr, cxr))
             r.append(hxr)
 
         return torch.stack(sc).transpose(0, 1), sc[-1], r[-1]  # B X T X H, B X H, B X H
