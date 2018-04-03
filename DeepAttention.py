@@ -604,10 +604,10 @@ class LSTMKeyAttn(nn.Module):
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1).transpose(0, 1)
 
         # Each is (1 x batch_size x h_dim)
-        hxc = torch.randn(x1.size(0), self.h_dim).cuda()
-        cxc = torch.randn(x1.size(0), self.h_dim).cuda()
-        hxr = torch.randn(x2.size(0), self.h_dim).cuda()
-        cxr = torch.randn(x2.size(0), self.h_dim).cuda()
+        hxc = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
+        cxc = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
+        hxr = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
+        cxr = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
         sc = []
         #c = []
         r = []
