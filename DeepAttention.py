@@ -609,7 +609,6 @@ class LSTMKeyAttn(nn.Module):
         hxr = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
         cxr = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
         sc = []
-        #c = []
         r = []
         for j in range(x1_emb.size(1)):
             hxc, cxc = self.rnn(torch.squeeze(x1_emb[:, j: j+1], 1), key_emb_c, (hxc, cxc))
@@ -619,7 +618,7 @@ class LSTMKeyAttn(nn.Module):
             hxr, cxr = self.rnn(torch.squeeze(x2_emb[:, j: j+1], 1), key_emb_r, (hxr, cxr))
             r.append(hxr)
 
-        return torch.squeeze(sc), sc[-1], r[-1]
+        return torch.stack(sc), sc[-1], r[-1]
 
     def forward_attn(self, x1, x, mask):
         """
