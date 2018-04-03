@@ -559,7 +559,7 @@ class LSTMKeyAttn(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        print (sc.size(), c.size(), r.size())
+        #print (sc.size(), c.size(), r.size())
         #key_emb_c = self.forward_key(x1)
         #key_emb_r = self.forward_key(x2)
         #sc = torch.cat([sc, key_emb_c], dim=-1)
@@ -619,7 +619,7 @@ class LSTMKeyAttn(nn.Module):
             hxr, cxr = self.rnn(torch.squeeze(x2_emb[:, j: j+1], 1), key_emb_r, (hxr, cxr))
             r.append(hxr)
 
-        return torch.stack(sc), sc[-1], r[-1]
+        return torch.stack(sc).transpose(0, 1), sc[-1], r[-1]
 
     def forward_attn(self, x1, x, mask):
         """
