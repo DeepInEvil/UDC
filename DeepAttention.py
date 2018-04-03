@@ -604,19 +604,19 @@ class LSTMKeyAttn(nn.Module):
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1).transpose(0, 1)
 
         # Each is (1 x batch_size x h_dim)
-        hxc = torch.randn(x1.size(0), self.h_dim)
-        cxc = torch.randn(x1.size(0), self.h_dim)
-        hxr = torch.randn(x2.size(0), self.h_dim)
-        cxr = torch.randn(x2.size(0), self.h_dim)
+        hxc = torch.randn(x1.size(0), self.h_dim).cuda()
+        cxc = torch.randn(x1.size(0), self.h_dim).cuda()
+        hxr = torch.randn(x2.size(0), self.h_dim).cuda()
+        cxr = torch.randn(x2.size(0), self.h_dim).cuda()
         sc = []
         #c = []
         r = []
         for j in range(x1_emb.size(1)):
-            hxc, cxc = self.rnn(x1_emb[:, j: j+1, :], key_emb_c, (hxc, cxc))
+            hxc, cxc = self.rnn(torch.squeeze(x1_emb[:, j: j+1], 1), key_emb_c, (hxc, cxc))
             sc.append(hxc)
 
         for j in range(x2_emb.size(1)):
-            hxr, cxr = self.rnn(x2_emb[:, j: j+1, :], key_emb_r, (hxr, cxr))
+            hxr, cxr = self.rnn(torch.squeeze(x2_emb[:, j: j+1], 1), key_emb_r, (hxr, cxr))
             r.append(hxr)
 
         return torch.squeeze(sc), sc[-1], r[-1]
