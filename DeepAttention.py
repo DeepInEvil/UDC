@@ -386,14 +386,12 @@ class GRUAttnmitKey(nn.Module):
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.attn = nn.Linear(2*h_dim + 200, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
-        #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
-        #self.bn = nn.BatchN
         self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
         self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
 
@@ -423,6 +421,9 @@ class GRUAttnmitKey(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
+        key_emb_c = self.forward_key(x1)
+        key_emb_r = self.forward_key(x2)
+        sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
@@ -456,13 +457,11 @@ class GRUAttnmitKey(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        key_emb_c = self.forward_key(x1)
-        key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
-        #print (x1_emb[0])
+        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        #sprint (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
