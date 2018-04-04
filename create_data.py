@@ -65,7 +65,7 @@ if __name__ == '__main__':
     train['y'], train['c'], train['r'] = get_values('./ubuntu_data/train.txt')
     test['y'], test['c'], test['r'] = get_values('./ubuntu_data/test.txt')
     valid['y'], valid['c'], valid['r'] = get_values('./ubuntu_data/valid.txt')
-    print train['c'][0]
+    print (train['c'][0])
     dataset = train, valid, test, w2id
 
     pickle.dump((dataset, open('dataset_1M_string.pkl', 'wb')))
