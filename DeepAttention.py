@@ -384,7 +384,7 @@ class GRUAttnmitKey(nn.Module):
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 200, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim + 200, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
@@ -425,7 +425,7 @@ class GRUAttnmitKey(nn.Module):
         key_emb_r = self.forward_key(x2)
         sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
-        print (c_attn.size())
+        #print (c_attn.size())
         o = self.forward_fc(c_attn, r)
         #
 
