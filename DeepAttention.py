@@ -421,9 +421,6 @@ class GRUAttnmitKey(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        #key_emb_c = self.forward_key(x1)
-        #key_emb_r = self.forward_key(x2)
-        #sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
@@ -468,6 +465,7 @@ class GRUAttnmitKey(nn.Module):
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
+        print (sc.size(), c.size(), r.size())
 
         return sc, c.squeeze(), r.squeeze()
 
