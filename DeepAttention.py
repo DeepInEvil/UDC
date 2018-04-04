@@ -379,7 +379,7 @@ class GRUAttnmitKey(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
