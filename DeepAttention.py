@@ -465,7 +465,8 @@ class GRUAttnmitKey(nn.Module):
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
-        print (sc.size(), c.size(), r.size())
+        c = torch.cat([c[0], c[1]], dim=-1)
+        r = torch.cat([r[0], r[1]], dim=-1)
 
         return sc, c.squeeze(), r.squeeze()
 
