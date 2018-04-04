@@ -53,13 +53,13 @@ k = 1
 with open('data/hred/Vocab.pkl', 'rb') as f:
     stoi, itos = pickle.load(f)
 
-with open('data/hred/Training.dialogues.pkl', 'rb') as f:
-    train_data = pickle.load(f)
+with open('data/hred/train.pkl', 'rb') as f:
+    train_data = pickle.load(f)  # (max_turns, max_seq_len, data_size)
 
-with open('data/hred/Validation.dialogues.pkl', 'rb') as f:
+with open('data/hred/valid.pkl', 'rb') as f:
     valid_data = pickle.load(f)
 
-with open('data/hred/Test.dialogues.pkl', 'rb') as f:
+with open('data/hred/test.pkl', 'rb') as f:
     test_data = pickle.load(f)
 
 model = HRED(
@@ -68,24 +68,6 @@ model = HRED(
 )
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
-
-
-def chunk_dialogue(dialogue):
-    turns = []
-    curr_turn = []
-
-    for i, w in enumerate(dialogue):
-        curr_turn.append(w)
-
-        if w == 1 or i == len(dialogue)-1:
-            if w != 1:  # In the case when last word in dialogue is not <eot>
-                curr_turn.append(1)
-            curr_turn = Variable(torch.LongTensor(curr_turn))
-            curr_turn = curr_turn.cuda() if args.gpu else curr_turn
-            turns.append(curr_turn)
-            curr_turn = []
-
-    return turns
 
 
 def main():
@@ -98,23 +80,21 @@ def main():
 
         total_loss = 0
 
-        for i in tqdm(range(len(train_data))):
-            # List of LongTensor of len: n_turn. Each entry has len: turn_len
-            inputs = chunk_dialogue(train_data[i])
+        for i in tqdm(range(0, len(train_data), step=args.mb_size)):
+            inputs = [:, :, i:i+args.mb_size]
+            inputs = Variable(torch.LongTensor(inputs))
+            inputs = inputs.cuda() if args.gpu else inputs
+
             loss = model(inputs)
-            total_loss += loss
+
+            loss.backward()
+            clip_gradient_threshold(model, -10, 10)
+            solver.step()
+            solver.zero_grad()
 
             # If current iteration is multiple of batchsize or it's the last one
-            if (i > 0 and i % args.mb_size == 0) or i == len(train_data)-1:
-                total_loss = total_loss / args.mb_size
-                total_loss.backward()
-                clip_gradient_threshold(model, -10, 10)
-                solver.step()
-                solver.zero_grad()
-
-                print('Loss: {:.3f}'.format(total_loss.data[0]))
-
-                total_loss = 0
+            if i % 1000:
+                print('Loss: {:.3f}'.format(loss.data[0]))
 
 #         # Validation
 #         recall_at_ks = eval_model_v1(

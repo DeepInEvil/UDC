@@ -26,6 +26,8 @@ parser.add_argument('--h_dim', type=int, default=100, metavar='',
                     help='hidden dimension (default: 100)')
 parser.add_argument('--lr', type=float, default=1e-3, metavar='',
                     help='learning rate (default: 1e-3)')
+parser.add_argument('--emb_drop', type=float, default=0.3, metavar='',
+                    help='embedding dropout (default: 0.3)')
 parser.add_argument('--mb_size', type=int, default=128, metavar='',
                     help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
@@ -56,9 +58,11 @@ model = LSTMKeyAttn(
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
-# model = EmbMM(
-#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+# model = CCN_LSTM(
+#     udc.emb_dim, udc.vocab_size, args.h_dim, max_seq_len, k,
+#     udc.vectors, args.gpu, args.emb_drop
 # )
+model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
@@ -86,6 +90,7 @@ def main():
 
             output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
+            # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
             #clip_gradient_threshold(model, -10, 10)
