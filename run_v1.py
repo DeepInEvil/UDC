@@ -52,7 +52,7 @@ max_seq_len = 320
 udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = LSTMKeyAttn(
+model = GRUAttnmitKey(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 # model = LSTMPAttn(
@@ -93,7 +93,7 @@ def main():
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
-            clip_gradient_threshold(model, -10, 10)
+            #clip_gradient_threshold(model, -10, 10)
             solver.step()
             solver.zero_grad()
 
@@ -105,7 +105,8 @@ def main():
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
-
+        if epoch > 2:
+            eval_test()
         save_model(model, 'attnEncoder')
 
 
@@ -123,7 +124,7 @@ def eval_test():
 
 try:
     main()
-    eval_test()
+    #eval_test()
 except KeyboardInterrupt:
     eval_test()
     exit(0)
