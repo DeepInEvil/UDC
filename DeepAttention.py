@@ -260,7 +260,7 @@ class LSTMPAttn(nn.Module):
 
 class GRUDualAttnEnc(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.7, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUDualAttnEnc, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -270,13 +270,13 @@ class GRUDualAttnEnc(nn.Module):
 
         self.rnn = nn.GRU(
             input_size=emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True
+            num_layers=1, batch_first=True, bidirectional=True
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(h_dim, h_dim)
+        self.attn = nn.Linear(2*h_dim, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -330,6 +330,8 @@ class GRUDualAttnEnc(nn.Module):
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
+        c = torch.cat([c[0], c[1]], dim=-1)
+        r = torch.cat([r[0], r[1]], dim=-1)
 
         return sc, c.squeeze(), r.squeeze()
 
