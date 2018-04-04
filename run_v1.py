@@ -10,7 +10,7 @@ from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1
 from evaluation import eval_model_v1
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn
 
 import argparse
 from tqdm import tqdm
@@ -48,13 +48,15 @@ if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
 max_seq_len = 160
-k = 1
 
-udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
-            max_seq_len=max_seq_len, gpu=args.gpu)
+udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+            max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-# model = LSTMDualEncoder(
-#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop
+model = LSTMKeyAttn(
+    udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+)
+# model = LSTMPAttn(
+#     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
 # model = CCN_LSTM(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, max_seq_len, k,
@@ -103,6 +105,9 @@ def main():
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
+        if args.n_epoch > 10:
+            eval_test()
+
         save_model(model, 'attnEncoder')
 
 
@@ -120,7 +125,7 @@ def eval_test():
 
 try:
     main()
-    eval_test()
+    #eval_test()
 except KeyboardInterrupt:
     eval_test()
     exit(0)
