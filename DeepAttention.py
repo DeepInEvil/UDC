@@ -378,7 +378,7 @@ class GRUAttnmitKey(nn.Module):
 
         self.rnn = nn.GRU(
             input_size=2*emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True
+            num_layers=1, batch_first=True, bidirectional=True
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
