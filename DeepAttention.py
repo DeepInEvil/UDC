@@ -379,7 +379,7 @@ class GRUAttnmitKey(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=emb_dim + 50, hidden_size=h_dim,
+            input_size=2*emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True, dropout=0.2
         )
 
@@ -387,7 +387,6 @@ class GRUAttnmitKey(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
-        self.key_w = nn.Parameter(torch.FloatTensor(300, 50))
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -458,20 +457,20 @@ class GRUAttnmitKey(nn.Module):
         key_emb_c = self.forward_key(x1)
         key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        key_w_c = torch.matmul(key_emb_c, self.key_w)
+        #key_w_c = torch.matmul(key_emb_c, self.key_w)
         #x1_emb = torch.add(x1_emb, key_emb_c)
-        x1_emb = torch.cat([x1_emb, key_w_c], dim=-1)
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         #sprint (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        key_w_r = torch.matmul(key_emb_r, self.key_w)
-        x1_emb = torch.cat([x1_emb, key_w_r], dim=-1)
+        #key_w_r = torch.matmul(key_emb_r, self.key_w)
+        x1_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
         #x2_emb = torch.add(x2_emb, key_emb_r)
         #print (self.tech_w)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
-        c = torch.cat([c[0], c[1]], dim=-1)
+        c = torch.cat([c[0], c[1]], dim=-1) #concat the bi directional stuffs
         r = torch.cat([r[0], r[1]], dim=-1)
 
         return sc, c.squeeze(), r.squeeze()
