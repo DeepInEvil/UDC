@@ -415,7 +415,7 @@ class UDCv2:
         c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
         r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
 
-        for j, (row_c, row_r, row_y, row_char_c, row_char_r) in enumerate(zip(c, r, y)):
+        for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
             # Truncate
             row_c = row_c[:self.max_seq_len_c]
             row_r = row_r[:self.max_seq_len_r]
