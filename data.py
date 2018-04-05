@@ -265,7 +265,7 @@ class UDCv1:
             self.char_train, self.char_valid, self.char_test, self.ctoi, self.itoc = dataset
 
         if use_fasttext:
-            vectors = np.load(f'{path}/fast_text_200_v.npy').item()
+            vectors = np.load(f'{path}/fast_text_200_v.npy')
         else:
             with open(f'{path}/W.pkl', 'rb') as f:
                 vectors, _ = pickle.load(f, encoding='ISO-8859-1')
