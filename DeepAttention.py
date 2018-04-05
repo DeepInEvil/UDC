@@ -426,10 +426,7 @@ class GRUAttnmitKey(nn.Module):
         c_attn = self.forward_attn(sc, r, x1mask)
         #print (c_attn.size())
         o = self.forward_fc(c_attn, r)
-        #
 
-        #o = F.tanh(self.out_hidden(c_attn))
-        #o = self.out_drop(o)
         return o.view(-1)
 
     def forward_key(self, context):
