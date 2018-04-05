@@ -86,7 +86,7 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, (cm, rm), (char_c, char_r) = mb
+            context, response, y, cm, rm = mb
 
             output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
