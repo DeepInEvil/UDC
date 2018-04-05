@@ -463,7 +463,7 @@ class GRUAttnmitKey(nn.Module):
         #sprint (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
         #key_w_r = torch.matmul(key_emb_r, self.key_w)
-        x1_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
         #x2_emb = torch.add(x2_emb, key_emb_r)
         #print (self.tech_w)
 
