@@ -251,13 +251,14 @@ class UDCv1:
 
     def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
         self.batch_size = batch_size
-        self.max_seq_len = max_seq_len
+        self.max_seq_len_c = max_seq_len
+	self.max_seq_len_r = max_seq_len/2
         self.use_mask = use_mask
         self.gpu = gpu
 
-        with open(f'{path}/dataset_1M.pkl', 'rb') as f:
-            dataset = pickle.load(f, encoding='ISO-8859-1')
-            self.train, self.valid, self.test = dataset
+        #with open(f'{path}/dataset_1M.pkl', 'rb') as f:
+        #    dataset = pickle.load(f, encoding='ISO-8859-1')
+        #    self.train, self.valid, self.test = dataset
 
         with open(f'{path}/dataset_1Mstr_preped.pkl', 'rb') as f:
             dataset = pickle.load(f, encoding='ISO-8859-1')
@@ -306,12 +307,12 @@ class UDCv1:
                 yield c, r, y
 
     def _load_batch(self, c, r, y, size):
-        c_arr = np.zeros([size, self.max_seq_len], np.int)
-        r_arr = np.zeros([size, self.max_seq_len], np.int)
+        c_arr = np.zeros([size, self.max_seq_len_c], np.int)
+        r_arr = np.zeros([size, self.max_seq_len_r], np.int)
         y_arr = np.zeros(size, np.float32)
 
-        c_mask = np.zeros([size, self.max_seq_len], np.float32)
-        r_mask = np.zeros([size, self.max_seq_len], np.float32)
+        c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
+        r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
 
         max_char_c_seq_len = max([len(x) for x in char_c])
         max_char_r_seq_len = max([len(x) for x in char_r])
