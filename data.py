@@ -387,6 +387,12 @@ class UDCv2:
         self.emb_dim = self.vectors.size(1)
 
     def get_iter(self, dataset='train'):
+        if dataset == 'train':
+            dataset = self.train
+        elif dataset == 'valid':
+            dataset = self.valid
+        else:
+            dataset = self.test
 
         for i in range(0, len(dataset['y']), self.batch_size):
             c = dataset['c'][i:i+self.batch_size]
@@ -409,12 +415,6 @@ class UDCv2:
         c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
         r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
 
-        #max_char_c_seq_len = max([len(x) for x in char_c])
-        #max_char_r_seq_len = max([len(x) for x in char_r])
-
-        #char_c_arr = np.zeros([size, max_char_c_seq_len], np.int)
-        #char_r_arr = np.zeros([size, max_char_r_seq_len], np.int)
-
         for j, (row_c, row_r, row_y, row_char_c, row_char_r) in enumerate(zip(c, r, y)):
             # Truncate
             row_c = row_c[:self.max_seq_len_c]
@@ -433,8 +433,6 @@ class UDCv2:
         y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
-        #char_c = Variable(torch.from_numpy(char_c_arr))
-        #char_r = Variable(torch.from_numpy(char_r_arr))
 
         # Load to GPU
         if self.gpu:
