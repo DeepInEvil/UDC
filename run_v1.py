@@ -50,9 +50,9 @@ if args.gpu:
 max_seq_len = 160
 
 udc = UDCv1('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
-            max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=False)
+            max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = LSTMKeyAttn(
+model = GRUAttnmitKey(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 # model = LSTMPAttn(
@@ -62,7 +62,7 @@ model = LSTMKeyAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, max_seq_len, k,
 #     udc.vectors, args.gpu, args.emb_drop
 # )
-model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
+#model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 

@@ -252,20 +252,20 @@ class UDCv1:
     def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
         self.batch_size = batch_size
         self.max_seq_len_c = max_seq_len
-	self.max_seq_len_r = max_seq_len/2
+        self.max_seq_len_r = max_seq_len/2
         self.use_mask = use_mask
         self.gpu = gpu
 
-        #with open(f'{path}/dataset_1M.pkl', 'rb') as f:
-        #    dataset = pickle.load(f, encoding='ISO-8859-1')
-        #    self.train, self.valid, self.test = dataset
+        with open(f'{path}/dataset_1M.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
 
         with open(f'{path}/dataset_1Mstr_preped.pkl', 'rb') as f:
             dataset = pickle.load(f, encoding='ISO-8859-1')
             self.char_train, self.char_valid, self.char_test, self.ctoi, self.itoc = dataset
 
         if use_fasttext:
-            vectors = np.load(f'{path}/fst_text.npy')
+            vectors = np.load(f'{path}/fast_text_200_v.npy').item()
         else:
             with open(f'{path}/W.pkl', 'rb') as f:
                 vectors, _ = pickle.load(f, encoding='ISO-8859-1')
@@ -299,14 +299,14 @@ class UDCv1:
             char_c = char_dataset['c'][i:i+self.batch_size]
             char_r = char_dataset['r'][i:i+self.batch_size]
 
-            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, self.batch_size)
+            c, r, y, c_mask, r_mask = self._load_batch(c, r, y,char_c, char_r, self.batch_size)
 
             if self.use_mask:
                 yield c, r, y, c_mask, r_mask
             else:
                 yield c, r, y
 
-    def _load_batch(self, c, r, y, size):
+    def _load_batch(self, c, r, y,char_c, char_r, size):
         c_arr = np.zeros([size, self.max_seq_len_c], np.int)
         r_arr = np.zeros([size, self.max_seq_len_r], np.int)
         y_arr = np.zeros(size, np.float32)
@@ -322,8 +322,8 @@ class UDCv1:
 
         for j, (row_c, row_r, row_y, row_char_c, row_char_r) in enumerate(zip(c, r, y, char_c_arr, char_r_arr)):
             # Truncate
-            row_c = row_c[:self.max_seq_len]
-            row_r = row_r[:self.max_seq_len]
+            row_c = row_c[:self.max_seq_len_c]
+            row_r = row_r[:self.max_seq_len_r]
 
             c_arr[j, :len(row_c)] = row_c
             r_arr[j, :len(row_r)] = row_r
