@@ -252,7 +252,7 @@ class UDCv1:
     def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
         self.batch_size = batch_size
         self.max_seq_len_c = max_seq_len
-        self.max_seq_len_r = max_seq_len/2
+        self.max_seq_len_r = int(max_seq_len/2)
         self.use_mask = use_mask
         self.gpu = gpu
 
