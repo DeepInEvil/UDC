@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -260,7 +259,7 @@ class LSTMPAttn(nn.Module):
 
 class GRUDualAttnEnc(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.7, max_seq_len=160):
         super(GRUDualAttnEnc, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -270,13 +269,13 @@ class GRUDualAttnEnc(nn.Module):
 
         self.rnn = nn.GRU(
             input_size=emb_dim, hidden_size=h_dim,
-            num_layers=1, batch_first=True, bidirectional=True
+            num_layers=1, batch_first=True
         )
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.attn = nn.Linear(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -330,8 +329,6 @@ class GRUDualAttnEnc(nn.Module):
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
-        c = torch.cat([c[0], c[1]], dim=-1)
-        r = torch.cat([r[0], r[1]], dim=-1)
 
         return sc, c.squeeze(), r.squeeze()
 
@@ -370,32 +367,39 @@ class GRUDualAttnEnc(nn.Module):
 
 class GRUAttnmitKey(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, n_chars, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=320):
         super(GRUAttnmitKey, self).__init__()
 
+        self.emb_dim = emb_dim
+
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        self.char_embed = nn.Embedding(n_chars, emb_dim)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=emb_dim + 50, hidden_size=h_dim,
-            num_layers=1, batch_first=True, bidirectional=True
+            input_size=3*emb_dim, hidden_size=h_dim,  # 3*emb_dim: (word_embed, char_embed, key_embed)
+            num_layers=1, batch_first=True, bidirectional=False
         )
 
+        self.char_encoder = nn.GRU(
+            input_size=emb_dim, hidden_size=h_dim, batch_first=True)
+
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
-        self.attn = nn.Linear(2*h_dim, 2*h_dim)
-        self.key_w = nn.Parameter(torch.FloatTensor(300, 50))
+        self.attn = nn.Linear(h_dim, h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
+        #self.attn_out = nn.Linear(h_dim, 1)
         self.softmax = nn.Softmax()
         self.init_params_()
+        #self.bn = nn.BatchN
         self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
         self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
-        self.tech_w = 0.0
+
         if gpu:
             self.cuda()
 
@@ -422,11 +426,9 @@ class GRUAttnmitKey(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        #sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
-        #print (c_attn.size())
         o = self.forward_fc(c_attn, r)
-        #
+        #print (c_attn.size())
 
         #o = F.tanh(self.out_hidden(c_attn))
         #o = self.out_drop(o)
@@ -439,7 +441,6 @@ class GRUAttnmitKey(nn.Module):
             for j, word in enumerate(utrncs):
                 #torch_val = torch.zeros(200)
                 if word in self.ubuntu_cmd_vec.keys():
-                    self.tech_w = self.tech_w + 1
                     key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
         return Variable(key_emb.cuda())
 
@@ -460,22 +461,20 @@ class GRUAttnmitKey(nn.Module):
         # Both are (batch_size, seq_len, emb_dim)
         key_emb_c = self.forward_key(x1)
         key_emb_r = self.forward_key(x2)
-        x1_emb = self.emb_drop(self.word_embed(x1))
-        key_w_c = torch.matmul(key_emb_c, self.key_w)
-        #x1_emb = torch.add(x1_emb, key_emb_c)
-        x1_emb = torch.cat([x1_emb, key_w_c], dim=-1)
-        #sprint (x1_emb[0])
+
+        x1_word_emb = self.emb_drop(self.word_embed(x1))
+        x1_char_emb = self.emb_drop(self.get_char_embed(x1))
+        x1_emb = torch.cat([x1_word_emb, x1_char_emb, key_emb_c], dim=-1)
+
+        #print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        key_w_r = torch.matmul(key_emb_r, self.key_w)
-        x1_emb = torch.cat([x1_emb, key_w_r], dim=-1)
-        #x2_emb = torch.add(x2_emb, key_emb_r)
-        #print (self.tech_w)
+        x2_char_emb = self.emb_drop(self.get_char_embed(x2))
+        x2_emb = torch.cat([x2_word_emb, x2_char_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
-        c = torch.cat([c[0], c[1]], dim=-1)
-        r = torch.cat([r[0], r[1]], dim=-1)
+        print (sc.size(), c.size(), r.size())
 
         return sc, c.squeeze(), r.squeeze()
 
@@ -510,6 +509,16 @@ class GRUAttnmitKey(nn.Module):
         o = o + self.b
 
         return o
+
+    def get_char_embed(self, x):
+        """ x: contains words, size (batch_size, seq_len) """
+        char_embeds = []
+
+        for word in x.t():
+            _, h = self.char_encoder(word)
+            char_embeds.append(h.squeeze())
+
+        return Variable(torch.cat(char_embeds)).cuda()
 
 
 class LSTMKeyAttn(nn.Module):

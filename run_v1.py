@@ -47,12 +47,12 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 320
+max_seq_len = 160
 
-udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
-            max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
+udc = UDCv1('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
+            max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=False)
 
-model = GRUAttnmitKey(
+model = LSTMKeyAttn(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 # model = LSTMPAttn(
@@ -62,7 +62,7 @@ model = GRUAttnmitKey(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, max_seq_len, k,
 #     udc.vectors, args.gpu, args.emb_drop
 # )
-#model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
+model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
 
@@ -86,7 +86,7 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm = mb
+            context, response, y, (cm, rm), (char_c, char_r) = mb
 
             output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
@@ -105,8 +105,9 @@ def main():
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
-        if epoch > 2:
+        if args.n_epoch > 10:
             eval_test()
+
         save_model(model, 'attnEncoder')
 
 
