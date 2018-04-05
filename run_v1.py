@@ -7,7 +7,7 @@ import numpy as np
 from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
-from data import UDCv1
+from data import UDCv1, UDCv2
 from evaluation import eval_model_v1
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn
@@ -47,7 +47,7 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 160
+max_seq_len = 320
 
 udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
