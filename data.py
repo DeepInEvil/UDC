@@ -299,14 +299,14 @@ class UDCv1:
             char_c = char_dataset['c'][i:i+self.batch_size]
             char_r = char_dataset['r'][i:i+self.batch_size]
 
-            c, r, y, c_mask, r_mask = self._load_batch(c, r, y,char_c, char_r, self.batch_size)
+            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, char_c, char_r, self.batch_size)
 
             if self.use_mask:
                 yield c, r, y, c_mask, r_mask
             else:
                 yield c, r, y
 
-    def _load_batch(self, c, r, y,char_c, char_r, size):
+    def _load_batch(self, c, r, y, char_c, char_r, size):
         c_arr = np.zeros([size, self.max_seq_len_c], np.int)
         r_arr = np.zeros([size, self.max_seq_len_r], np.int)
         y_arr = np.zeros(size, np.float32)
@@ -351,3 +351,94 @@ class UDCv1:
             char_c, char_r = char_c.cuda(), char_r.cuda()
 
         return c, r, y, (c_mask, r_mask), (char_c, char_r)
+
+
+class UDCv2:
+    """
+    Wrapper for UDCv2 taken from: http://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/.
+    Everything has been preprocessed and converted to numerical indexes.
+    """
+
+    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
+        self.batch_size = batch_size
+        self.max_seq_len_c = max_seq_len
+        self.max_seq_len_r = int(max_seq_len/2)
+        self.use_mask = use_mask
+        self.gpu = gpu
+
+        with open(f'{path}/dataset_1M.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
+
+        if use_fasttext:
+            vectors = np.load(f'{path}/fast_text_200_v.npy')
+        else:
+            with open(f'{path}/W.pkl', 'rb') as f:
+                vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+
+        print('Finished loading dataset!')
+
+        self.n_train = len(self.train['y'])
+        self.n_valid = len(self.valid['y'])
+        self.n_test = len(self.test['y'])
+        self.vectors = torch.from_numpy(vectors.astype(np.float32))
+
+        self.vocab_size = self.vectors.size(0)
+        self.emb_dim = self.vectors.size(1)
+
+    def get_iter(self, dataset='train'):
+
+        for i in range(0, len(dataset['y']), self.batch_size):
+            c = dataset['c'][i:i+self.batch_size]
+            r = dataset['r'][i:i+self.batch_size]
+            y = dataset['y'][i:i+self.batch_size]
+
+
+            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, self.batch_size)
+
+            if self.use_mask:
+                yield c, r, y, c_mask, r_mask
+            else:
+                yield c, r, y
+
+    def _load_batch(self, c, r, y, size):
+        c_arr = np.zeros([size, self.max_seq_len_c], np.int)
+        r_arr = np.zeros([size, self.max_seq_len_r], np.int)
+        y_arr = np.zeros(size, np.float32)
+
+        c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
+        r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
+
+        #max_char_c_seq_len = max([len(x) for x in char_c])
+        #max_char_r_seq_len = max([len(x) for x in char_r])
+
+        #char_c_arr = np.zeros([size, max_char_c_seq_len], np.int)
+        #char_r_arr = np.zeros([size, max_char_r_seq_len], np.int)
+
+        for j, (row_c, row_r, row_y, row_char_c, row_char_r) in enumerate(zip(c, r, y)):
+            # Truncate
+            row_c = row_c[:self.max_seq_len_c]
+            row_r = row_r[:self.max_seq_len_r]
+
+            c_arr[j, :len(row_c)] = row_c
+            r_arr[j, :len(row_r)] = row_r
+            y_arr[j] = float(row_y)
+
+            c_mask[j, :len(row_c)] = 1
+            r_mask[j, :len(row_r)] = 1
+
+        # Convert to PyTorch tensor
+        c = Variable(torch.from_numpy(c_arr))
+        r = Variable(torch.from_numpy(r_arr))
+        y = Variable(torch.from_numpy(y_arr))
+        c_mask = Variable(torch.from_numpy(c_mask))
+        r_mask = Variable(torch.from_numpy(r_mask))
+        #char_c = Variable(torch.from_numpy(char_c_arr))
+        #char_r = Variable(torch.from_numpy(char_r_arr))
+
+        # Load to GPU
+        if self.gpu:
+            c, r, y = c.cuda(), r.cuda(), y.cuda()
+            c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
+
+        return c, r, y, c_mask, r_mask

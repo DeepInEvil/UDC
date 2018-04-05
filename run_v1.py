@@ -49,7 +49,7 @@ if args.gpu:
 
 max_seq_len = 160
 
-udc = UDCv1('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUAttnmitKey(
