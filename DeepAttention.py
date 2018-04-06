@@ -383,7 +383,7 @@ class GRUAttnmitKey(nn.Module):
             self.key_emb.weight.data.copy_(key_emb)
 
         self.rnn = nn.GRU(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim + 50, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True, dropout=0.2
         )
 
@@ -391,6 +391,7 @@ class GRUAttnmitKey(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.key_wght = nn.Linear(200, 50)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -460,10 +461,12 @@ class GRUAttnmitKey(nn.Module):
         x1_emb = self.emb_drop(self.word_embed(x1))
         key_emb_c = self.key_emb(x1)
         key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_c = self.key_wght(key_emb_c)
         x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
         key_emb_r = self.key_emb(x2)
         key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_r = self.key_wght(key_emb_r)
         x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
