@@ -671,7 +671,7 @@ class AttnLstmDeep(nn.Module):
             self.conv4 = nn.Conv2d(1, 100, (4, h_dim))
             self.conv5 = nn.Conv2d(1, 100, (5, h_dim))
             self.attention = nn.Sequential(
-                nn.Linear(300, max_seq_len),
+                nn.Linear(300, max_seqF_len),
                 nn.Softmax(dim=1)
             )
 

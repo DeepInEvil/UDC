@@ -1,6 +1,7 @@
-from data import UDC
+from data import UDC, UDCv1
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM
 from util import load_model
+from DeepAttention import GRUDualAttnEnc
 
 import torch
 import torch.nn.functional as F
@@ -39,23 +40,17 @@ parser.add_argument('--model_name', metavar='',
 args = parser.parse_args()
 
 
-max_seq_len = 160
+max_seq_len = 220
 k = 1
 h_dim = args.h_dim
 
-if args.toy_data:
-    dataset = UDC(
-        train_file='train10k.csv', valid_file='valid500.csv', test_file='test500.csv', vocab_file='vocabulary.txt',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
-    )
-else:
-    dataset = UDC(
-        train_file='train.csv', valid_file='valid.csv', test_file='test.csv', vocab_file='vocabulary.txt',
-        embed_dim=args.emb_dim, batch_size=args.mb_size, max_seq_len=max_seq_len, gpu=args.gpu
-    )
+udc = UDCv1('data/dataset_1MM', batch_size=args.mb_size, use_mask = True,
+            max_seq_len=max_seq_len, gpu=args.gpu)
 
 # model = CNNDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
-model = LSTMDualEncoder(dataset.embed_dim, dataset.vocab_size, h_dim, dataset.vectors, args.gpu)
+model = GRUDualAttnEnc(
+    udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+)
 # model = CCN_LSTM(dataset.embed_dim, dataset.vocab_size, h_dim, max_seq_len, k, dataset.vectors, args.gpu)
 
 model = load_model(model, args.model_name, gpu=args.gpu)
@@ -63,23 +58,16 @@ model = load_model(model, args.model_name, gpu=args.gpu)
 model.eval()
 scores = []
 
-valid_iter = tqdm(dataset.valid_iter())
-valid_iter.set_description_str('Validation')
+valid_iter = tqdm(udc.get_iter('test'))
+valid_iter.set_description_str('test')
 
-for mb in tqdm(valid_iter):
-    context = mb.context[:, :args.max_context_len]
+for mb in valid_iter:
+    context, response, y, cm, rm = mb
 
-    # Get score for positive/ground-truth response
-    score_pos = F.sigmoid(model(context, mb.positive[:, :args.max_response_len]).unsqueeze(1))
-    # Get scores for negative samples
-    score_negs = [
-        F.sigmoid(model(context, getattr(mb, 'negative_{}'.format(i))[:, :args.max_response_len]).unsqueeze(1))
-        for i in range(1, 10)
-    ]
-    # Total scores, positives at position zero
-    scores_mb = torch.cat([score_pos, *score_negs], dim=1)
-
-    scores.append(scores_mb)
+    # Get scores
+    scores_mb = F.sigmoid(model(context, response, cm))
+    scores_mb = scores_mb.cpu() if args.gpu else scores_mb
+    scores.append(scores_mb.data.numpy())
 
 scores = torch.cat(scores, dim=0)
 

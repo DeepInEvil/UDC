@@ -372,6 +372,7 @@ class UDCv2:
 
         if use_fasttext:
             vectors = np.load(f'{path}/fast_text_200_v.npy')
+            man_vec = np.load(f'{path}/key_vec.npy')
         else:
             with open(f'{path}/W.pkl', 'rb') as f:
                 vectors, _ = pickle.load(f, encoding='ISO-8859-1')
@@ -382,6 +383,7 @@ class UDCv2:
         self.n_valid = len(self.valid['y'])
         self.n_test = len(self.test['y'])
         self.vectors = torch.from_numpy(vectors.astype(np.float32))
+        self.man_vec = torch.from_numpy(man_vec.astype(np.float32))
 
         self.vocab_size = self.vectors.size(0)
         self.emb_dim = self.vectors.size(1)

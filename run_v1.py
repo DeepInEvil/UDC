@@ -53,7 +53,7 @@ udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, 
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUAttnmitKey(
-    udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, udc.man_vec, 0, args.gpu
 )
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu

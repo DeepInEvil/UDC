@@ -370,13 +370,17 @@ class GRUDualAttnEnc(nn.Module):
 
 class GRUAttnmitKey(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, key_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttnmitKey, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        self.key_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
+
+        if key_emb is not None:
+            self.key_emb.weight.data.copy_(key_emb)
 
         self.rnn = nn.GRU(
             input_size=2*emb_dim, hidden_size=h_dim,
@@ -393,7 +397,6 @@ class GRUAttnmitKey(nn.Module):
         self.softmax = nn.Softmax()
         self.init_params_()
         self.ubuntu_cmd_vec = np.load('ubuntu_data/man_dict_vec.npy').item()
-        self.ubuntu_cmds = np.load('ubuntu_data/man_dict.npy').item()
         self.tech_w = 0.0
         if gpu:
             self.cuda()
@@ -407,8 +410,6 @@ class GRUAttnmitKey(nn.Module):
 
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
-
-        #init.xavier_uniform(self.attn.data)
 
     def forward(self, x1, x2, x1mask):
         """
@@ -429,14 +430,14 @@ class GRUAttnmitKey(nn.Module):
         return o.view(-1)
 
     def forward_key(self, context):
-        key_emb = torch.zeros(context.size(0), context.size(1), 200)
+        key_emb = torch.zeros(context.size(0), context.size(1))
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 #torch_val = torch.zeros(200)
                 if word in self.ubuntu_cmd_vec.keys():
-                    self.tech_w = self.tech_w + 1
-                    key_emb[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word])
+                    #self.tech_w = self.tech_w + 1
+                    key_emb[i][j] = 1
         return Variable(key_emb.cuda())
 
     def check_key(self, context):
@@ -454,18 +455,16 @@ class GRUAttnmitKey(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        key_emb_c = self.forward_key(x1)
-        key_emb_r = self.forward_key(x2)
+        key_mask_c = self.forward_key(x1)
+        key_mask_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        #key_w_c = torch.matmul(key_emb_c, self.key_w)
-        #x1_emb = torch.add(x1_emb, key_emb_c)
+        key_emb_c = self.key_emb(x1)
+        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, x1_emb.size(-1))
         x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
-        #sprint (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        #key_w_r = torch.matmul(key_emb_r, self.key_w)
+        key_emb_r = self.key_emb(x2)
+        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, x1_emb.size(-1))
         x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
-        #x2_emb = torch.add(x2_emb, key_emb_r)
-        #print (self.tech_w)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
