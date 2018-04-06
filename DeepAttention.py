@@ -459,11 +459,11 @@ class GRUAttnmitKey(nn.Module):
         key_mask_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
         key_emb_c = self.key_emb(x1)
-        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, x1_emb.size(-1))
+        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
         x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
         key_emb_r = self.key_emb(x2)
-        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, x1_emb.size(-1))
+        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
         x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
