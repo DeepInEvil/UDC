@@ -410,7 +410,7 @@ class GRUAttn_KeyCNN(nn.Module):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
-                    key_mask[i][j] = 1
+                    key_mask[i] = 1
                     keys[i] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
