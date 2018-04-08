@@ -391,7 +391,8 @@ class GRUAttnmitKey(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
-        self.key_wght = nn.Linear(200, 50)
+        self.key_wghtc = nn.Linear(200, 50)
+        self.key_wghtr = nn.Linear(200, 50)
         self.scale = 1. / math.sqrt(max_seq_len)
         self.out_hidden = nn.Linear(h_dim, 1)
         self.out_drop = nn.Dropout(0.5)
@@ -422,10 +423,10 @@ class GRUAttnmitKey(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        sc, c, r = self.forward_enc(x1, x2)
-        #sc = torch.cat([sc, key_emb_c], dim=-1)
+        key_c, key_r = self.get_weighted_key(x1, x2)
+        sc, c, r = self.forward_enc(x1, x2, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
-        #print (c_attn.size())
+
         o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
@@ -435,9 +436,7 @@ class GRUAttnmitKey(nn.Module):
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
-                #torch_val = torch.zeros(200)
                 if word in self.ubuntu_cmd_vec.keys():
-                    #self.tech_w = self.tech_w + 1
                     key_emb[i][j] = 1
         return Variable(key_emb.cuda())
 
@@ -451,22 +450,29 @@ class GRUAttnmitKey(nn.Module):
 
         return Variable(key_emb.cuda())
 
-    def forward_enc(self, x1, x2):
+    def get_weighted_key(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        key_mask_c = self.forward_key(x1)
+        key_mask_r = self.forward_key(x2)
+        key_emb_c = Variable(self.key_emb(x1))
+        key_emb_r = Variable(self.key_emb(x2))
+        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_c = self.key_wghtc(key_emb_c)
+        key_emb_r = self.key_wghtr(key_emb_r)
+
+        return key_emb_c, key_emb_r
+
+    def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
-        key_mask_c = self.forward_key(x1)
-        key_mask_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        key_emb_c = self.key_emb(x1)
-        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
-        key_emb_c = self.key_wght(key_emb_c)
         x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
-        key_emb_r = self.key_emb(x2)
-        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
-        key_emb_r = self.key_wght(key_emb_r)
         x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
@@ -477,7 +483,7 @@ class GRUAttnmitKey(nn.Module):
 
         return sc, c.squeeze(), r.squeeze()
 
-    def forward_attn(self, x1, x, mask):
+    def forward_attn(self, x1, x2, mask):
         """
         attention
         :param x1: batch X seq_len X dim
@@ -486,10 +492,10 @@ class GRUAttnmitKey(nn.Module):
         max_len = x1.size(1)
         b_size = x1.size(0)
 
-        x = x.squeeze(0).unsqueeze(2)
+        x2 = x2.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
-        attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         attn_energies = attn_energies.squeeze(1) * mask  # B, T
         alpha = F.softmax(attn_energies, dim=-1)  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
@@ -565,10 +571,6 @@ class LSTMKeyAttn(nn.Module):
         o: vector of (batch_size)
         """
         sc, c, r = self.forward_enc(x1, x2)
-        #print (sc.size(), c.size(), r.size())
-        #key_emb_c = self.forward_key(x1)
-        #key_emb_r = self.forward_key(x2)
-        #sc = torch.cat([sc, key_emb_c], dim=-1)
         c_attn = self.forward_attn(sc, r, x1mask)
         o = self.forward_fc(c_attn, r)
         #print (c_attn.size())
@@ -605,10 +607,7 @@ class LSTMKeyAttn(nn.Module):
         key_emb_c = self.forward_key(x1)
         key_emb_r = self.forward_key(x2)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
-        #print (x1_emb[0])
         x2_emb = self.emb_drop(self.word_embed(x2))
-        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1).transpose(0, 1)
 
         # Each is (1 x batch_size x h_dim)
         hxc = Variable(torch.zeros(x1.size(0), self.h_dim)).cuda()
