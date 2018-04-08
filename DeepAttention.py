@@ -95,16 +95,12 @@ class LSTMDualAttnEnc(nn.Module):
 
         x = x.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
-        #print (attn.size(), x.size())
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
-        #print (attn_energies.size())
         attn_energies = attn_energies.squeeze(1) * mask
-        #attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
         alpha = F.softmax(attn_energies, dim=-1)  # B,T
         alpha = alpha.unsqueeze(1)  # B,1,T
         print (alpha[0])
-        #print (alpha.size(), x1.size())
         weighted_attn = alpha.bmm(x1)
 
 
@@ -194,29 +190,6 @@ class LSTMPAttn(nn.Module):
         _, (r, _) = self.rnn(x2_emb)
 
         return sc, c, r.squeeze()
-
-    # def forward_attn(self, x1, x, mask):
-    #     """
-    #     attention
-    #     :param x1: batch X seq_len X dim
-    #     :return:
-    #     """
-    #     max_len = x1.size(1)
-    #     b_size = x1.size(0)
-    #
-    #     x = x.squeeze(0).unsqueeze(2)
-    #     attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
-    #     #print (attn.size(), x.size())
-    #     attn = attn.view(b_size, max_len, -1) # B,T,D
-    #     attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
-    #     #print (attn_energies.size())
-    #     attn_energies = attn_energies.squeeze(1).masked_fill(mask, -1e12)
-    #     alpha = F.softmax(attn_energies, dim=-1)  # B,T
-    #     alpha = alpha.unsqueeze(1)  # B,1,T
-    #     #print (alpha.size(), x1.size())
-    #     weighted_attn = alpha.bmm(x1)
-    #
-    #     return weighted_attn.squeeze()
 
     def forward_attn(self, x1, x, mask):
         """
@@ -367,6 +340,140 @@ class GRUDualAttnEnc(nn.Module):
 
         return o
 
+
+class GRUAttn_KeyCNN(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+        super(GRUAttn_KeyCNN, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.rnn = nn.GRU(
+            input_size=emb_dim + 50, hidden_size=h_dim,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
+
+        self.emb_drop = nn.Dropout(emb_drop)
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+        self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.scale = 1. / math.sqrt(max_seq_len)
+        self.out_hidden = nn.Linear(h_dim, 1)
+        self.out_drop = nn.Dropout(0.5)
+        self.softmax = nn.Softmax()
+        self.init_params_()
+        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_d.npy').item()
+        self.tech_w = 0.0
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2, x1mask):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        key_c, key_r = self.get_weighted_key(x1, x2)
+        sc, c, r = self.forward_enc(x1, x2, key_c, key_r)
+        c_attn = self.forward_attn(sc, r, x1mask)
+
+        o = self.forward_fc(c_attn, r)
+
+        return o.view(-1)
+
+    def forward_key(self, context):
+
+        key_mask = torch.zeros(context.size(0), context.size(1))
+        keys = torch.zeros(context.size(0), context.size(1))
+        for i in range(context.size(0)):
+            utrncs = context[i].cpu().data.numpy()
+            for j, word in enumerate(utrncs):
+                if word in self.ubuntu_cmd_vec.keys():
+                    key_mask[i][j] = 1
+                    keys[i] = self.ubuntu_cmd_vec[word]
+        return Variable(key_mask.cuda()), Variable(keys.cuda())
+
+    def get_weighted_key(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        key_mask_c, keys_c = self.forward_key(x1)
+        key_mask_r, keys_r = self.forward_key(x2)
+        key_emb_c = self.word_embed(keys_c)
+        key_emb_r = self.word_embed(keys_r)
+        key_emb_c = self.key_wghtc(key_emb_c)
+        key_emb_r = self.key_wghtr(key_emb_r)
+        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+
+        return key_emb_c, key_emb_r
+
+    def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.emb_drop(self.word_embed(x1))
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        x2_emb = self.emb_drop(self.word_embed(x2))
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+
+        # Each is (1 x batch_size x h_dim)
+        sc, c = self.rnn(x1_emb)
+        _, r = self.rnn(x2_emb)
+        c = torch.cat([c[0], c[1]], dim=-1) #concat the bi directional stuffs
+        r = torch.cat([r[0], r[1]], dim=-1)
+
+        return sc, c.squeeze(), r.squeeze()
+
+    def forward_attn(self, x1, x2, mask):
+        """
+        attention
+        :param x1: batch X seq_len X dim
+        :return:
+        """
+        max_len = x1.size(1)
+        b_size = x1.size(0)
+
+        x2 = x2.squeeze(0).unsqueeze(2)
+        attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
+        attn = attn.view(b_size, max_len, -1) # B,T,D
+        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        attn_energies = attn_energies.squeeze(1) * mask  # B, T
+        alpha = F.softmax(attn_energies, dim=-1)  # B, T
+        alpha = alpha.unsqueeze(1)  # B,1,T
+        weighted_attn = alpha.bmm(x1)  # B,T
+
+        return weighted_attn.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
 
 class GRUAttnmitKey(nn.Module):
 
