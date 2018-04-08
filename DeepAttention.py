@@ -405,13 +405,13 @@ class GRUAttn_KeyCNN(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), 1)
+        key_mask = torch.zeros(context.size(0), context.size(1))
         keys = torch.zeros(context.size(0), 44)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
-                    key_mask[i] = 1
+                    key_mask[i][j] = 1
                     keys[i] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
@@ -425,8 +425,8 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         _, key_emb_c = self.key_rnn(key_emb_c)
         _, key_emb_r = self.key_rnn(key_emb_r)
-        key_emb_c = key_emb_c * key_mask_c
-        key_emb_r = key_emb_r * key_mask_r
+        key_emb_c = key_emb_c.unsqueeze(2).repeat([1, x1.size(1), 1]) * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_r = key_emb_r.unsqueeze(2).repeat([1, x2.size(1), 1]) * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
         return key_emb_c.squeeze(), key_emb_r.squeeze()
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
