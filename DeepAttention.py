@@ -456,8 +456,8 @@ class GRUAttnmitKey(nn.Module):
         """
         key_mask_c = self.forward_key(x1)
         key_mask_r = self.forward_key(x2)
-        key_emb_c = Variable(self.key_emb(x1))
-        key_emb_r = Variable(self.key_emb(x2))
+        key_emb_c = (self.key_emb(x1))
+        key_emb_r = (self.key_emb(x2))
         key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
         key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
         key_emb_c = self.key_wghtc(key_emb_c)
