@@ -355,6 +355,10 @@ class GRUAttn_KeyCNN(nn.Module):
             input_size=2*emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
+        self.key_rnn = nn.GRU(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True
+        )
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
@@ -400,7 +404,7 @@ class GRUAttn_KeyCNN(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), context.size(1))
+        key_mask = torch.zeros(context.size(0), 1)
         keys = torch.zeros(context.size(0), 44)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
@@ -419,10 +423,10 @@ class GRUAttn_KeyCNN(nn.Module):
         print (keys_c)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
-        _, key_emb_c = self.rnn(key_emb_c)
-        _, key_emb_r = self.rnn(key_emb_r)
-        key_emb_c = key_emb_c * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
-        key_emb_r = key_emb_r * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+        _, key_emb_c = self.key_rnn(key_emb_c)
+        _, key_emb_r = self.key_rnn(key_emb_r)
+        key_emb_c = key_emb_c * key_mask_c
+        key_emb_r = key_emb_r * key_mask_r
 
         return key_emb_c, key_emb_r
 
