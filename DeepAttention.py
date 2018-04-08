@@ -356,7 +356,7 @@ class GRUAttn_KeyCNN(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
         self.key_rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=200,
             num_layers=1, batch_first=True
         )
 
@@ -420,15 +420,14 @@ class GRUAttn_KeyCNN(nn.Module):
         """
         key_mask_c, keys_c = self.forward_key(x1)
         key_mask_r, keys_r = self.forward_key(x2)
-        print (keys_c)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
         _, key_emb_c = self.key_rnn(key_emb_c)
         _, key_emb_r = self.key_rnn(key_emb_r)
         key_emb_c = key_emb_c * key_mask_c
         key_emb_r = key_emb_r * key_mask_r
-
-        return key_emb_c, key_emb_r
+        print (key_emb_c)
+        return key_emb_c.squeeze(), key_emb_r.squeeze()
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
         """
