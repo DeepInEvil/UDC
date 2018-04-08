@@ -352,11 +352,11 @@ class GRUAttn_KeyCNN(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim + 20, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
         self.key_rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=200,
+            input_size=emb_dim, hidden_size=20,
             num_layers=1, batch_first=True
         )
 
@@ -425,8 +425,8 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         _, key_emb_c = self.key_rnn(key_emb_c)
         _, key_emb_r = self.key_rnn(key_emb_r)
-        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
-        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 20)
+        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 20)
         return key_emb_c, key_emb_r
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
