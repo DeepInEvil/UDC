@@ -425,10 +425,9 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         _, key_emb_c = self.key_rnn(key_emb_c)
         _, key_emb_r = self.key_rnn(key_emb_r)
-        print (key_emb_c.unsqueeze(1).repeat(1, x1.size(1), 1).size())
-        key_emb_c = key_emb_c.unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
-        key_emb_r = key_emb_r.unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
-        return key_emb_c.squeeze(), key_emb_r.squeeze()
+        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 200)
+        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 200)
+        return key_emb_c, key_emb_r
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
         """
