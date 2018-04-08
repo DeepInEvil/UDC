@@ -382,6 +382,8 @@ class GRUAttnmitKey(nn.Module):
         if key_emb is not None:
             self.key_emb.weight.data.copy_(key_emb)
 
+        self.key_emb.weight.requires_grad = False
+
         self.rnn = nn.GRU(
             input_size=emb_dim + 50, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True, dropout=0.2
