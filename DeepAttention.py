@@ -395,7 +395,6 @@ class GRUAttn_KeyCNN(nn.Module):
         o: vector of (batch_size)
         """
         key_c, key_r = self.get_weighted_key(x1, x2)
-        print (key_r.size())
         sc, c, r = self.forward_enc(x1, x2, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
