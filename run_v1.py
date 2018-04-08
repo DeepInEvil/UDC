@@ -64,7 +64,7 @@ model = GRUAttnmitKey(
 # )
 #model = CNNDualEncoder(udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, args.gpu, args.emb_drop)
 
-solver = optim.Adam(model.parameters(), lr=args.lr)
+solver = optim.Adam(filter(lambda p: p.rquires_grad, model.parameters()), lr=args.lr)
 
 if args.gpu:
     model.cuda()
