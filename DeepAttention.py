@@ -416,6 +416,7 @@ class GRUAttn_KeyCNN(nn.Module):
         """
         key_mask_c, keys_c = self.forward_key(x1)
         key_mask_r, keys_r = self.forward_key(x2)
+        print (keys_c)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
         key_emb_c = self.key_wghtc(key_emb_c)
