@@ -355,10 +355,13 @@ class GRUAttn_KeyCNN(nn.Module):
             input_size=emb_dim + 20, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
-        self.key_rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=20,
-            num_layers=1, batch_first=True
-        )
+
+        self.n_filter = h_dim // 3
+        self.h_dim = self.n_filter * 3
+
+        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
+        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
@@ -422,11 +425,27 @@ class GRUAttn_KeyCNN(nn.Module):
         key_mask_r, keys_r = self.forward_key(x2)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
-        _, key_emb_c = self.key_rnn(key_emb_c)
-        _, key_emb_r = self.key_rnn(key_emb_r)
+        key_emb_c = self._forward(key_emb_c)
+        key_emb_r = self._forward(key_emb_r)
         key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 20)
         key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 20)
         return key_emb_c, key_emb_r
+
+    def _forward(self, x):
+        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+
+        x3 = F.relu(self.conv3(x)).squeeze()
+        x4 = F.relu(self.conv4(x)).squeeze()
+        x5 = F.relu(self.conv5(x)).squeeze()
+
+        # Max-over-time-pool
+        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
+        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+
+        out = torch.cat([x3, x4, x5], dim=1)
+
+        return out
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
         """
