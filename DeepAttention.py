@@ -352,7 +352,7 @@ class GRUAttn_KeyCNN(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=emb_dim + 20, hidden_size=h_dim,
+            input_size=emb_dim + 300, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
@@ -428,8 +428,8 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_c = self._forward(key_emb_c)
         key_emb_r = self._forward(key_emb_r)
         print (key_emb_r.size())
-        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 20)
-        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 20)
+        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 300)
+        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 300)
         return key_emb_c, key_emb_r
 
     def _forward(self, x):
