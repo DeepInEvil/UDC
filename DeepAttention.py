@@ -427,6 +427,7 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         key_emb_c = self._forward(key_emb_c)
         key_emb_r = self._forward(key_emb_r)
+        print (key_emb_r.size())
         key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 20)
         key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 20)
         return key_emb_c, key_emb_r
