@@ -323,6 +323,7 @@ class GRUDualAttnEnc(nn.Module):
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         attn_energies = attn_energies.squeeze(1) * mask  # B, T
         alpha = F.softmax(attn_energies, dim=-1)  # B, T
+        print (alpha)
         alpha = alpha.unsqueeze(1)  # B,1,T
         weighted_attn = alpha.bmm(x1)  # B,T
 
