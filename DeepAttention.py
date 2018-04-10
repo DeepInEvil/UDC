@@ -321,9 +321,8 @@ class GRUDualAttnEnc(nn.Module):
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
-        alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
+        alpha = F.log_softmax(attn_energies.squeeze(1), dim=-1)  # B, T
         alpha = alpha * mask  # B, T
-        alpha = torch.div(alpha, alpha.sum(-1).unsqueeze(1).repeat(1, alpha.size(1)))
         alpha = alpha.unsqueeze(1)  # B,1,T
         weighted_attn = alpha.bmm(x1)  # B,T
 
