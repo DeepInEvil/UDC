@@ -357,7 +357,7 @@ class GRUAttn_KeyCNN(nn.Module):
         )
 
         self.n_filter = 20
-        self.h_dim = self.n_filter * 3
+        #self.h_dim = self.n_filter * 3
 
         self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
         self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
@@ -427,8 +427,8 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         key_emb_c = self._forward(key_emb_c)
         key_emb_r = self._forward(key_emb_r)
-        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 300)
-        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 300)
+        key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
+        key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         return key_emb_c, key_emb_r
 
     def _forward(self, x):
