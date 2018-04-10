@@ -308,7 +308,7 @@ class GRUDualAttnEnc(nn.Module):
 
         return sc, c.squeeze(), r.squeeze()
 
-    def forward_attn(self, x1, x, mask):
+    def forward_attn(self, x1, x2, mask):
         """
         attention
         :param x1: batch X seq_len X dim
@@ -317,10 +317,10 @@ class GRUDualAttnEnc(nn.Module):
         max_len = x1.size(1)
         b_size = x1.size(0)
 
-        x = x.squeeze(0).unsqueeze(2)
+        x2 = x2.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
-        attn_energies = attn.bmm(x).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
         alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
         alpha = alpha * mask  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
@@ -352,11 +352,11 @@ class GRUAttn_KeyCNN(nn.Module):
             self.word_embed.weight.data.copy_(pretrained_emb)
 
         self.rnn = nn.GRU(
-            input_size=emb_dim + 300, hidden_size=h_dim,
+            input_size=emb_dim + 60, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.n_filter = h_dim // 3
+        self.n_filter = 20
         self.h_dim = self.n_filter * 3
 
         self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
@@ -478,8 +478,8 @@ class GRUAttn_KeyCNN(nn.Module):
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
-        attn_energies = attn_energies.squeeze(1) * mask  # B, T
-        alpha = F.softmax(attn_energies, dim=-1)  # B, T
+        alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
+        alpha = alpha * mask  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
         weighted_attn = alpha.bmm(x1)  # B,T
 
