@@ -371,8 +371,8 @@ class UDCv2:
             self.train, self.valid, self.test = dataset
 
         if use_fasttext:
-            #vectors = np.load(f'{path}/fast_text_200_v.npy')
-            vectors = np.load(f'{path}/w2vec_200.npy')
+            vectors = np.load(f'{path}/fast_text_200_v.npy')
+            #vectors = np.load(f'{path}/w2vec_200.npy')
             #man_vec = np.load(f'{path}/key_vec.npy')
         else:
             with open(f'{path}/W.pkl', 'rb') as f:

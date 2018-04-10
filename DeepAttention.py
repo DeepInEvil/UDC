@@ -356,11 +356,11 @@ class GRUAttn_KeyCNN(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.n_filter = 20
+        self.n_filter = 30
         #self.h_dim = self.n_filter * 3
 
-        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
+        self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        self.conv4 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
