@@ -353,7 +353,7 @@ class GRUAttn_KeyCNN(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.n_filter = h_dim // 3
+        self.n_filter = 40
         #self.h_dim = self.n_filter * 3
 
         self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
