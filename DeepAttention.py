@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -492,6 +489,172 @@ class GRUAttn_KeyCNN(nn.Module):
         # (batch_size x 1 x h_dim)
         c = torch.cat([c, key_c], dim=-1)
         r = torch.cat([r, key_r], dim=-1)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
+
+
+class GRUAttn_KeyCNN_AllKeys(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+        super(GRUAttn_KeyCNN_AllKeys, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.h_dim = h_dim
+
+        self.rnn = nn.GRU(
+            input_size=emb_dim+50, hidden_size=h_dim,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
+
+        self.n_filter = 30
+        self.h_key_dim = self.n_filter * 3
+
+        self.key_rnn = nn.GRU(input_size=emb_dim, hidden_size=50, batch_first=True)
+
+        self.emb_drop = nn.Dropout(emb_drop)
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+        self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.scale = 1. / math.sqrt(max_seq_len)
+        self.out_hidden = nn.Linear(h_dim, 1)
+        self.out_drop = nn.Dropout(0.5)
+        self.softmax = nn.Softmax()
+        self.init_params_()
+        self.ubuntu_cmd_vec = np.load('/home/DebanjanChaudhuri/UDC/ubuntu_data/man_d.npy').item()
+        self.tech_w = 0.0
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2, x1mask):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        key_c, key_r = self.get_weighted_key(x1, x2)
+        sc, c, r = self.forward_enc(x1, x2, key_c, key_r)
+        c_attn = self.forward_attn(sc, r, x1mask)
+
+        o = self.forward_fc(c_attn, r)
+
+        return o.view(-1)
+
+    def forward_key(self, context):
+
+        key_mask = torch.zeros(context.size(0), context.size(1))
+        keys = torch.zeros(context.size(0), context.size(1), 44)  # batch x seq x desc_len
+        for i in range(context.size(0)):
+            utrncs = context[i].cpu().data.numpy()
+            for j, word in enumerate(utrncs):
+                if word in self.ubuntu_cmd_vec.keys():
+                    key_mask[i][j] = 1
+                    keys[i, j] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
+        return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
+
+    def get_weighted_key(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        key_mask_c, keys_c = self.forward_key(x1)
+        key_mask_r, keys_r = self.forward_key(x2)
+
+        # print(keys_c.size(), keys_r.size())
+
+        keys_emb_c = Variable(torch.zeros(keys_c.size(0), keys_c.size(1), 50)).cuda()
+
+        for i, key_c in enumerate(keys_c.transpose(0, 1)):  # iterate sequence
+            # key_c: (batch, desc_len)
+            key_emb_c = self.word_embed(key_c)
+            # keys_emb_c[:, i, :] = self._forward(key_emb_c)
+            # _, key_emb_c =
+            keys_emb_c[:, i, :] = self.key_rnn(key_emb_c)[1].squeeze()
+
+        keys_emb_r = Variable(torch.zeros(keys_r.size(0), keys_r.size(1), 50)).cuda()
+
+        for i, key_r in enumerate(keys_r.transpose(0, 1)):  # iterate sequence
+            # key_r: (batch, desc_len)
+            key_emb_r = self.word_embed(key_r)
+            # keys_emb_r[:, i, :] = self._forward(key_emb_r)
+            keys_emb_r[:, i, :] = self.key_rnn(key_emb_r)[1].squeeze()
+
+        # print(key_emb_c.size(), key_emb_r.size())
+
+        # key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
+        # key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
+
+        # print(keys_emb_c.size(), keys_emb_r.size())
+
+        return keys_emb_c, keys_emb_r
+
+    def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.emb_drop(self.word_embed(x1))
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        x2_emb = self.emb_drop(self.word_embed(x2))
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+
+        # print(x1_emb.size(), x2_emb.size())
+
+        # Each is (1 x batch_size x h_dim)
+        sc, c = self.rnn(x1_emb)
+        _, r = self.rnn(x2_emb)
+        c = torch.cat([c[0], c[1]], dim=-1) #concat the bi directional stuffs
+        r = torch.cat([r[0], r[1]], dim=-1)
+
+        # print(c.size(), r.size())
+
+        return sc, c.squeeze(), r.squeeze()
+
+    def forward_attn(self, x1, x2, mask):
+        """
+        attention
+        :param x1: batch X seq_len X dim
+        :return:
+        """
+        max_len = x1.size(1)
+        b_size = x1.size(0)
+
+        x2 = x2.squeeze(0).unsqueeze(2)
+        attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
+        attn = attn.view(b_size, max_len, -1) # B,T,D
+        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
+        alpha = alpha * mask  # B, T
+        alpha = alpha.unsqueeze(1)  # B,1,T
+        weighted_attn = alpha.bmm(x1)  # B,T
+
+        return weighted_attn.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.unsqueeze(2))
