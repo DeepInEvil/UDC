@@ -353,7 +353,7 @@ class GRUAttn_KeyCNN(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.n_filter = 30
+        self.n_filter = h_dim // 3
         #self.h_dim = self.n_filter * 3
 
         self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
@@ -361,7 +361,7 @@ class GRUAttn_KeyCNN(nn.Module):
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 90, 2*h_dim + 90))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
