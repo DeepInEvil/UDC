@@ -93,7 +93,7 @@ def main():
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
-            print (model.conv3.grad)
+            #print (model.conv3.grad)
             #clip_gradient_threshold(model, -10, 10)
             solver.step()
             solver.zero_grad()
