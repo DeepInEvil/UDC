@@ -403,6 +403,7 @@ class GRUAttn_KeyCNN(nn.Module):
         key_c, key_r = self.get_weighted_key(x1, x2)
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
+        print (c_attn.size(), r.size())
 
         o = self.forward_fc(c_attn, r, key_c, key_r)
 
