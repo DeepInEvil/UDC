@@ -353,15 +353,21 @@ class GRUAttn_KeyCNN(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.n_filter = 40
-        #self.h_dim = self.n_filter * 3
+        self.rnn_key = nn.GRU(
+            input_size=50, hidden_size=h_dim,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
 
-        self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
-        self.conv4 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        # self.n_filter = 40
+        # #self.h_dim = self.n_filter * 3
+        #
+        # self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        # self.conv4 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
+        #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50, 2*h_dim + 50))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
@@ -422,11 +428,13 @@ class GRUAttn_KeyCNN(nn.Module):
         key_mask_r, keys_r = self.forward_key(x2)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
-        key_emb_c = self._forward(key_emb_c)
-        key_emb_r = self._forward(key_emb_r)
+        #key_emb_c = self._forward(key_emb_c)
+        #key_emb_r = self._forward(key_emb_r)
+        _, key_emb_c = self.rnn_key(key_emb_c)
+        _, key_emb_r = self.rnn_key(key_emb_r)
         #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
-        return key_emb_c, key_emb_r
+        return key_emb_c.squeeze(), key_emb_r.squeeze()
 
     def _forward(self, x):
         x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
@@ -517,7 +525,7 @@ class GRUAttn_KeyCNN_AllKeys(nn.Module):
         self.n_filter = 30
         self.h_key_dim = self.n_filter * 3
 
-        self.key_rnn = nn.GRU(input_size=emb_dim, hidden_size=50, batch_first=True)
+        #self.key_rnn = nn.GRU(input_size=emb_dim, hidden_size=50, batch_first=True)
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
@@ -582,22 +590,27 @@ class GRUAttn_KeyCNN_AllKeys(nn.Module):
 
         # print(keys_c.size(), keys_r.size())
 
-        keys_emb_c = Variable(torch.zeros(keys_c.size(0), keys_c.size(1), 50)).cuda()
+        keys_emb_c = Variable(torch.zeros(keys_c.size(0), keys_c.size(1), self.h_dim)).cuda()
 
         for i, key_c in enumerate(keys_c.transpose(0, 1)):  # iterate sequence
             # key_c: (batch, desc_len)
             key_emb_c = self.word_embed(key_c)
             # keys_emb_c[:, i, :] = self._forward(key_emb_c)
             # _, key_emb_c =
-            keys_emb_c[:, i, :] = self.key_rnn(key_emb_c)[1].squeeze()
+            _, k_c = self.rnn(key_emb_c)
+            k_c = torch.cat([k_c[0], k_c[1]], dim=-1)
+            keys_emb_c[:, i, :] = k_c
 
-        keys_emb_r = Variable(torch.zeros(keys_r.size(0), keys_r.size(1), 50)).cuda()
+        keys_emb_r = Variable(torch.zeros(keys_r.size(0), keys_r.size(1), self.h_dim)).cuda()
 
         for i, key_r in enumerate(keys_r.transpose(0, 1)):  # iterate sequence
             # key_r: (batch, desc_len)
             key_emb_r = self.word_embed(key_r)
             # keys_emb_r[:, i, :] = self._forward(key_emb_r)
-            keys_emb_r[:, i, :] = self.key_rnn(key_emb_r)[1].squeeze()
+            _, k_c = self.rnn(key_emb_r)
+            k_c = torch.cat([k_c[0], k_c[1]], dim=-1)
+            keys_emb_c[:, i, :] = k_c
+            keys_emb_r[:, i, :] = self.rnn(key_emb_r)[1].squeeze()
 
         # print(key_emb_c.size(), key_emb_r.size())
 
