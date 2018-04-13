@@ -510,7 +510,7 @@ class GRUAttn_KeyCNN_AllKeys(nn.Module):
         self.h_dim = h_dim
 
         self.rnn = nn.GRU(
-            input_size=emb_dim+50, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
