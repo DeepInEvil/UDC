@@ -403,7 +403,7 @@ class GRUAttn_KeyCNN(nn.Module):
         key_c, key_r = self.get_weighted_key(x1, x2)
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        print (c_attn.size(), r.size())
+        print (c_attn.size(), r.size(), key_r.size(), key_c.size())
 
         o = self.forward_fc(c_attn, r, key_c, key_r)
 
@@ -466,7 +466,7 @@ class GRUAttn_KeyCNN(nn.Module):
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
         _, r = self.rnn(x2_emb)
-        c = torch.cat([c[0], c[1]], dim=-1) #concat the bi directional stuffs
+        c = torch.cat([c[0], c[1]], dim=-1) # concat the bi-directional hidden layers
         r = torch.cat([r[0], r[1]], dim=-1)
 
         return sc, c.squeeze(), r.squeeze()
