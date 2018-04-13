@@ -367,7 +367,7 @@ class GRUAttn_KeyCNN(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50, 2*h_dim + 50))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
         self.scale = 1. / math.sqrt(max_seq_len)
@@ -431,8 +431,10 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         #key_emb_c = self._forward(key_emb_c)
         #key_emb_r = self._forward(key_emb_r)
-        _, key_emb_c = self.rnn_key(key_emb_c)
-        _, key_emb_r = self.rnn_key(key_emb_r)
+        _, c = self.rnn_key(key_emb_c)
+        _, r = self.rnn_key(key_emb_r)
+        key_emb_c = torch.cat([c[0], c[1]], dim=-1) # concat the bi-directional hidden layers
+        key_emb_r = torch.cat([r[0], r[1]], dim=-1)
         #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         return key_emb_c.squeeze(), key_emb_r.squeeze()
