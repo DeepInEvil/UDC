@@ -405,7 +405,7 @@ class GRUAttn_KeyCNN(nn.Module):
         c_attn = self.forward_attn(sc, r, x1mask)
 
         o = self.forward_fc(c_attn, r, key_c, key_r)
-
+        print (o.view(-1))
         return o.view(-1)
 
     def forward_key(self, context):
