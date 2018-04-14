@@ -340,7 +340,7 @@ class GRUDualAttnEnc(nn.Module):
 
 class GRUAttn_KeyCNN(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.5, max_seq_len=160):
         super(GRUAttn_KeyCNN, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -432,7 +432,7 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self._forward(key_emb_r)
         #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
-        return key_emb_c * key_mask_c, key_emb_r * key_mask_r
+        return key_emb_c, key_emb_r
 
     def _forward(self, x):
         x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
@@ -480,7 +480,7 @@ class GRUAttn_KeyCNN(nn.Module):
         x2 = x2.squeeze(0).unsqueeze(2)
         attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
-        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        attn_energies = F.tanh(attn.bmm(x2).transpose(1, 2)) #B,T,D * B,D,1 --> B,1,T
         alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
         alpha = alpha * mask  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
