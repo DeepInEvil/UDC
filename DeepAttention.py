@@ -366,7 +366,7 @@ class GRUAttn_KeyCNN(nn.Module):
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 1, 2*h_dim + self.n_filter * 3))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
@@ -410,7 +410,7 @@ class GRUAttn_KeyCNN(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), context.size(1))
+        key_mask = torch.zeros(context.size(0), self.n_filter * 3)
         keys = torch.zeros(context.size(0), 44)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
@@ -430,10 +430,10 @@ class GRUAttn_KeyCNN(nn.Module):
         key_emb_r = self.word_embed(keys_r)
         key_emb_c = self._forward(key_emb_c)
         key_emb_r = self._forward(key_emb_r)
-        print (key_mask_c, key_emb_c.size())
         #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         return key_emb_c * key_mask_c, key_emb_r * key_mask_r
+
     def _forward(self, x):
         x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
 
