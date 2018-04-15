@@ -472,7 +472,7 @@ class UDCv3:
 
         print('Finished loading dataset!')
 
-        self.q_idx = np.load('ubuntu_data/ques.npy')
+        self.q_idx = list(np.load('ubuntu_data/ques.npy'))
 
         self.n_train = len(self.train['y'])
         self.n_valid = len(self.valid['y'])
@@ -516,11 +516,9 @@ class UDCv3:
         r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
 
         for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
-
             #check if query
-            if row_c[-1] in self.q_idx:
-                if row_r[-1] in self.q_idx:
-                    print ('Query term')
+            if int(row_c[-1]) in self.q_idx:
+                if int(row_r[-1]) in self.q_idx:
                     q_l[j] = 1
 
             # Truncate
