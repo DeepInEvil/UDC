@@ -497,10 +497,10 @@ class UDCv3:
             y = dataset['y'][i:i+self.batch_size]
 
 
-            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, self.batch_size)
+            c, r, y, c_mask, r_mask, ql = self._load_batch(c, r, y, self.batch_size)
 
             if self.use_mask:
-                yield c, r, y, c_mask, r_mask
+                yield c, r, y, c_mask, r_mask, ql
             else:
                 yield c, r, y
 
