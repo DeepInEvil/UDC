@@ -55,6 +55,7 @@ udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, 
 model = GRUAttn_KeyCNN(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
+query_idx = np.load('ubuntu_data/ques.npy')
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
@@ -68,6 +69,18 @@ solver = optim.Adam(model.parameters(), lr=args.lr)
 
 if args.gpu:
     model.cuda()
+
+
+def compute_qloss(c, r, y):
+    qloss = torch.zeros(y.size(0))
+    for i in range(c.size(0)):
+        if c[i][-1] in query_idx:
+            if r[i][-1] in query_idx:
+                qloss[i] = torch.max(0, y[i]) * 0.005
+
+    return torch.mean(qloss)
+
+
 
 
 def main():
@@ -89,7 +102,7 @@ def main():
             context, response, y, cm, rm = mb
 
             output = model(context, response, cm)
-            loss = F.binary_cross_entropy_with_logits(output, y)
+            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(context, response, output)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
