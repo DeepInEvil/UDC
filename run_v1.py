@@ -74,6 +74,7 @@ if args.gpu:
 def compute_qloss(c, r, y):
     qloss = torch.zeros(y.size(0))
     for i in range(c.size(0)):
+        print (c[i])
         if c[i][-1] in query_idx:
             if r[i][-1] in query_idx:
                 print ('adding loss term!')
