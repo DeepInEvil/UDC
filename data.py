@@ -443,3 +443,107 @@ class UDCv2:
             c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
 
         return c, r, y, c_mask, r_mask
+
+
+class UDCv3:
+    """
+    Wrapper for UDCv2 taken from: http://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/.
+    Everything has been preprocessed and converted to numerical indexes.
+    """
+
+    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
+        self.batch_size = batch_size
+        self.max_seq_len_c = max_seq_len
+        self.max_seq_len_r = int(max_seq_len/2)
+        self.use_mask = use_mask
+        self.gpu = gpu
+
+        with open(f'{path}/dataset_1M.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
+
+        if use_fasttext:
+            vectors = np.load(f'{path}/fast_text_200_v.npy')
+            #vectors = np.load(f'{path}/w2vec_200.npy')
+            #man_vec = np.load(f'{path}/key_vec.npy')
+        else:
+            with open(f'{path}/W.pkl', 'rb') as f:
+                vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+
+        print('Finished loading dataset!')
+
+        self.q_idx = np.load('ubuntu_data/ques.npy')
+
+        self.n_train = len(self.train['y'])
+        self.n_valid = len(self.valid['y'])
+        self.n_test = len(self.test['y'])
+        self.vectors = torch.from_numpy(vectors.astype(np.float32))
+        #self.man_vec = torch.from_numpy(man_vec.astype(np.float32))
+
+        self.vocab_size = self.vectors.size(0)
+        self.emb_dim = self.vectors.size(1)
+
+    def get_iter(self, dataset='train'):
+        if dataset == 'train':
+            dataset = self.train
+        elif dataset == 'valid':
+            dataset = self.valid
+        else:
+            dataset = self.test
+
+        for i in range(0, len(dataset['y']), self.batch_size):
+            c = dataset['c'][i:i+self.batch_size]
+            r = dataset['r'][i:i+self.batch_size]
+            y = dataset['y'][i:i+self.batch_size]
+
+
+            c, r, y, c_mask, r_mask = self._load_batch(c, r, y, self.batch_size)
+
+            if self.use_mask:
+                yield c, r, y, c_mask, r_mask
+            else:
+                yield c, r, y
+
+    def _load_batch(self, c, r, y, size):
+        c_arr = np.zeros([size, self.max_seq_len_c], np.int)
+        r_arr = np.zeros([size, self.max_seq_len_r], np.int)
+        y_arr = np.zeros(size, np.float32)
+
+        q_l_c = np.zeros(size, np.float32)
+        q_l_r = np.zeros(size, np.float32)
+
+
+        c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
+        r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
+
+        for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
+
+            #check if query
+
+            print (row_c)
+
+            # Truncate
+            row_c = row_c[:self.max_seq_len_c]
+            row_r = row_r[:self.max_seq_len_r]
+
+            c_arr[j, :len(row_c)] = row_c
+            r_arr[j, :len(row_r)] = row_r
+            y_arr[j] = float(row_y)
+
+
+            c_mask[j, :len(row_c)] = 1
+            r_mask[j, :len(row_r)] = 1
+
+        # Convert to PyTorch tensor
+        c = Variable(torch.from_numpy(c_arr))
+        r = Variable(torch.from_numpy(r_arr))
+        y = Variable(torch.from_numpy(y_arr))
+        c_mask = Variable(torch.from_numpy(c_mask))
+        r_mask = Variable(torch.from_numpy(r_mask))
+
+        # Load to GPU
+        if self.gpu:
+            c, r, y = c.cuda(), r.cuda(), y.cuda()
+            c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
+
+        return c, r, y, c_mask, r_mask

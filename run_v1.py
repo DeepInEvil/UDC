@@ -7,7 +7,7 @@ import numpy as np
 from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
-from data import UDCv1, UDCv2
+from data import UDCv1, UDCv2, UDCv3
 from evaluation import eval_model_v1
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
@@ -49,13 +49,13 @@ if args.gpu:
 
 max_seq_len = 320
 
-udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv3('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUAttn_KeyCNN(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-query_idx = torch.from_numpy(np.load('ubuntu_data/ques.npy'))
+
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
@@ -70,7 +70,7 @@ solver = optim.Adam(model.parameters(), lr=args.lr)
 if args.gpu:
     model.cuda()
 
-
+'''
 def compute_qloss(c, r, y):
     qloss = torch.zeros(y.size(0))
     for i in range(c.size(0)):
@@ -81,7 +81,7 @@ def compute_qloss(c, r, y):
                 qloss[i] = torch.max(0, y[i]) * 0.005
 
     return torch.mean(qloss)
-
+'''
 
 def main():
     for epoch in range(args.n_epoch):
