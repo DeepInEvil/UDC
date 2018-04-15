@@ -55,7 +55,7 @@ udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, 
 model = GRUAttn_KeyCNN(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-query_idx = np.load('ubuntu_data/ques.npy')
+query_idx = list(np.load('ubuntu_data/ques.npy'))
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
