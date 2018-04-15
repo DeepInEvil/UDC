@@ -76,6 +76,7 @@ def compute_qloss(c, r, y):
     for i in range(c.size(0)):
         if c[i][-1] in query_idx:
             if r[i][-1] in query_idx:
+                print ('adding loss term!')
                 qloss[i] = torch.max(0, y[i]) * 0.005
 
     return torch.mean(qloss)
