@@ -541,7 +541,7 @@ class UDCv3:
         y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
-        q_l = Variable(torch.from_numpy(q_l).t  )
+        q_l = Variable(torch.from_numpy(q_l))
 
         # Load to GPU
         if self.gpu:
