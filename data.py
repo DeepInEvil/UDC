@@ -520,6 +520,7 @@ class UDCv3:
             #check if query
             if row_c[-1] in self.q_idx:
                 if row_r[-1] in self.q_idx:
+                    print ('Query term')
                     q_l[j] = 1
 
             # Truncate
@@ -540,7 +541,7 @@ class UDCv3:
         y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
-        q_l = Variable(torch.from_numpy(q_l))
+        q_l = Variable(torch.from_numpy(q_l).t  )
 
         # Load to GPU
         if self.gpu:

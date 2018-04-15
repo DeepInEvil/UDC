@@ -74,12 +74,8 @@ if args.gpu:
 def compute_qloss(ql, y):
     qloss = torch.zeros(y.size(0))
     for i in range(ql.size(0)):
-        if ql[i]:
-            print ('adding loss term!')
-            qloss[i] = torch.max(0, y[i]) * 0.005
-
+        qloss[i] = ql[i] * torch.max(0, y[i]) * 0.005
     return torch.mean(qloss)
-
 
 
 def main():
@@ -99,7 +95,6 @@ def main():
 
         for it, mb in train_iter:
             context, response, y, cm, rm, ql = mb
-            print (ql.size())
             output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(ql, output)
             # loss = F.mse_loss(F.sigmoid(output), y)
