@@ -509,8 +509,7 @@ class UDCv3:
         r_arr = np.zeros([size, self.max_seq_len_r], np.int)
         y_arr = np.zeros(size, np.float32)
 
-        q_l_c = np.zeros(size, np.float32)
-        q_l_r = np.zeros(size, np.float32)
+        q_l = np.zeros(size, np.float32)
 
 
         c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
@@ -519,8 +518,9 @@ class UDCv3:
         for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
 
             #check if query
-
-            print (row_c)
+            if row_c[-1] in self.q_idx:
+                if row_r[-1] in self.q_idx:
+                    q_l[j] = 1
 
             # Truncate
             row_c = row_c[:self.max_seq_len_c]
@@ -540,10 +540,12 @@ class UDCv3:
         y = Variable(torch.from_numpy(y_arr))
         c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
+        q_l = Variable(torch.from_numpy(q_l))
 
         # Load to GPU
         if self.gpu:
             c, r, y = c.cuda(), r.cuda(), y.cuda()
             c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
+            q_l = q_l.cuda()
 
-        return c, r, y, c_mask, r_mask
+        return c, r, y, c_mask, r_mask, q_l

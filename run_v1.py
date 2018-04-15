@@ -70,18 +70,16 @@ solver = optim.Adam(model.parameters(), lr=args.lr)
 if args.gpu:
     model.cuda()
 
-'''
-def compute_qloss(c, r, y):
+
+def compute_qloss(ql, y):
     qloss = torch.zeros(y.size(0))
-    for i in range(c.size(0)):
-        print (c[i])
-        if c[i][-1] in query_idx:
-            if r[i][-1] in query_idx:
-                print ('adding loss term!')
-                qloss[i] = torch.max(0, y[i]) * 0.005
+    for i in range(ql.size(0)):
+        if ql[i]:
+            print ('adding loss term!')
+            qloss[i] = torch.max(0, y[i]) * 0.005
 
     return torch.mean(qloss)
-'''
+
 
 
 def main():
@@ -100,10 +98,10 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm = mb
-
+            context, response, y, cm, rm, ql = mb
+            print (ql.size())
             output = model(context, response, cm)
-            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(context, response, output)
+            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(ql, output)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
