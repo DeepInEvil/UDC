@@ -21,6 +21,18 @@ model = GRUDualAttnEnc(
     udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
 )
 
+vocab = open('ubuntu_data/vocab.txt', 'r').readlines()
+w2id = {}
+for word in vocab:
+    w = word.split('\n')[0].split('\t')
+    w2id[w[0]] = int(w[1])
+
+i2w = {v: k for k, v in w2id.items()}
+
+
+def get_words(sent):
+    return ' '.join(i2w[w] for w in sent)
+
 
 def eval_test():
     print('\n\nEvaluating on test set...')
@@ -52,9 +64,9 @@ def evaluate_recall(y_pred, k=1):
     num_correct = 0.0
     predictions = sorted_idxs
     if 0 in predictions[:k].cpu().data:
-        return True
+        return True, _
     else:
-        return False
+        return False, predictions[0]
 
 
 def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
@@ -71,7 +83,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
         data_iter.total = n_data // dataset.batch_size
 
-    outs = []
+    out_file = open('ubuntu_data/wrong_preds.txt', 'w')
     tot = 0.0
     correct = 0.0
     for mb in data_iter:
@@ -82,13 +94,21 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores_mb = scores_mb.cpu() if gpu else scores_mb
 
         for j in range(0, len(context), 10):
-            if evaluate_recall(scores_mb[j:j+10]):
+            corr, _ = evaluate_recall(scores_mb[j:j+10])
+            if corr:
                 correct += 1
                 tot += 1
             else:
                 tot += 1
+                cntxt = get_words(torch.from_numpy(context[j]))
+                correct_response = get_words(torch.from_numpy(response[j]))
+                predicted = get_words(torch.from_numpy(response[j+_]))
 
+                out_file.write(cntxt+'\t'+correct_response + '\t' + predicted)
+                out_file.write('\n')
         scores.append(scores_mb.data.numpy())
+    out_file.close()
+    print (tot)
     print (correct/tot)
     scores = np.concatenate(scores)
     print (scores.shape)
