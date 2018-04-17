@@ -5,7 +5,7 @@ import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
-
+from evaluation import eval_model_v1
 from hybrid_model import GRUDualEncoderPlusVAE
 from data import UDCv2
 from evaluation import recall_at_k, eval_model_hybrid_v1
@@ -76,7 +76,7 @@ for epoch in range(args.n_vae_epoch):
     train_iter.total = udc.n_train // udc.batch_size
 
     for it, mb in train_iter:
-        context, response, y, _, _ = mb
+        context, response, y, _, _= mb
 
         recon_loss, kl_loss = model.forward_vae(context)
         loss = recon_loss + kld_weight*kl_loss
