@@ -100,9 +100,9 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
                 tot += 1
             else:
                 tot += 1
-                cntxt = get_words(torch.from_numpy(context[j]))
-                correct_response = get_words(torch.from_numpy(response[j]))
-                predicted = get_words(torch.from_numpy(response[j+_]))
+                cntxt = get_words((context[j].data.numpy()))
+                correct_response = get_words((response[j].data.numpy()))
+                predicted = get_words((response[j+_].data.numpy()))
 
                 out_file.write(cntxt+'\t'+correct_response + '\t' + predicted)
                 out_file.write('\n')
