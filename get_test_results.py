@@ -57,12 +57,12 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
 
     for mb in data_iter:
         context, response, y, cm, rm = mb
+        print (context.size())
 
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         scores.append(scores_mb.data.numpy())
-    print (scores)
     scores = np.concatenate(scores)
     print (scores.shape)
     scores = scores[:-(scores.shape[0] % 10)]
