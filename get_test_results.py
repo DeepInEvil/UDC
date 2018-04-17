@@ -14,7 +14,7 @@ from util import load_model
 
 from tqdm import tqdm
 
-udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=256, use_mask=True,
+udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=500, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUDualAttnEnc(
@@ -57,7 +57,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
 
     for mb in data_iter:
         context, response, y, cm, rm = mb
-        print (context.size())
 
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm))
