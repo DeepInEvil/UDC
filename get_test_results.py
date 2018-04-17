@@ -64,7 +64,8 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores.append(scores_mb.data.numpy())
     scores = np.concatenate(scores)
     print (scores.shape)
-    scores = scores[:-(scores.shape[0] % 10)]
+    #scores = scores[:-(scores.shape[0] % 10)]
+    scores = scores[:-(scores.shape[0])]
     scores = scores.reshape(-1, 10)  # 1 in 10
     recall_at_ks = [r for r in recall_at_k_np(scores)]
 
