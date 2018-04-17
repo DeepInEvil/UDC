@@ -48,14 +48,13 @@ def evaluate_recall(y_pred, k=1):
     :param k: recall test value
     :return:
     """
-    num_examples = float(y_pred.size(0))
-    _, sorted_idxs = torch.sort(y_pred, dim=1, descending=True)
+    _, sorted_idxs = torch.sort(y_pred, dim=0, descending=True)
     num_correct = 0.0
-    for i in range(sorted_idxs.size(0)):
-        predictions = sorted_idxs[i]
-        if 0 in predictions[:k].cpu().data:
-            num_correct += 1.0
-    return num_correct/num_examples
+    predictions = sorted_idxs
+    if 0 in predictions[:k].cpu().data:
+        return True
+    else:
+        return False
 
 
 def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
@@ -73,6 +72,8 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     outs = []
+    tot = 0.0
+    correct = 0.0
     for mb in data_iter:
         context, response, y, cm, rm = mb
 
@@ -81,8 +82,14 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores_mb = scores_mb.cpu() if gpu else scores_mb
 
         for j in range(0, len(context), 10):
-            print (y[j: j + 10])
+            if evaluate_recall(scores_mb[j:j+10]):
+                correct += 1
+                tot += 1
+            else:
+                tot += 1
+
         scores.append(scores_mb.data.numpy())
+    print (correct/tot)
     scores = np.concatenate(scores)
     print (scores.shape)
     #scores = scores[:-(scores.shape[0] % 10)]
