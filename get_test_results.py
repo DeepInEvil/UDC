@@ -41,6 +41,23 @@ def recall_at_k_np(scores, ks=[1, 2, 3, 4, 5]):
     return recalls
 
 
+def evaluate_recall(y_pred, k=1):
+    """
+    Get a batch of scores and compute the recalls
+    :param y_pred: predicted batch of candidates batch_size x 10
+    :param k: recall test value
+    :return:
+    """
+    num_examples = float(y_pred.size(0))
+    _, sorted_idxs = torch.sort(y_pred, dim=1, descending=True)
+    num_correct = 0.0
+    for i in range(sorted_idxs.size(0)):
+        predictions = sorted_idxs[i]
+        if 0 in predictions[:k].cpu().data:
+            num_correct += 1.0
+    return num_correct/num_examples
+
+
 def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     model.eval()
     scores = []
@@ -55,12 +72,16 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
         data_iter.total = n_data // dataset.batch_size
 
+    outs = []
     for mb in data_iter:
         context, response, y, cm, rm = mb
 
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
+
+        for j in range(0, len(context), 10):
+            print (y[j: j + 10])
         scores.append(scores_mb.data.numpy())
     scores = np.concatenate(scores)
     print (scores.shape)
