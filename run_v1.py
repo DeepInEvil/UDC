@@ -98,7 +98,7 @@ def main():
         for it, mb in train_iter:
             context, response, y, cm, rm, ql = mb
             output = model(context, response, cm)
-            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(ql, output)
+            loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()

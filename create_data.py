@@ -34,10 +34,10 @@ def get_values(file, get_c_d=False):
     c = [' __EOS__ '.join(a[1:-1]).split() for a in data]
     r = [a[-1].split() for a in data]
     if get_c_d:
-        for sent in c:
-            sent = ' '.join(sent)
-            for c in sent:
-                chars.append(c)
+        for word in c:
+            sent = ' '.join(word)
+            for char in sent:
+                chars.append(char)
         chars = set(chars)
         return y, c, r, dict(zip(chars, range(len(chars))))
     else:
