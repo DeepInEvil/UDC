@@ -13,11 +13,11 @@ from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
 from util import load_model
 
-udc = UDCv3('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
-            max_seq_len=320, gpu=args.gpu, use_fasttext=True)
+udc = UDCv3('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=256, use_mask=True,
+            max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUDualAttnEnc(
-    udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
 )
 
 
@@ -26,7 +26,7 @@ def eval_test():
     print('-------------------------------')
 
     recall_at_ks = eval_model_v1(
-        model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
+        model, udc, 'test', gpu=True, no_tqdm=True
     )
 
     print('Recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
