@@ -13,7 +13,7 @@ from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
 from util import load_model
 
-udc = UDCv3('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=256, use_mask=True,
+udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=256, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUDualAttnEnc(
