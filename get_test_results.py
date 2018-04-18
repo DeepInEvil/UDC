@@ -111,6 +111,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
                 tot += 1
                 cntxt = get_words((context[j].cpu().data.numpy()))
                 correct_response = get_words((response[j].cpu().data.numpy()))
+                print (response[j+_].cpu().data.numpy())
                 predicted = get_words((response[j+_].cpu().data.numpy()))
 
                 out_file.write(cntxt+'\t'+correct_response + '\t' + predicted)
