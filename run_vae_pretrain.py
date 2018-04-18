@@ -123,7 +123,7 @@ def main():
             solver.zero_grad()
 
         # Validation
-        recall_at_ks = eval_model_v1(
+        recall_at_ks = eval_model_hybrid_v1(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -140,7 +140,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model_v1(
+    recall_at_ks = eval_model_hybrid_v1(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
