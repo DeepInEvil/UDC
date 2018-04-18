@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3
-from evaluation import eval_model_v1
+from evaluation import eval_model_v1, eval_model_v2
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
 
@@ -98,7 +98,7 @@ def main():
         for it, mb in train_iter:
             context, response, y, cm, rm, ql = mb
             output = model(context, response, cm)
-            loss = F.binary_cross_entropy_with_logits(output, y)
+            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(ql, output)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
@@ -108,7 +108,7 @@ def main():
             solver.zero_grad()
 
         # Validation
-        recall_at_ks = eval_model_v1(
+        recall_at_ks = eval_model_v2(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -125,7 +125,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model_v1(
+    recall_at_ks = eval_model_v2(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
