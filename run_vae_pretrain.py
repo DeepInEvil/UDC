@@ -37,6 +37,8 @@ parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
 parser.add_argument('--randseed', type=int, default=123, metavar='',
                     help='random seed (default: 123)')
+parser.add_argument('--no_tqdm', default=False, action='store_true',
+                    help='disable tqdm progress bar')
 
 args = parser.parse_args()
 
