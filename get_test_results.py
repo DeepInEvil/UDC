@@ -30,8 +30,15 @@ for word in vocab:
 i2w = {v: k for k, v in w2id.items()}
 
 
+def getI2W(word):
+    try:
+        return i2w[w]
+    except KeyError:
+        return '__PAD__'
+
+
 def get_words(sent):
-    return ' '.join(i2w[w] for w in sent)
+    return ' '.join(get_words()[w] for w in sent)
 
 
 def eval_test():
