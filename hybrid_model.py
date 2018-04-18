@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from model import LSTMDualEncoder, GRUDualEncoder
-
+from collections import _chain
 
 class HybridModel(nn.Module):
 
@@ -252,7 +252,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
 
         # Grouping params
         self.retrieval_params = self.retrieval_model.parameters()
-        self.vae_params = chain(
+        self.vae_params = _chain(
             self.retrieval_model.word_embed.parameters(),
             self.vae_encoder.parameters(),
             self.latent_mu_fc.parameters(),
