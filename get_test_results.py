@@ -75,7 +75,7 @@ def evaluate_recall(y_pred, k=1):
     if 0 in predictions[:k].cpu().data:
         return True, _
     else:
-        return False, predictions[0]
+        return False, predictions[0].cuda()
 
 
 def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
