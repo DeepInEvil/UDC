@@ -39,9 +39,8 @@ def getI2W(word):
 
 def get_words(sent):
     #print (sent)
-    for w in sent:
-        print (w)
-    return ' '.join(getI2W(w) for w in sent)
+    sents = [getI2W(w) for w in sent]
+    return ' '.join(sents)
 
 
 def eval_test():
