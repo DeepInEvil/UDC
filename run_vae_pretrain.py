@@ -98,7 +98,7 @@ for epoch in range(args.n_vae_epoch):
 
 def main():
     # Freeze VAE, only optimize retrieval model
-    solver = optim.Adam(model.retrieval_params(), lr=args.lr)
+    solver = optim.Adam(model.retrieval_params, lr=args.lr)
 
     for epoch in range(args.n_epoch):
         print('\n\n-------------------------------------------')
