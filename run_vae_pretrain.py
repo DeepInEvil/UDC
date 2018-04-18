@@ -58,12 +58,13 @@ eos_idx = 63346
 pad_idx = 0
 model = GRUDualEncoderPlusVAE(udc.emb_dim, udc.vocab_size, args.h_dim, args.z_dim, udc.vectors, eos_idx, pad_idx, 0.5, args.gpu)
 
-solver = optim.Adam(model.parameters(), lr=1e-3)
+# Freeze retrieval model, only optimize VAE
+solver = optim.Adam(model.vae_params(), lr=args.lr)
 
 n_iter = args.n_epoch * (udc.n_train // udc.batch_size)
-kld_start_inc = 3000
+kld_start_inc = 7000
 kld_weight = 0.01
-kld_max = 0.15
+kld_max = 1
 kld_inc = (kld_max - kld_weight) / (n_iter - kld_start_inc)
 
 # Pretrain VAE
@@ -96,6 +97,9 @@ for epoch in range(args.n_vae_epoch):
 
 
 def main():
+    # Freeze VAE, only optimize retrieval model
+    solver = optim.Adam(model.retrieval_params(), lr=args.lr)
+
     for epoch in range(args.n_epoch):
         print('\n\n-------------------------------------------')
         print('Epoch-{}'.format(epoch))

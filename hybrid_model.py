@@ -250,6 +250,17 @@ class GRUDualEncoderPlusVAE(nn.Module):
         self.vae_decoder = nn.GRU(emb_dim, h_dim, batch_first=True)
         self.vae_decoder_fc = nn.Linear(h_dim, n_vocab)
 
+        # Grouping params
+        self.retrieval_params = self.retrieval_model.parameters()
+        self.vae_params = chain(
+            self.retrieval_model.word_embed.parameters(),
+            self.vae_encoder.parameters(),
+            self.latent_mu_fc.parameters(),
+            self.latent_logvar_fc.parameters(),
+            self.vae_decoder.parameters(),
+            self.vae_decoder_fc.parameters()
+        )
+
         if gpu:
             self.cuda()
 
