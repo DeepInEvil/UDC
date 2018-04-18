@@ -316,3 +316,6 @@ class GRUDualEncoderPlusVAE(nn.Module):
         kl_loss = torch.mean(0.5 * torch.sum(torch.exp(z_logvar) + z_mu**2 - 1 - z_logvar, 1))
 
         return recon_loss, kl_loss
+
+    def predict(self, x1, x2):
+        return self.forward(x1, x2)
