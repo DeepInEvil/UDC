@@ -32,7 +32,7 @@ i2w = {v: k for k, v in w2id.items()}
 
 def getI2W(word):
     try:
-        return i2w[w]
+        return i2w[word]
     except KeyError:
         return '__PAD__'
 
