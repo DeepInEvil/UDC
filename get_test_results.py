@@ -38,6 +38,7 @@ def getI2W(word):
 
 
 def get_words(sent):
+    print (sent)
     return ' '.join(getI2W(w) for w in sent)
 
 
