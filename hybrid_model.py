@@ -289,7 +289,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
 
         return outputs, targets
 
-    def forward(self, x1, x2, m):
+    def forward(self, x1, x2, cm):
         """
         Inputs:
         -------
@@ -301,7 +301,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         """
         mb_size = x2.size(0)
 
-        c, r = self.retrieval_model.forward_enc(x1, x2)
+        sc, c, r = self.retrieval_model.forward_enc(x1, x2)
 
         vae_c = self.vae_encoder(self.retrieval_model.word_embed(x1))[1].squeeze()
         zc_mu = self.latent_mu_fc(vae_c)
@@ -312,7 +312,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         c = torch.cat([c, zc_mu], -1)
         r = torch.cat([r, zr_mu], -1)
 
-        out = self.retrieval_model.forward(c, r, m).squeeze()
+        out = self.retrieval_model.forward(c, r, cm).squeeze()
 
         return out
 
