@@ -270,7 +270,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         z = mu + torch.exp(logvar/2) * eps
         return z.unsqueeze(0)
 
-    def forward_decoder(self, x, init_state, max_seq_len=50):
+    def forward_decoder(self, x, init_state, max_seq_len=20):
         # sentence: 'I want to fly __eos__ __pad__ __pad__'
         # decoder input : '__eos__ I want to fly __eos__ __pad__'
         # decoder target: 'I want to fly __eos__ __pad__ __pad__'
@@ -309,10 +309,10 @@ class GRUDualEncoderPlusVAE(nn.Module):
         vae_r = self.vae_encoder(self.retrieval_model.word_embed(x2))[1].squeeze()
         zr_mu = self.latent_mu_fc(vae_r)
 
-        c = torch.cat([c, zc_mu], 1)
-        r = torch.cat([r, zr_mu], 1)
+        c = torch.cat([c, zc_mu], -1)
+        r = torch.cat([r, zr_mu], -1)
 
-        out = self.retrieval_model.forward_fc(c, r).squeeze()
+        out = self.retrieval_model.forward(c, r).squeeze()
 
         return out
 
