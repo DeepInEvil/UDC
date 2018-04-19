@@ -521,7 +521,7 @@ class UDCv3:
             try:
                 idx_eos = row_c.index(63346, -1)
             except ValueError:
-                idx_eos = 0
+                idx_eos = -1
             last_utr = row_c[idx_eos+1:]
             if int(row_c[-1]) in self.q_idx or int(last_utr[0]) in self.w1h:
                 if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
