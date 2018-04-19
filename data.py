@@ -518,7 +518,7 @@ class UDCv3:
 
         for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
             #check if query
-            last_utr = row_c.split(63346)[-1]
+            last_utr = str(row_c).split(63346)[-1]
             if int(row_c[-1]) in self.q_idx or int(last_utr[0]) in self.w1h:
                 if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
                     q_l[j] = 1
