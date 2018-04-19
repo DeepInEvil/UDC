@@ -49,7 +49,7 @@ if args.gpu:
 
 max_seq_len = 320
 
-udc = UDCv3('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUDualAttnEnc(
@@ -78,7 +78,7 @@ def compute_qloss(ql, y):
         qloss[i] = ql[i] * F.relu(y[i]) * 0.001
         tot += 1
 
-    #print (torch.mean(qloss))
+    print torch.sum(qloss)/tot
     return torch.sum(qloss)/tot
 
 
