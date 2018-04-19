@@ -231,7 +231,7 @@ class VAEDualEncoder(nn.Module):
 
 class GRUDualEncoderPlusVAE(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim, z_dim, pretrained_emb=None, eos_idx=63346, pad_idx=0, emb_drop=0.5, gpu=False):
+    def __init__(self, emb_dim, n_vocab, h_dim, z_dim, pretrained_emb=None, eos_idx=63346, pad_idx=0, emb_drop=0.6, gpu=False):
         super(GRUDualEncoderPlusVAE, self).__init__()
 
         self.EOS_IDX = eos_idx
@@ -289,7 +289,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
 
         return outputs, targets
 
-    def forward(self, x1, x2):
+    def forward(self, x1, x2, m):
         """
         Inputs:
         -------
@@ -312,7 +312,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         c = torch.cat([c, zc_mu], -1)
         r = torch.cat([r, zr_mu], -1)
 
-        out = self.retrieval_model.forward(c, r).squeeze()
+        out = self.retrieval_model.forward(c, r, m).squeeze()
 
         return out
 

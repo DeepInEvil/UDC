@@ -51,7 +51,7 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv2('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 eos_idx = 63346
@@ -117,7 +117,7 @@ def main():
         for it, mb in train_iter:
             context, response, y, cm, rm = mb
 
-            output = model.forward(context, response)
+            output = model.forward(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
