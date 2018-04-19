@@ -73,11 +73,13 @@ if args.gpu:
 
 def compute_qloss(ql, y):
     qloss = Variable(torch.zeros(y.size(0))).cuda()
+    tot = 0.0
     for i in range(ql.size(0)):
         qloss[i] = ql[i] * F.relu(y[i]) * 0.001
+        tot += 1
 
-    print (torch.mean(qloss))
-    return torch.mean(qloss)
+    #print (torch.mean(qloss))
+    return torch.sum(qloss)/tot
 
 
 def main():
