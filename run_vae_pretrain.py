@@ -42,7 +42,7 @@ parser.add_argument('--no_tqdm', default=False, action='store_true',
 
 args = parser.parse_args()
 
-max_seq_len = 160
+max_seq_len = 320
 
 # Set random seed
 np.random.seed(args.randseed)

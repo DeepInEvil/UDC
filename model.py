@@ -227,6 +227,117 @@ class GRUDualEncoder(nn.Module):
         return o
 
 
+class GRUDualEncoderAttn(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.5, pad_idx=0, z_dim=None):
+        super(GRUDualEncoderAttn, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+
+        self.rnn = nn.GRU(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
+
+        self.emb_drop = nn.Dropout(emb_drop)
+
+        if z_dim is None:
+            self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        else:
+            self.M = nn.Parameter(torch.FloatTensor(2*h_dim+z_dim, 2*h_dim+z_dim))
+
+        self.attn = nn.Linear(2*h_dim, 2*h_dim)
+
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+
+        self.init_params_()
+
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+        #init.xavier_uniform(self.attn.data)
+
+    def forward(self, x1, x2, x1mask):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        sc, c, r = self.forward_enc(x1, x2)
+        c_attn = self.forward_attn(sc, r, x1mask)
+        o = self.forward_fc(c_attn, r)
+        #print (c_attn.size())
+
+        #o = F.tanh(self.out_hidden(c_attn))
+        #o = self.out_drop(o)
+        return o.view(-1)
+
+    def forward_enc(self, x1, x2):
+        """
+        x1, x2: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.emb_drop(self.word_embed(x1))
+        x2_emb = self.emb_drop(self.word_embed(x2))
+
+        # Each is (1 x batch_size x h_dim)
+        sc, c = self.rnn(x1_emb)
+        _, r = self.rnn(x2_emb)
+        c = torch.cat([c[0], c[1]], dim=-1)
+        r = torch.cat([r[0], r[1]], dim=-1)
+
+        return sc, c.squeeze(), r.squeeze()
+
+    def forward_attn(self, x1, x2, mask):
+        """
+        attention
+        :param x1: batch X seq_len X dim
+        :return:
+        """
+        max_len = x1.size(1)
+        b_size = x1.size(0)
+
+        x2 = x2.squeeze(0).unsqueeze(2)
+        attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
+        attn = attn.view(b_size, max_len, -1) # B,T,D
+        attn_energies = attn.bmm(x2).transpose(1, 2) #B,T,D * B,D,1 --> B,1,T
+        alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
+        alpha = alpha * mask  # B, T
+        alpha = alpha.unsqueeze(1)  # B,1,T
+        weighted_attn = alpha.bmm(x1)  # B,T
+
+        return weighted_attn.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        c, r: tensor of (batch_size, h_dim)
+        """
+        # (batch_size x 1 x h_dim)
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
+
+
 class LSTMDualEncPack(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False):

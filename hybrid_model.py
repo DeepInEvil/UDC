@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from model import LSTMDualEncoder, GRUDualEncoder
+from model import LSTMDualEncoder, GRUDualEncoder, GRUDualEncoderAttn
 from itertools import chain
 
 class HybridModel(nn.Module):
@@ -240,7 +240,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         self.z_dim = z_dim
         self.gpu = gpu
 
-        self.retrieval_model = GRUDualEncoder(emb_dim, n_vocab, h_dim, pretrained_emb, gpu, emb_drop, pad_idx, z_dim=z_dim)
+        self.retrieval_model = GRUDualEncoderAttn(emb_dim, n_vocab, h_dim, pretrained_emb, gpu, emb_drop, pad_idx, z_dim=z_dim)
         self.dropout = nn.Dropout(p=emb_drop)
 
         self.vae_encoder = nn.GRU(emb_dim, h_dim, batch_first=True)
@@ -270,7 +270,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         z = mu + torch.exp(logvar/2) * eps
         return z.unsqueeze(0)
 
-    def forward_decoder(self, x, init_state, max_seq_len=16):
+    def forward_decoder(self, x, init_state, max_seq_len=50):
         # sentence: 'I want to fly __eos__ __pad__ __pad__'
         # decoder input : '__eos__ I want to fly __eos__ __pad__'
         # decoder target: 'I want to fly __eos__ __pad__ __pad__'
