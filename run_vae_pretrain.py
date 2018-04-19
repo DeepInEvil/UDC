@@ -59,7 +59,7 @@ pad_idx = 0
 model = GRUDualEncoderPlusVAE(udc.emb_dim, udc.vocab_size, args.h_dim, args.z_dim, udc.vectors, eos_idx, pad_idx, 0.5, args.gpu)
 
 # Freeze retrieval model, only optimize VAE
-solver = optim.Adam(model.vae_params, lr=args.lr)
+solver = optim.Adam(model.vae_params, lr=args.lr/10)
 
 n_iter = args.n_epoch * (udc.n_train // udc.batch_size)
 kld_start_inc = 7000
