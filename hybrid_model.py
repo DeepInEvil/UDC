@@ -322,7 +322,7 @@ class GRUDualEncoderPlusVAE(nn.Module):
         z_logvar = self.latent_logvar_fc(enc_out)
         z = self.sample_z(z_mu, z_logvar)
         outputs, targets = self.forward_decoder(x, z)
-
+        print (z_mu)
         recon_loss = F.cross_entropy(outputs, targets.contiguous().view(-1))
         kl_loss = torch.mean(0.5 * torch.sum(torch.exp(z_logvar) + z_mu**2 - 1 - z_logvar, 1))
 
