@@ -523,9 +523,13 @@ class UDCv3:
             except ValueError:
                 idx_eos = -1
             last_utr = row_c[idx_eos+1:]
-            if int(row_c[-1]) in self.q_idx or int(last_utr[0]) in self.w1h:
+            if int(row_c[-1]) in self.q_idx:
                 if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
                     q_l[j] = 1
+            elif:
+                if int(last_utr[0]) in self.w1h:
+                    if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
+                        q_l[j] = 1
 
             # Truncate
             row_c = row_c[:self.max_seq_len_c]
