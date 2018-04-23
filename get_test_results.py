@@ -14,7 +14,7 @@ from util import load_model
 
 from tqdm import tqdm
 
-udc = UDCv2('/home/DebanjanChaudhuri/UDC/ubuntu_data', batch_size=250, use_mask=True,
+udc = UDCv2('ubuntu_data', batch_size=250, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUDualAttnEnc(
