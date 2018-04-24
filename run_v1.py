@@ -78,7 +78,7 @@ def compute_qloss(ql, y):
         qloss[i] = ql[i] * F.relu(y[i]) * 0.001
         tot += 1
 
-    print torch.sum(qloss)/tot
+    #print torch.sum(qloss)/tot
     return torch.sum(qloss)/tot
 
 
