@@ -340,7 +340,7 @@ class GRUDualAttnEnc(nn.Module):
 
 class GRUAttn_KeyCNN(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.5, max_seq_len=160):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttn_KeyCNN, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -366,7 +366,7 @@ class GRUAttn_KeyCNN(nn.Module):
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim + self.n_filter * 3, 2*h_dim + self.n_filter * 3))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + self.n_filter * 3))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
@@ -493,7 +493,7 @@ class GRUAttn_KeyCNN(nn.Module):
         c, r: tensor of (batch_size, h_dim)
         """
         # (batch_size x 1 x h_dim)
-        c = torch.cat([c, key_c], dim=-1)
+        #c = torch.cat([c, key_c], dim=-1)
         r = torch.cat([r, key_r], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
