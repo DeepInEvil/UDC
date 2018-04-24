@@ -366,7 +366,7 @@ class GRUAttn_KeyCNN(nn.Module):
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + self.n_filter * 3))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 4*h_dim + self.n_filter * 3))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
