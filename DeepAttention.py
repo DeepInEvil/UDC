@@ -494,7 +494,9 @@ class GRUAttn_KeyCNN(nn.Module):
         """
         # (batch_size x 1 x h_dim)
         #c = torch.cat([c, key_c], dim=-1)
-        r = torch.cat([r, key_r], dim=-1)
+        s = torch.cat([c, key_r], dim=-1)
+        s = F.sigmoid(s) * key_r
+        r = torch.cat([r, s], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
         o = torch.bmm(o, r.unsqueeze(2))
