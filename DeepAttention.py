@@ -375,7 +375,7 @@ class GRUAttn_KeyCNN(nn.Module):
         self.out_drop = nn.Dropout(0.5)
         self.softmax = nn.Softmax()
         self.init_params_()
-        self.ubuntu_cmd_vec = np.load('ubuntu_data/man_d.npy').item()
+        self.ubuntu_cmd_vec = np.load('ubuntu_data/command_desc_dict.npy').item()
         self.tech_w = 0.0
         if gpu:
             self.cuda()
@@ -411,7 +411,7 @@ class GRUAttn_KeyCNN(nn.Module):
     def forward_key(self, context):
 
         key_mask = torch.zeros(context.size(0), self.n_filter * 3)
-        keys = torch.zeros(context.size(0), 44)
+        keys = torch.zeros(context.size(0), 320)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
