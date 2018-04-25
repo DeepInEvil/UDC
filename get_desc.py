@@ -17,8 +17,21 @@ def get_lines(file_c, command):
             else:
                 desc.append(line)
         return ' '.join([line for line in desc])
+
     except Exception:
         print (command)
+        index_desc = file_c.index('NAME\n')
+        i = index_desc + 1
+        while i < len(file_c):
+            line = file_c[i].replace('\n', '')
+            i = i + 1
+            if line.isupper():
+                break
+            else:
+                desc.append(line)
+        return ' '.join([line for line in desc])
+
+
 
 
 for file in files:
