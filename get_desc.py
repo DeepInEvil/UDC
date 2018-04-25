@@ -22,7 +22,7 @@ def get_lines(file_c, command):
 
 
 for file in files:
-    command = file.split('_')[0]
+    command = file.split('_man')[0]
     with open(desc_dir+file, 'r') as f:
         man = f.readlines()
     desc = get_lines(man, command)
