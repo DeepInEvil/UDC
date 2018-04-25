@@ -4,25 +4,28 @@ files = os.listdir(desc_dir)
 unix_desc = open('/data/dchaudhu/UDC/ubuntu_data/desc.csv', 'w')
 
 
-def get_lines(file_c):
+def get_lines(file_c, command):
     desc = []
-    index_desc = file_c.index('DESCRIPTION\n')
-    i = index_desc + 1
-    while i < len(file_c):
-        line = file_c[i].replace('\n', '')
-        i = i + 1
-        if line.isupper():
-            break
-        else:
-            desc.append(line)
-    return ' '.join([line for line in desc])
+    try:
+        index_desc = file_c.index('DESCRIPTION\n')
+        i = index_desc + 1
+        while i < len(file_c):
+            line = file_c[i].replace('\n', '')
+            i = i + 1
+            if line.isupper():
+                break
+            else:
+                desc.append(line)
+        return ' '.join([line for line in desc])
+    except Exception:
+        print (command)
 
 
 for file in files:
     command = file.split('_')[0]
     with open(desc_dir+file, 'r') as f:
         man = f.readlines()
-    desc = get_lines(man)
+    desc = get_lines(man, command)
     unix_desc.write(command + '\t' + desc)
     unix_desc.write('\n')
 
