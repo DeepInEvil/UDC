@@ -370,8 +370,8 @@ class GRUAttn_KeyCNN(nn.Module):
         # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
-        self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + 100))
+        #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
@@ -513,9 +513,9 @@ class GRUAttn_KeyCNN(nn.Module):
         s = F.sigmoid(s) * torch.cat([r, key_r], dim=-1)
         #r = torch.cat([r, s], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
-        o_fc = torch.mm(s, self.fc_key)
+        #o_fc = torch.mm(s, self.fc_key)
         # (batch_size x 1 x 1)
-        o = torch.bmm(o, o_fc.unsqueeze(2))
+        o = torch.bmm(o, s.unsqueeze(2))
         o = o + self.b
 
         return o
