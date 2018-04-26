@@ -414,7 +414,7 @@ class GRUAttn_KeyCNN(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), self.n_filter * 3)
+        key_mask = torch.zeros(context.size(0), 100)
         keys = torch.zeros(context.size(0), 320)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
