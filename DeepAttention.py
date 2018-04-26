@@ -352,21 +352,25 @@ class GRUAttn_KeyCNN(nn.Module):
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
+        self.rnn_desc = nn.GRU(
+            input_size=emb_dim, hidden_size=50,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
 
         # self.rnn_key = nn.GRU(
         #     input_size=emb_dim, hidden_size=50,
         #     num_layers=1, batch_first=True, bidirectional=True
         # )
 
-        self.n_filter = 30
+        #self.n_filter = 30
         self.h_dim = h_dim
 
-        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
-        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        # self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
+        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 4*h_dim + self.n_filter * 3))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 4*h_dim + 100))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
@@ -435,18 +439,20 @@ class GRUAttn_KeyCNN(nn.Module):
         return key_emb_c, key_emb_r
 
     def _forward(self, x):
-        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
-
-        x3 = F.relu(self.conv3(x)).squeeze()
-        x4 = F.relu(self.conv4(x)).squeeze()
-        x5 = F.relu(self.conv5(x)).squeeze()
-
-        # Max-over-time-pool
-        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
-        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
-
-        out = torch.cat([x3, x4, x5], dim=1)
+        # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+        #
+        # x3 = F.relu(self.conv3(x)).squeeze()
+        # x4 = F.relu(self.conv4(x)).squeeze()
+        # x5 = F.relu(self.conv5(x)).squeeze()
+        #
+        # # Max-over-time-pool
+        # x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        # x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
+        # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+        #
+        # out = torch.cat([x3, x4, x5], dim=1)
+        _, h = self.rnn_desc(x)
+        out = torch.cat([h[0], h[1]], dim=-1)
 
         return out
 
