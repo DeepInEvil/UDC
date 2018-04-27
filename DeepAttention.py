@@ -412,11 +412,11 @@ class GRUAttn_KeyCNN(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        key_r = self.get_weighted_key(x2)
+        key_c, key_r = self.get_weighted_key(x1, x2)
         sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
 
-        o = self.forward_fc(c_attn, r, key_r)
+        o = self.forward_fc(c_attn, r, key_c, key_r)
 
         return o.view(-1)
 
@@ -432,20 +432,20 @@ class GRUAttn_KeyCNN(nn.Module):
                     keys[i] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
-    def get_weighted_key(self, x2):
+    def get_weighted_key(self, x1, x2):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
-        #key_mask_c, keys_c = self.forward_key(x1)
+        key_mask_c, keys_c = self.forward_key(x1)
         key_mask_r, keys_r = self.forward_key(x2)
-        #key_emb_c = self.word_embed(keys_c)
+        key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
-        #key_emb_c = self._forward(key_emb_c)
+        key_emb_c = self._forward(key_emb_c)
         key_emb_r = self._forward(key_emb_r)
         #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
         #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 3)
-        #return key_emb_c, key_emb_r
-        return key_emb_r
+        return key_emb_c, key_emb_r
+        #return key_emb_r
 
     def _forward(self, x):
         # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
@@ -503,7 +503,7 @@ class GRUAttn_KeyCNN(nn.Module):
 
         return weighted_attn.squeeze()
 
-    def forward_fc(self, c, r, key_r):
+    def forward_fc(self, c, r, key_c, key_r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
@@ -511,7 +511,7 @@ class GRUAttn_KeyCNN(nn.Module):
         #c = torch.cat([c, key_c], dim=-1)
         s = torch.cat([c, key_r], dim=-1)
         s = F.tanh(s)
-        s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_r], dim=-1)
+        s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
         #r = torch.cat([r, s], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
         #o_fc = torch.mm(s, self.fc_key)
