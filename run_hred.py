@@ -47,7 +47,7 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 160
+max_seq_len = 80
 k = 1
 
 with open('data/hred/Vocab.pkl', 'rb') as f:
@@ -62,9 +62,11 @@ with open('data/hred/valid.pkl', 'rb') as f:
 with open('data/hred/test.pkl', 'rb') as f:
     test_data = pickle.load(f)
 
+print(len(itos))
+
 model = HRED(
     emb_dim=300, n_vocab=len(itos), h_dim=args.h_dim,
-    emb_drop=args.emb_drop, max_seq_len=30, start_token=1, gpu=args.gpu
+    emb_drop=args.emb_drop, start_token=1, gpu=args.gpu
 )
 
 solver = optim.Adam(model.parameters(), lr=args.lr)
@@ -80,8 +82,8 @@ def main():
 
         total_loss = 0
 
-        for i in tqdm(range(0, len(train_data), step=args.mb_size)):
-            inputs = [:, :, i:i+args.mb_size]
+        for i in tqdm(range(0, train_data.shape[2], args.mb_size)):
+            inputs = train_data[:, :max_seq_len, i:i+args.mb_size]
             inputs = Variable(torch.LongTensor(inputs))
             inputs = inputs.cuda() if args.gpu else inputs
 
@@ -93,7 +95,7 @@ def main():
             solver.zero_grad()
 
             # If current iteration is multiple of batchsize or it's the last one
-            if i % 1000:
+            if i % 1000 == 0:
                 print('Loss: {:.3f}'.format(loss.data[0]))
 
 #         # Validation

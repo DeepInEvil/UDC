@@ -54,9 +54,9 @@ class ResponseAttnDecoder(nn.Module):
 
     def forward(self, input, context):
         emb = self.emb_drop(self.word_embed(input))
-        input = torch.cat((emb, context), 2)
+        input = torch.cat((emb, context.expand_as(emb)), 2)
 
-        out = self.gru(input)  # (seq_len x batch_size x h_dim)
+        out, _ = self.gru(input)  # (seq_len x batch_size x h_dim)
         out = self.decoder_fc(out.view(-1, self.h_dim))  # (seq_len*batch_size, n_vocab)
 
         return out
@@ -91,7 +91,7 @@ class HRED(nn.Module):
         dec_input = self._get_dec_input(target)
         dec_h = ctx_h
 
-        out, _ = self.response_dec(dec_input, ctx_h)  # (seq_len x mb_size, h)
+        out = self.response_dec(dec_input, ctx_h)  # (seq_len x mb_size, h)
 
         return out, ctx_h
 
