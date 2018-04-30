@@ -8,7 +8,7 @@ from torch.autograd import Variable
 from evaluation import eval_model_v1
 from hybrid_model import GRUDualEncoderPlusVAE
 from data import UDCv2
-from evaluation import recall_at_k, eval_model_hybrid_v1
+from evaluation import recall_at_k, eval_model_hybrid_v1, eval_model_v1
 from util import save_model
 
 import argparse
@@ -127,7 +127,7 @@ def main():
             solver.zero_grad()
 
         # Validation
-        recall_at_ks = eval_model_hybrid_v1(
+        recall_at_ks = eval_model_v1(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
