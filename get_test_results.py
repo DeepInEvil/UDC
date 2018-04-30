@@ -17,7 +17,7 @@ from tqdm import tqdm
 udc = UDCv2('ubuntu_data', batch_size=250, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
-model = GRUDualAttnEnc(
+model = GRUAttn_KeyCNN(
     udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
 )
 
@@ -130,6 +130,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     return recall_at_ks
 
 
-model = load_model(model, 'GRU_key_enc')
+model = load_model(model, 'GRU_attn_kb.bin')
 
 eval_test()
