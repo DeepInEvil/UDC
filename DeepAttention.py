@@ -537,7 +537,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         )
         self.rnn_desc = nn.GRU(
             input_size=emb_dim, hidden_size=50,
-            num_layers=1, batch_first=True, bidirectional=True
+            num_layers=1, batch_first=True
         )
 
         # self.rnn_key = nn.GRU(
@@ -650,9 +650,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         #
         # out = torch.cat([x3, x4, x5], dim=1)
         _, h = self.rnn_desc(x)
-        out = torch.cat([h[0], h[1]], dim=-1)
+        #out = torch.cat([h[0], h[1]], dim=-1)
 
-        return out
+        return h.squeeze()
 
     def forward_enc(self, x1, x2):
         """
