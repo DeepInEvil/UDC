@@ -612,7 +612,7 @@ class GRUAttn_KeyCNN2(nn.Module):
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
-                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:7s0]).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:70]).type(torch.cuda.LongTensor)
                 else:
                     keys[i][j] = torch.zeros((70)).type(torch.cuda.LongTensor)
         return Variable(keys.type(torch.LongTensor).cuda())
