@@ -606,7 +606,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
     def forward_key(self, context):
 
-        #key_mask = torch.zeros(context.size(0), 100)
+        key_mask = torch.zeros(context.size(0), 1)
         keys = torch.zeros(context.size(0), context.size(1), 100)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
@@ -614,24 +614,31 @@ class GRUAttn_KeyCNN2(nn.Module):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
                     keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
+                    key_mask[i] = 1
                 else:
                     keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
-        return Variable(keys.type(torch.LongTensor).cuda())
+        return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
-        keys_c = self.forward_key(x1)
+        mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_c.size(0)):
-            emb = self.word_embed(keys_c[b])
-            key_emb_c[b] = self._forward(emb)
-        keys_r = self.forward_key(x2)
+            if mask_c[b] == 0:
+                continue
+            else:
+                emb = self.word_embed(keys_c[b])
+                key_emb_c[b] = self._forward(emb)
+        mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_r.size(0)):
-            emb = self.word_embed(keys_r[b])
-            key_emb_r[b] = self._forward(emb)
+            if mask_r[b] == 0:
+                continue
+            else:
+                emb = self.word_embed(keys_r[b])
+                key_emb_r[b] = self._forward(emb)
         # keys_r = self.forward_key(x2)
         # key_emb_c = self.word_embed(keys_c)
         # key_emb_r = self.word_embed(keys_r)
