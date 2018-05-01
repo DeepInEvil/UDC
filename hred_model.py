@@ -110,6 +110,7 @@ class HRED(nn.Module):
             target = inputs[t+1]  # (max_seq_len, mb_size)
 
             out, ctx_h = self.step(input, target, ctx_h)
+            print (out)
 
             loss = F.cross_entropy(out, target.view(-1))
             total_loss += loss
