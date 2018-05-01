@@ -530,15 +530,15 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
-
+        self.desc_rnn_size = 30
         self.rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=emb_dim + self.desc_rnn_size, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
-        self.desc_rnn_size = 30
+
         self.rnn_desc = nn.GRU(
             input_size=emb_dim, hidden_size=self.desc_rnn_size,
-            num_layers=1, batch_first=True
+            num_layers=1, batch_first=True, bidirectional=True
         )
 
         # self.rnn_key = nn.GRU(
@@ -656,9 +656,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         #
         # out = torch.cat([x3, x4, x5], dim=1)
         _, h = self.rnn_desc(x)
-        #out = torch.cat([h[0], h[1]], dim=-1)
+        out = torch.cat([h[0], h[1]], dim=-1)
 
-        return h.squeeze()
+        return out.squeeze()
 
     def forward_enc(self, x1, x2, key_emb_c, key_emb_r):
         """
