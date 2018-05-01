@@ -626,6 +626,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_c.size(0)):
+            print (mask_c[b].data.cpu())
             if not mask_c[b].data:
                 continue
             else:
