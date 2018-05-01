@@ -615,7 +615,7 @@ class GRUAttn_KeyCNN2(nn.Module):
                     #key_mask[i] = 1
                     keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
                 else:
-                    keys[i][j] = torch.zeros((70)).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
         return Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
