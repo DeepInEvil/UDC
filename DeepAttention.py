@@ -617,7 +617,7 @@ class GRUAttn_KeyCNN2(nn.Module):
                     out = self._forward(emb)
                     keys[i][j] = out
                 else:
-                    keys[i][j] = np.zeros((100))
+                    keys[i][j] = torch.zeros((100))
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
