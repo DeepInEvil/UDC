@@ -621,9 +621,9 @@ class GRUAttn_KeyCNN2(nn.Module):
 
     def get_desc(self, word):
         try:
-            return torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
+            return self.ubuntu_cmd_vec[word][:100]
         except KeyError:
-            return torch.zeros((100)).type(torch.cuda.LongTensor)
+            return [0] * 100
 
     def get_weighted_key(self, x1, x2):
         """
