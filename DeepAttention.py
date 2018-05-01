@@ -633,13 +633,14 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(x1.size(0)):
             keys = [self.get_desc(word) for word in x1[b]]
-            emb = self.word_embed(Variable(torch.cuda.FloatTensor(keys)))
+            print (torch.cuda.LongTensor(keys))
+            emb = self.word_embed(Variable(torch.cuda.LongTensor(keys)))
             key_emb_c[b] = self._forward(emb)
         #mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(x2.size(0)):
             keys = [self.get_desc(word) for word in x2[b]]
-            emb = self.word_embed(Variable(torch.cuda.FloatTensor(keys)))
+            emb = self.word_embed(Variable(torch.cuda.LongTensor(keys)))
             key_emb_r[b] = self._forward(emb)
         # keys_r = self.forward_key(x2)
         # key_emb_c = self.word_embed(keys_c)
