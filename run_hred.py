@@ -50,16 +50,16 @@ if args.gpu:
 max_seq_len = 80
 k = 1
 
-with open('data/hred/Vocab.pkl', 'rb') as f:
+with open('/home/AgustinusKristiadi/UDC/data/hred/Vocab.pkl', 'rb') as f:
     stoi, itos = pickle.load(f)
 
-with open('data/hred/train.pkl', 'rb') as f:
+with open('/home/AgustinusKristiadi/UDC/data/hred/train.pkl', 'rb') as f:
     train_data = pickle.load(f)  # (max_turns, max_seq_len, data_size)
 
-with open('data/hred/valid.pkl', 'rb') as f:
+with open('/home/AgustinusKristiadi/UDC/data/hred/valid.pkl', 'rb') as f:
     valid_data = pickle.load(f)
 
-with open('data/hred/test.pkl', 'rb') as f:
+with open('/home/AgustinusKristiadi/UDC/data/hred/test.pkl', 'rb') as f:
     test_data = pickle.load(f)
 
 print(len(itos))
