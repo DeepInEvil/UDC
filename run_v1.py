@@ -137,7 +137,7 @@ def eval_test():
 
 try:
     main()
-    @eval_test()
+    #eval_test()
 except KeyboardInterrupt:
     eval_test()
     exit(0)
