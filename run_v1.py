@@ -10,7 +10,7 @@ from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3
 from evaluation import eval_model_v1, eval_model_v2
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2
 
 import argparse
 from tqdm import tqdm
@@ -52,7 +52,7 @@ max_seq_len = 320
 udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = GRUAttn_KeyCNN(
+model = GRUAttn_KeyCNN2(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 
@@ -120,7 +120,7 @@ def main():
         # if epoch > 20:
         #     eval_test()
 
-        save_model(model, 'GRU_kb_enc_gru')
+        save_model(model, 'GRU_kb_enc_gru2')
 
 
 def eval_test():
