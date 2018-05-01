@@ -626,8 +626,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_c.size(0)):
-            print (mask_c[b].data.cpu().numpy())
-            if not mask_c[b].data:
+            if not mask_c[b].data.cpu().numpy()[0]:
                 continue
             else:
                 emb = self.word_embed(keys_c[b])
@@ -635,7 +634,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_r.size(0)):
-            if not mask_r[b].data:
+            if not mask_c[b].data.cpu().numpy()[0]:
                 continue
             else:
                 emb = self.word_embed(keys_r[b])
