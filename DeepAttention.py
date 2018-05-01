@@ -611,21 +611,22 @@ class GRUAttn_KeyCNN2(nn.Module):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
-                    key_mask[i] = 1
-                    #keys[i] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
-                    emb = self.word_embed(Variable(self.word_embed(torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.cuda.LongTensor)).unsqueeze(0)))
-                    out = self._forward(emb)
-                    keys[i][j] = out
+                    #key_mask[i] = 1
+                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
                 else:
-                    keys[i][j] = torch.zeros((100))
-        return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
+                    keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
+        return Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
-        key_mask_c, keys_c = self.forward_key(x1)
-        key_mask_r, keys_r = self.forward_key(x2)
+        keys_c = self.forward_key(x1)
+        key_emb_c = torch.zeros(x1.size(0), x1.size(1), 100)
+        for b in range(keys_c.size(0)):
+            emb = self.word_embed(keys_c[b])
+            key_emb_c[b] = self._forward(emb)
+        keys_r = self.forward_key(x2)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
         key_emb_c = self._forward(key_emb_c)
