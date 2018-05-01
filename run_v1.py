@@ -117,7 +117,7 @@ def main():
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
 
-        if epoch > 20:
+        if epoch > 5:
              eval_test()
 
         save_model(model, 'GRU_kb_enc_gru2')
