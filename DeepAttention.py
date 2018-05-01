@@ -526,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttn_KeyCNN2, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx, sparse=True)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -535,7 +535,7 @@ class GRUAttn_KeyCNN2(nn.Module):
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
-        self.desc_rnn_size = 20
+        self.desc_rnn_size = 30
         self.rnn_desc = nn.GRU(
             input_size=emb_dim, hidden_size=self.desc_rnn_size,
             num_layers=1, batch_first=True
@@ -555,7 +555,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + 100))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
