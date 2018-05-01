@@ -526,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttn_KeyCNN2, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx, sparse=True)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
