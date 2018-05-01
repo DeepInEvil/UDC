@@ -606,16 +606,18 @@ class GRUAttn_KeyCNN2(nn.Module):
     def forward_key(self, context):
 
         key_mask = torch.zeros(context.size(0), 100)
-        keys = torch.zeros(context.size(0), context.size(1))
+        keys = torch.zeros(context.size(0), context.size(1), 100)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
                     key_mask[i] = 1
                     #keys[i] = torch.from_numpy(self.ubuntu_cmd_vec[word]).type(torch.LongTensor)
-                    keys[i][j] = int(word)
+                    emb = self.word_embed(self.word_embed(self.ubuntu_cmd_vec[word]))
+                    out = self._forward(emb)
+                    keys[i][j] = out
                 else:
-                    keys[i][j] = -1
+                    keys[i][j] = np.zeros((100))
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
@@ -623,7 +625,6 @@ class GRUAttn_KeyCNN2(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         key_mask_c, keys_c = self.forward_key(x1)
-        print (x1[0], keys_c[0])
         key_mask_r, keys_r = self.forward_key(x2)
         key_emb_c = self.word_embed(keys_c)
         key_emb_r = self.word_embed(keys_r)
