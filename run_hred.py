@@ -65,7 +65,7 @@ with open('/home/AgustinusKristiadi/UDC/data/hred/test.pkl', 'rb') as f:
 print(len(itos))
 
 model = HRED(
-    emb_dim=200, n_vocab=len(itos), h_dim=args.h_dim,
+    emb_dim=100, n_vocab=len(itos), h_dim=args.h_dim,
     emb_drop=args.emb_drop, start_token=1, gpu=args.gpu
 )
 
