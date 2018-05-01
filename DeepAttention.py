@@ -526,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
         super(GRUAttn_KeyCNN2, self).__init__()
 
-        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx, sparse=True)
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -536,7 +536,7 @@ class GRUAttn_KeyCNN2(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
         self.rnn_desc = nn.GRU(
-            input_size=emb_dim, hidden_size=20,
+            input_size=emb_dim, hidden_size=30,
             num_layers=1, batch_first=True
         )
 
@@ -606,15 +606,15 @@ class GRUAttn_KeyCNN2(nn.Module):
     def forward_key(self, context):
 
         key_mask = torch.zeros(context.size(0), 100)
-        keys = torch.zeros(context.size(0), context.size(1), 50)
+        keys = torch.zeros(context.size(0), context.size(1), 100)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
-                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:50]).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
                 else:
-                    keys[i][j] = torch.zeros((50)).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
         return Variable(keys.type(torch.LongTensor).cuda())
 
     def get_weighted_key(self, x1, x2):
@@ -622,12 +622,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         keys_c = self.forward_key(x1)
-        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), 20))
+        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), 30)).type(torch.cuda.FloatTensor)
         for b in range(keys_c.size(0)):
             emb = self.word_embed(keys_c[b])
             key_emb_c[b] = self._forward(emb)
         keys_r = self.forward_key(x2)
-        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), 20))
+        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), 30)).type(torch.cuda.FloatTensor)
         for b in range(keys_r.size(0)):
             emb = self.word_embed(keys_r[b])
             key_emb_r[b] = self._forward(emb)
