@@ -614,7 +614,7 @@ class GRUAttn_KeyCNN2(nn.Module):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
                     keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
-                    key_mask[i] = 1
+                    key_mask[i] = 1.0
                 else:
                     keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
@@ -626,7 +626,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_c.size(0)):
-            if not mask_c[b]:
+            if not mask_c[b][0]:
                 continue
             else:
                 emb = self.word_embed(keys_c[b])
@@ -634,7 +634,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(keys_r.size(0)):
-            if not mask_r[b]:
+            if not mask_r[b][0]:
                 continue
             else:
                 emb = self.word_embed(keys_r[b])
