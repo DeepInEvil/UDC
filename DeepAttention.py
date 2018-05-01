@@ -600,7 +600,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         sc, c, r = self.forward_enc(x1, x2, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
-        o = self.forward_fc(c_attn, r, key_c, key_r)
+        o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
 
