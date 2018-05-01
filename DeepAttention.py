@@ -535,8 +535,9 @@ class GRUAttn_KeyCNN2(nn.Module):
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
+        self.desc_rnn_size = 20
         self.rnn_desc = nn.GRU(
-            input_size=emb_dim, hidden_size=30,
+            input_size=emb_dim, hidden_size=self.desc_rnn_size,
             num_layers=1, batch_first=True
         )
 
@@ -605,7 +606,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), 100)
+        #key_mask = torch.zeros(context.size(0), 100)
         keys = torch.zeros(context.size(0), context.size(1), 70)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
@@ -622,12 +623,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         keys_c = self.forward_key(x1)
-        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), 30)).type(torch.cuda.FloatTensor)
+        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size)).type(torch.cuda.FloatTensor)
         for b in range(keys_c.size(0)):
             emb = self.word_embed(keys_c[b])
             key_emb_c[b] = self._forward(emb)
         keys_r = self.forward_key(x2)
-        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), 30)).type(torch.cuda.FloatTensor)
+        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size)).type(torch.cuda.FloatTensor)
         for b in range(keys_r.size(0)):
             emb = self.word_embed(keys_r[b])
             key_emb_r[b] = self._forward(emb)
