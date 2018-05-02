@@ -47,7 +47,7 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 280
+max_seq_len = 240
 
 udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
@@ -100,7 +100,7 @@ def main():
         for it, mb in train_iter:
             context, response, y, cm, rm, ql = mb
             output = model(context, response, cm)
-            loss = F.binary_cross_entropy_with_logits(output, y) + compute_qloss(ql, output)
+            loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
             loss.backward()
@@ -109,6 +109,7 @@ def main():
             solver.step()
             solver.zero_grad()
 
+        del (context, response, y, output)
         # Validation
         recall_at_ks = eval_model_v2(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
