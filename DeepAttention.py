@@ -536,13 +536,8 @@ class GRUAttn_KeyCNN2(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.rnn_keys = nn.GRU(
-            input_size=emb_dim, hidden_size=self.desc_rnn_size,
-            num_layers=1, batch_first=True, bidirectional=True
-        )
-
         self.rnn_desc = nn.GRU(
-            input_size=2*self.desc_rnn_size, hidden_size=self.desc_rnn_size,
+            input_size=3*self.n_filter, hidden_size=self.desc_rnn_size,
             num_layers=1, batch_first=True
         )
         # self.rnn_key = nn.GRU(
@@ -550,7 +545,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #     num_layers=1, batch_first=True, bidirectional=True
         # )
 
-        #self.n_filter = 30
+        self.n_filter = 30
         self.h_dim = h_dim
 
         # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
@@ -564,10 +559,6 @@ class GRUAttn_KeyCNN2(nn.Module):
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
-        self.scale = 1. / math.sqrt(max_seq_len)
-        self.out_hidden = nn.Linear(h_dim, 1)
-        self.out_drop = nn.Dropout(0.5)
-        self.softmax = nn.Softmax()
         self.init_params_()
         self.ubuntu_cmd_vec = np.load('ubuntu_data/command_desc_dict.npy').item()
         self.tech_w = 0.0
@@ -635,23 +626,23 @@ class GRUAttn_KeyCNN2(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         mask_c, keys_c = self.forward_key(x1, 80)
-        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
+        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.n_filter*3)).cuda()
         for b in range(keys_c.size(0)):
             #keys = [self.get_desc(word, 80) for word in x1[b]]
             #print (keys)
             #print (torch.cuda.LongTensor(keys))
             emb = self.word_embed(keys_c[b])
             key_emb_c[b] = self._forward(emb)
-        key_emb_c = key_emb_c * mask_c.unsqueeze(2).repeat(1, 1, 2*self.desc_rnn_size)
+        key_emb_c = key_emb_c * mask_c.unsqueeze(2).repeat(1, 1, self.n_filter*3)
 
         mask_r, keys_r = self.forward_key(x2, 80)
-        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
+        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.n_filter*3)).cuda()
         for b in range(keys_r.size(0)):
             #keys = [self.get_desc(word, 80) for word in x2[b]]
             emb = self.word_embed(keys_r[b])
             key_emb_r[b] = self._forward(emb)
 
-        key_emb_r = key_emb_r * mask_r.unsqueeze(2).repeat(1, 1, 2 * self.desc_rnn_size)
+        key_emb_r = key_emb_r * mask_r.unsqueeze(2).repeat(1, 1, 3 * self.n_filter)
         # keys_r = self.forward_key(x2)
         # key_emb_c = self.word_embed(keys_c)
         # key_emb_r = self.word_embed(keys_r)
@@ -663,20 +654,20 @@ class GRUAttn_KeyCNN2(nn.Module):
         #return key_emb_r
 
     def _forward(self, x):
-        # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
-        #
-        # x3 = F.relu(self.conv3(x)).squeeze()
-        # x4 = F.relu(self.conv4(x)).squeeze()
-        # x5 = F.relu(self.conv5(x)).squeeze()
-        #
-        # # Max-over-time-pool
-        # x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        # x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
-        # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
-        #
-        # out = torch.cat([x3, x4, x5], dim=1)
-        _, h = self.rnn_keys(x)
-        out = torch.cat([h[0], h[1]], dim=-1)
+        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+
+        x3 = F.relu(self.conv3(x)).squeeze()
+        x4 = F.relu(self.conv4(x)).squeeze()
+        x5 = F.relu(self.conv5(x)).squeeze()
+
+        # Max-over-time-pool
+        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
+        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+
+        out = torch.cat([x3, x4, x5], dim=1)
+        #_, h = self.rnn_keys(x)
+        #out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
 
