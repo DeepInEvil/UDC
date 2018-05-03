@@ -609,25 +609,24 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return o.view(-1)
 
-    def forward_key(self, context):
+    def forward_key(self, context, max_len):
 
         key_mask = torch.zeros(context.size(0), context.size(1))
-        keys = torch.zeros(context.size(0), context.size(1), 100)
+        keys = torch.zeros(context.size(0), context.size(1), max_len)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
-                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:max_len]).type(torch.cuda.LongTensor)
                     key_mask[i][j] = 1
                 else:
-                    keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
+                    keys[i][j] = torch.zeros((max_len)).type(torch.cuda.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_desc(self, word, max_len):
         try:
             return self.ubuntu_cmd_vec[word][:max_len]
-            print ("Found word")
         except KeyError:
             return [0] * max_len
 
@@ -637,19 +636,19 @@ class GRUAttn_KeyCNN2(nn.Module):
         """
         mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
-        for b in range(x1.size(0)):
+        for b in range(keys_c.size(0)):
             #keys = [self.get_desc(word, 80) for word in x1[b]]
             #print (keys)
             #print (torch.cuda.LongTensor(keys))
-            emb = self.word_embed(keys_c)
+            emb = self.word_embed(keys_c[b])
             key_emb_c[b] = self._forward(emb)
         key_emb_c = key_emb_c * mask_c.unsqueeze(2).repeat(1, 1, 2*self.desc_rnn_size)
 
         mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
-        for b in range(x2.size(0)):
+        for b in range(keys_r.size(0)):
             #keys = [self.get_desc(word, 80) for word in x2[b]]
-            emb = self.word_embed(keys_r)
+            emb = self.word_embed(keys_r[b])
             key_emb_r[b] = self._forward(emb)
 
         key_emb_r = key_emb_r * mask_r.unsqueeze(2).repeat(1, 1, 2 * self.desc_rnn_size)
