@@ -627,7 +627,7 @@ class GRUAttn_KeyCNN2(nn.Module):
     def get_desc(self, word, max_len):
         try:
             return self.ubuntu_cmd_vec[word][:max_len]
-        print ("Found word")
+            print ("Found word")
         except KeyError:
             return [0] * max_len
 
