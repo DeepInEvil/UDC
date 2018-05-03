@@ -728,7 +728,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         # (batch_size x 1 x h_dim)
         key_c = key_c.squeeze()
         key_r = key_r.squeeze()
-        c = torch.cat([c, key_c], dim=-1)
+        #c = torch.cat([c, key_c], dim=-1)
         s = torch.cat([c, key_r], dim=-1)
         s = F.tanh(s)
         s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
