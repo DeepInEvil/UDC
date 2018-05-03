@@ -626,7 +626,8 @@ class GRUAttn_KeyCNN2(nn.Module):
 
     def get_desc(self, word, max_len):
         try:
-            return self.ubuntu_cmd_vec[word][:max_len]
+            print ("Found word" + word)
+            return self.ubuntu_cmd_vec[int(word)][:max_len]
         except KeyError:
             return [0] * max_len
 
@@ -722,8 +723,10 @@ class GRUAttn_KeyCNN2(nn.Module):
         _, key_c = self.rnn_desc(key_emb_c)
         _, key_r = self.rnn_desc(key_emb_r)
         # (batch_size x 1 x h_dim)
-        c = torch.cat([c, key_c.squeeze()], dim=-1)
-        s = torch.cat([c, key_r.squeeze()], dim=-1)
+        key_c = key_c.squeeze()
+        key_r = key_r.squeeze()
+        c = torch.cat([c, key_c], dim=-1)
+        s = torch.cat([c, key_r], dim=-1)
         s = F.tanh(s)
         s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
         r = torch.cat([r, s], dim=-1)
