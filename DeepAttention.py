@@ -635,20 +635,24 @@ class GRUAttn_KeyCNN2(nn.Module):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
-        #mask_c, keys_c = self.forward_key(x1)
+        mask_c, keys_c = self.forward_key(x1)
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(x1.size(0)):
-            keys = [self.get_desc(word, 80) for word in x1[b]]
-            print (keys)
+            #keys = [self.get_desc(word, 80) for word in x1[b]]
+            #print (keys)
             #print (torch.cuda.LongTensor(keys))
-            emb = self.word_embed(Variable(torch.cuda.LongTensor(keys)))
+            emb = self.word_embed(keys_c)
             key_emb_c[b] = self._forward(emb)
-        #mask_r, keys_r = self.forward_key(x2)
+        key_emb_c = key_emb_c * mask_c.unsqueeze(2).repeat(1, 1, 2*self.desc_rnn_size)
+
+        mask_r, keys_r = self.forward_key(x2)
         key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(x2.size(0)):
-            keys = [self.get_desc(word, 80) for word in x2[b]]
-            emb = self.word_embed(Variable(torch.cuda.LongTensor(keys)))
+            #keys = [self.get_desc(word, 80) for word in x2[b]]
+            emb = self.word_embed(keys_r)
             key_emb_r[b] = self._forward(emb)
+
+        key_emb_r = key_emb_r * mask_r.unsqueeze(2).repeat(1, 1, 2 * self.desc_rnn_size)
         # keys_r = self.forward_key(x2)
         # key_emb_c = self.word_embed(keys_c)
         # key_emb_r = self.word_embed(keys_r)
