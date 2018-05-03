@@ -611,7 +611,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
     def forward_key(self, context):
 
-        key_mask = torch.zeros(context.size(0), 1)
+        key_mask = torch.zeros(context.size(0), context.size(1))
         keys = torch.zeros(context.size(0), context.size(1), 100)
         for i in range(context.size(0)):
             utrncs = context[i].cpu().data.numpy()
@@ -619,7 +619,7 @@ class GRUAttn_KeyCNN2(nn.Module):
                 if word in self.ubuntu_cmd_vec.keys():
                     #key_mask[i] = 1
                     keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:100]).type(torch.cuda.LongTensor)
-                    key_mask[i] = 1.0
+                    key_mask[i][j] = 1
                 else:
                     keys[i][j] = torch.zeros((100)).type(torch.cuda.LongTensor)
         return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
@@ -638,6 +638,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.desc_rnn_size*2)).cuda()
         for b in range(x1.size(0)):
             keys = [self.get_desc(word, 80) for word in x1[b]]
+            print (keys)
             #print (torch.cuda.LongTensor(keys))
             emb = self.word_embed(Variable(torch.cuda.LongTensor(keys)))
             key_emb_c[b] = self._forward(emb)
@@ -721,8 +722,8 @@ class GRUAttn_KeyCNN2(nn.Module):
         _, key_c = self.rnn_desc(key_emb_c)
         _, key_r = self.rnn_desc(key_emb_r)
         # (batch_size x 1 x h_dim)
-        c = torch.cat([c, key_c], dim=-1)
-        s = torch.cat([c, key_r], dim=-1)
+        c = torch.cat([c, key_c.squeeze()], dim=-1)
+        s = torch.cat([c, key_r.squeeze()], dim=-1)
         s = F.tanh(s)
         s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
         r = torch.cat([r, s], dim=-1)
