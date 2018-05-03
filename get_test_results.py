@@ -9,7 +9,7 @@ import torch.nn.init as init
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2
 from util import load_model
 
 from tqdm import tqdm
@@ -17,7 +17,7 @@ from tqdm import tqdm
 udc = UDCv2('ubuntu_data', batch_size=250, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
-model = GRUAttn_KeyCNN(
+model = GRUAttn_KeyCNN2(
     udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
 )
 
@@ -130,6 +130,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     return recall_at_ks
 
 
-model = load_model(model, 'GRU_attn_kb.bin')
+model = load_model(model, 'GRU_attn_kb')
 
 eval_test()
