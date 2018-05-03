@@ -669,7 +669,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
         #
         # out = torch.cat([x3, x4, x5], dim=1)
-        _, h = self.rnn_desc(x)
+        _, h = self.rnn_keys(x)
         out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
