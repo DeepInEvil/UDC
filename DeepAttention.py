@@ -548,9 +548,9 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.h_dim = h_dim
 
-        # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        # self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
-        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        self.conv4 = nn.Conv2d(1, self.n_filter, (4, emb_dim))
+        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
