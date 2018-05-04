@@ -35,9 +35,7 @@ def recall_at_k(scores, ks=[1, 2, 3, 4, 5]):
     """
 
     _, sorted_idxs = torch.sort(scores, dim=1, descending=True)
-    print (sorted_idxs[0])
     _, ranks = (sorted_idxs == 0).max(1)
-    print (ranks[0])
     recalls = [((ranks + 1) <= k).float().mean() for k in ks]
 
     return recalls
@@ -172,7 +170,11 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores.append(scores_mb.data.numpy())
 
     scores = np.concatenate(scores)
-    scores = scores[:-(scores.shape[0] % 10)]
+
+    # Handle the case when numb. of data not divisible by 10
+    mod = scores.shape[0] % 10
+    scores = scores[:-mod if mod != 0 else None]
+
     scores = scores.reshape(-1, 10)  # 1 in 10
     recall_at_ks = [r for r in recall_at_k_np(scores)]
 
@@ -202,7 +204,11 @@ def eval_model_v2(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores.append(scores_mb.data.numpy())
 
     scores = np.concatenate(scores)
-    scores = scores[:-(scores.shape[0] % 10)]
+    
+    # Handle the case when numb. of data not divisible by 10
+    mod = scores.shape[0] % 10
+    scores = scores[:-mod if mod != 0 else None]
+
     scores = scores.reshape(-1, 10)  # 1 in 10
     recall_at_ks = [r for r in recall_at_k_np(scores)]
 
@@ -270,7 +276,11 @@ def eval_model_hybrid_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False)
         scores.append(scores_mb.data.numpy())
 
     scores = np.concatenate(scores)
-    scores = scores[:-(scores.shape[0] % 10)]
+    
+    # Handle the case when numb. of data not divisible by 10
+    mod = scores.shape[0] % 10
+    scores = scores[:-mod if mod != 0 else None]
+
     scores = scores.reshape(-1, 10)  # 1 in 10
     recall_at_ks = [r for r in recall_at_k_np(scores)]
 
