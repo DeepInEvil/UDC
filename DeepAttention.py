@@ -532,10 +532,10 @@ class GRUAttn_KeyCNN2(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        self.rnn_desc = nn.GRU(
-            input_size=3*self.n_filter, hidden_size=self.desc_rnn_size,
-            num_layers=1, batch_first=True
-        )
+        # self.rnn_desc = nn.GRU(
+        #     input_size=3*self.n_filter, hidden_size=self.desc_rnn_size,
+        #     num_layers=1, batch_first=True
+        # )
         # self.rnn_key = nn.GRU(
         #     input_size=emb_dim, hidden_size=50,
         #     num_layers=1, batch_first=True, bidirectional=True
@@ -550,7 +550,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + self.desc_rnn_size))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
@@ -600,7 +600,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         sc, c, r = self.forward_enc(x1, x2, inv_mc, inv_mr, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
-        o = self.forward_fc(c_attn, r, key_c, key_r)
+        o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
 
@@ -707,25 +707,24 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return weighted_attn.squeeze()
 
-    def forward_fc(self, c, r, key_emb_c, key_emb_r):
+    def forward_fc(self, c, r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
 
-        _, key_c = self.rnn_desc(key_emb_c)
-        _, key_r = self.rnn_desc(key_emb_r)
+        #_, key_c = self.rnn_desc(key_emb_c)
+        #_, key_r = self.rnn_desc(key_emb_r)
         # (batch_size x 1 x h_dim)
-        key_c = key_c.squeeze()
-        key_r = key_r.squeeze()
+        #key_c = key_c.squeeze()
+        #key_r = key_r.squeeze()
         #c = torch.cat([c, key_c], dim=-1)
-        s = torch.cat([c, key_r], dim=-1)
-        s = F.tanh(s)
-        s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
+        #s = torch.cat([c, key_r], dim=-1)
+        #s = F.tanh(s)
+        #s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
         #r = torch.cat([r, s], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
-        #o_fc = torch.mm(s, self.fc_key)
         # (batch_size x 1 x 1)
-        o = torch.bmm(o, s.unsqueeze(2))
+        o = torch.bmm(o, r.unsqueeze(2))
         o = o + self.b
 
         return o
