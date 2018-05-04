@@ -247,11 +247,6 @@ class GRUDualAttnEnc(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
-        self.scale = 1. / math.sqrt(max_seq_len)
-        self.out_hidden = nn.Linear(h_dim, 1)
-        self.out_drop = nn.Dropout(0.5)
-        #self.attn_out = nn.Linear(h_dim, 1)
-        self.softmax = nn.Softmax()
         self.init_params_()
         #self.bn = nn.BatchN
 
@@ -531,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
         self.desc_rnn_size = 25
-        self.n_filter = 30
+        self.n_filter = 50
         self.rnn = nn.GRU(
             input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
@@ -548,9 +543,10 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.h_dim = h_dim
 
-        self.conv3 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
-        self.conv4 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
         self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
@@ -564,6 +560,14 @@ class GRUAttn_KeyCNN2(nn.Module):
         self.tech_w = 0.0
         if gpu:
             self.cuda()
+
+    def custom_replace(self, tensor, on_zero=1, on_non_zero=0):
+        # we create a copy of the original tensor,
+        # because of the way we are replacing them.
+        res = tensor.clone()
+        res[tensor == 0] = on_zero
+        res[tensor != 0] = on_non_zero
+        return res
 
     def init_params_(self):
         nn.init.xavier_normal(self.M)
@@ -591,8 +595,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        key_c, key_r = self.get_weighted_key(x1, x2)
-        sc, c, r = self.forward_enc(x1, x2)
+        key_c, key_r, mask_c, mask_r = self.get_weighted_key(x1, x2)
+        inv_mc, inv_mr = self.custom_replace(mask_c), self.custom_replace(mask_r)
+        sc, c, r = self.forward_enc(x1, x2, inv_mc, inv_mr, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
         o = self.forward_fc(c_attn, r, key_c, key_r)
@@ -607,7 +612,6 @@ class GRUAttn_KeyCNN2(nn.Module):
             utrncs = context[i].cpu().data.numpy()
             for j, word in enumerate(utrncs):
                 if word in self.ubuntu_cmd_vec.keys():
-                    #key_mask[i] = 1
                     keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:max_len]).type(torch.cuda.LongTensor)
                     key_mask[i][j] = 1
                 else:
@@ -625,59 +629,54 @@ class GRUAttn_KeyCNN2(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         mask_c, keys_c = self.forward_key(x1, 80)
-        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.n_filter*3)).cuda()
+        mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.n_filter * 4)).cuda()
         for b in range(keys_c.size(0)):
-            #keys = [self.get_desc(word, 80) for word in x1[b]]
-            #print (keys)
-            #print (torch.cuda.LongTensor(keys))
             emb = self.word_embed(keys_c[b])
             key_emb_c[b] = self._forward(emb)
-        key_emb_c = key_emb_c * mask_c.unsqueeze(2).repeat(1, 1, self.n_filter*3)
+        key_emb_c = key_emb_c * mask_c
 
         mask_r, keys_r = self.forward_key(x2, 80)
-        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.n_filter*3)).cuda()
+        mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.n_filter * 4)).cuda()
         for b in range(keys_r.size(0)):
-            #keys = [self.get_desc(word, 80) for word in x2[b]]
             emb = self.word_embed(keys_r[b])
             key_emb_r[b] = self._forward(emb)
 
-        key_emb_r = key_emb_r * mask_r.unsqueeze(2).repeat(1, 1, 3 * self.n_filter)
-        # keys_r = self.forward_key(x2)
-        # key_emb_c = self.word_embed(keys_c)
-        # key_emb_r = self.word_embed(keys_r)
-        # key_emb_c = self._forward(key_emb_c)
-        # key_emb_r = self._forward(key_emb_r)
-        #key_emb_c = key_emb_c.squeeze().unsqueeze(1).repeat(1, x1.size(1), 1) * key_mask_c.unsqueeze(2).repeat(1, 1, 100)
-        #key_emb_r = key_emb_r.squeeze().unsqueeze(1).repeat(1, x2.size(1), 1) * key_mask_r.unsqueeze(2).repeat(1, 1, 100)
-        return key_emb_c, key_emb_r
-        #return key_emb_r
+        key_emb_r = key_emb_r * mask_r
+
+        return key_emb_c, key_emb_r, mask_c, mask_r
 
     def _forward(self, x):
         x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
 
+        x1 = F.relu(self.conv1(x)).squeeze()
         x3 = F.relu(self.conv3(x)).squeeze()
-        x4 = F.relu(self.conv4(x)).squeeze()
         x5 = F.relu(self.conv5(x)).squeeze()
+        x7 = F.relu(self.conv7(x)).squeeze()
 
         # Max-over-time-pool
+        x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
         x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        x4 = F.max_pool1d(x4, x4.size(2)).squeeze()
         x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+        x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
 
-        out = torch.cat([x3, x4, x5], dim=1)
+        out = torch.cat([x1, x3, x5, x7], dim=1)
         #_, h = self.rnn_keys(x)
         #out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
 
-    def forward_enc(self, x1, x2):
+    def forward_enc(self, x1, x2, invc, invr, key_emb_c, key_emb_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.emb_drop(self.word_embed(x1))
+        x1_emb = x1_emb * invc + key_emb_c
         #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
+        x2_emb = x2_emb * invr + key_emb_r
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
