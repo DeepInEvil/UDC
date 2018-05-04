@@ -615,7 +615,7 @@ class GRUAttn_KeyCNN2(nn.Module):
                     key_mask[i][j] = 1
                 else:
                     keys[i][j] = torch.zeros((max_len)).type(torch.cuda.LongTensor)
-        return Variable(key_mask.cuda()), Variable(keys.type(torch.LongTensor).cuda())
+        return Variable(key_mask.cuda(), requires_grad=False), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_desc(self, word, max_len):
         try:
