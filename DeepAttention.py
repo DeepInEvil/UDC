@@ -579,11 +579,11 @@ class GRUAttn_KeyCNN2(nn.Module):
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
 
-        size = self.rnn_desc.bias_hh_l0.size(0)
-        self.rnn_desc.bias_hh_l0.data[size//4:size//2] = 2
-
-        size = self.rnn_desc.bias_ih_l0.size(0)
-        self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
+        # size = self.rnn_desc.bias_hh_l0.size(0)
+        # self.rnn_desc.bias_hh_l0.data[size//4:size//2] = 2
+        #
+        # size = self.rnn_desc.bias_ih_l0.size(0)
+        # self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
 
     def forward(self, x1, x2, x1mask):
         """
