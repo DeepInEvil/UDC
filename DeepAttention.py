@@ -596,8 +596,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         o: vector of (batch_size)
         """
         key_c, key_r, mask_c, mask_r = self.get_weighted_key(x1, x2)
-        inv_mc, inv_mr = self.custom_replace(mask_c), self.custom_replace(mask_r)
-        sc, c, r = self.forward_enc(x1, x2, inv_mc, inv_mr, key_c, key_r)
+        sc, c, r = self.forward_enc(x1, x2, mask_c, mask_r, key_c, key_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
         o = self.forward_fc(c_attn, r)
@@ -667,16 +666,16 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return out.squeeze()
 
-    def forward_enc(self, x1, x2, invc, invr, key_emb_c, key_emb_r):
+    def forward_enc(self, x1, x2, maskc, maskr, key_emb_c, key_emb_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        x1_emb = x1_emb * invc + key_emb_c
+        x1_emb = x1_emb * (1 - maskc) + key_emb_c
         #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
-        x2_emb = x2_emb * invr + key_emb_r
+        x2_emb = x2_emb * (1 - maskr) + key_emb_r
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
