@@ -596,7 +596,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        print (torch.sum(key_c[b] != 0))
+        print (torch.sum(key_mask_r != 0))
         key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_emb_c, key_emb_r = self.get_weighted_key(key_c, key_mask_c, key_r, key_mask_r)
