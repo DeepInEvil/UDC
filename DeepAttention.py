@@ -633,11 +633,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         """
         #mask_c, keys_c = self.forward_key(x1, 80)
         #mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
-        for b in range(key_c.size(0)):
-            emb = self.word_embed(key_c[b])
-            key_emb_c[b] = self._forward(emb)
-        key_emb_c = key_emb_c * key_mask_c
+        #key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
+        key_emb_c = Variable(torch.Tensor([[self._forward(self.word_embed(key_c[b])) for b in range(key_c.size(0))]]))
+        # for b in range(key_c.size(0)):
+        #     emb = self.word_embed(key_c[b])
+        #     key_emb_c[b] = self._forward(emb)
+        # key_emb_c = key_emb_c * key_mask_c
 
         #mask_r, keys_r = self.forward_key(x2, 80)
         #mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
