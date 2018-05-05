@@ -522,6 +522,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         super(GRUAttn_KeyCNN2, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        self.desc_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx, sparse=True)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
@@ -634,7 +635,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
         for b in range(key_c.size(0)):
-            emb = self.word_embed(key_c[b])
+            emb = self.desc_emb(key_c[b])
             key_emb_c[b] = self._forward(emb)
         key_emb_c = key_emb_c * key_mask_c
 
@@ -642,7 +643,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_emb_r = Variable(torch.zeros(key_r.size(0), key_r.size(1), self.n_filter * 4)).cuda()
         for b in range(key_r.size(0)):
-            emb = self.word_embed(key_r[b])
+            emb = self.desc_emb(key_r[b])
             key_emb_r[b] = self._forward(emb)
         key_emb_r = key_emb_r * key_mask_r
 
