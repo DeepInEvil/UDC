@@ -630,8 +630,8 @@ class UDCv4:
         :param max_len:
         :return:
         """
-        key_mask = np.zeros((len(max_seq_len)))
-        keys = np.zeros((len(max_seq_len), max_len))
+        key_mask = np.zeros((max_seq_len))
+        keys = np.zeros((max_seq_len, max_len))
         for j, word in enumerate(sentence):
             if word in self.ubuntu_cmd_vec.keys():
                 keys[j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:max_len]).type(torch.cuda.LongTensor)
