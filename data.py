@@ -574,7 +574,7 @@ class UDCv4:
 
         self.desc_len = 80
 
-        with open(f'{path}/dataset_1M', 'rb') as f:
+        with open(f'{path}/dataset_1M.pkl', 'rb') as f:
             dataset = pickle.load(f, encoding='ISO-8859-1')
             self.train, self.valid, self.test = dataset
 
