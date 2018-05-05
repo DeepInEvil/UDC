@@ -637,7 +637,7 @@ class UDCv4:
                 keys[j] = self.ubuntu_cmd_vec[int(word)][:max_len]
                 key_mask[j] = 1
             else:
-                keys[j] = torch.zeros((max_len)).type(torch.cuda.LongTensor)
+                keys[j] = np.zeros((max_len))
         return key_mask, keys
 
 
