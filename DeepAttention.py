@@ -635,7 +635,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
         for b in range(key_c.size(0)):
-            print (key_c[b]!=0)
+            print (torch.sum(key_c[b]!=0))
             emb = self.desc_emb(key_c[b])
             key_emb_c[b] = self._forward(emb)
         key_emb_c = key_emb_c * key_mask_c
