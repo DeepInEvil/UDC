@@ -633,7 +633,7 @@ class UDCv4:
         key_mask = np.zeros((max_seq_len))
         keys = np.zeros((max_seq_len, max_len))
         for j, word in enumerate(sentence):
-            if word in self.ubuntu_cmd_vec.keys():
+            if int(word) in self.ubuntu_cmd_vec.keys():
                 keys[j] = self.ubuntu_cmd_vec[word][:max_len]
                 key_mask[j] = 1
             else:
