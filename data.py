@@ -523,7 +523,7 @@ class UDCv3:
             except ValueError:
                 idx_eos = -1
             last_utr = row_c[idx_eos+1:]
-            if int(row_c[-1]) in self.q_idx or int(last_utr[0]) in self.w1h:
+            if int(row_c[-1]) in self.q_idx and int(last_utr[0]) in self.w1h:
                 if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
                     q_l[j] = 1
             # if int(last_utr[0]) in self.w1h:
@@ -557,3 +557,159 @@ class UDCv3:
             q_l = q_l.cuda()
 
         return c, r, y, c_mask, r_mask, q_l
+
+
+class UDCv4:
+    """
+    Wrapper for UDCv2 taken from: http://dataset.cs.mcgill.ca/ubuntu-corpus-1.0/.
+    Everything has been preprocessed and converted to numerical indexes.
+    """
+
+    def __init__(self, path, batch_size=256, max_seq_len=160, use_mask=False, gpu=True, use_fasttext=False):
+        self.batch_size = batch_size
+        self.max_seq_len_c = max_seq_len
+        self.max_seq_len_r = int(max_seq_len/2)
+        self.use_mask = use_mask
+        self.gpu = gpu
+
+        self.desc_len = 80
+
+        with open(f'{path}/dataset_1m_s.pkl', 'rb') as f:
+            dataset = pickle.load(f, encoding='ISO-8859-1')
+            self.train, self.valid, self.test = dataset
+
+        if use_fasttext:
+            vectors = np.load(f'{path}/fast_text_200_v.npy')
+            #vectors = np.load(f'{path}/w2vec_200.npy')
+            #man_vec = np.load(f'{path}/key_vec.npy')
+        else:
+            with open(f'{path}/W.pkl', 'rb') as f:
+                vectors, _ = pickle.load(f, encoding='ISO-8859-1')
+        self.ubuntu_cmd_vec = np.load(f'{path}/command_desc_dict.npy').item()
+
+        print('Finished loading dataset!')
+
+        self.q_idx = list(np.load('ubuntu_data/ques.npy'))
+        self.w1h = [124405, 124413, 54469, 17261]
+
+        self.n_train = len(self.train['y'])
+        self.n_valid = len(self.valid['y'])
+        self.n_test = len(self.test['y'])
+        self.vectors = torch.from_numpy(vectors.astype(np.float32))
+        #self.man_vec = torch.from_numpy(man_vec.astype(np.float32))
+
+        self.vocab_size = self.vectors.size(0)
+        self.emb_dim = self.vectors.size(1)
+
+    def get_iter(self, dataset='train'):
+        if dataset == 'train':
+            dataset = self.train
+        elif dataset == 'valid':
+            dataset = self.valid
+        else:
+            dataset = self.test
+
+        for i in range(0, len(dataset['y']), self.batch_size):
+            c = dataset['c'][i:i+self.batch_size]
+            r = dataset['r'][i:i+self.batch_size]
+            y = dataset['y'][i:i+self.batch_size]
+
+
+            c, r, y, c_mask, r_mask, ql, key_c, key_mask_c, key_r, key_mask_r = self._load_batch(c, r, y, self.batch_size)
+
+            if self.use_mask:
+                yield c, r, y, c_mask, r_mask, ql, key_c, key_mask_c, key_r, key_mask_r
+            else:
+                yield c, r, y
+
+
+    def get_key(self, sentence, max_seq_len, max_len):
+        """
+        get key mask
+        :param sentence:
+        :param max_len:
+        :return:
+        """
+        key_mask = np.zeros((len(max_seq_len)))
+        keys = np.zeros((len(max_seq_len), max_len))
+        for j, word in enumerate(sentence):
+            if word in self.ubuntu_cmd_vec.keys():
+                keys[j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:max_len]).type(torch.cuda.LongTensor)
+                key_mask[j] = 1
+            else:
+                keys[j] = torch.zeros((max_len)).type(torch.cuda.LongTensor)
+        return key_mask, keys
+
+
+    def _load_batch(self, c, r, y, size):
+        c_arr = np.zeros([size, self.max_seq_len_c], np.int)
+        r_arr = np.zeros([size, self.max_seq_len_r], np.int)
+        y_arr = np.zeros(size, np.float32)
+
+        q_l = np.zeros(size, np.float32)
+
+
+        c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
+        r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
+
+        key_c = np.zeros([size, self.max_seq_len_c, self.desc_len], np.float32)
+        key_r = np.zeros([size, self.max_seq_len_r, self.desc_len], np.float32)
+
+        key_mask_c = np.zeros([size, self.max_seq_len_c], np.float32)
+        key_mask_r = np.zeros([size, self.max_seq_len_r], np.float32)
+
+        for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
+            #check if query
+            try:
+                idx_eos = row_c.index(63346, -1)
+            except ValueError:
+                idx_eos = -1
+            last_utr = row_c[idx_eos+1:]
+            if int(row_c[-1]) in self.q_idx and int(last_utr[0]) in self.w1h:
+                if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
+                    q_l[j] = 1
+            # if int(last_utr[0]) in self.w1h:
+            #     if int(row_r[-1]) in self.q_idx or int(row_r[-1]) in self.w1h:
+            #         q_l[j] = 1
+
+
+
+            # Truncate
+            row_c = row_c[:self.max_seq_len_c]
+            row_r = row_r[:self.max_seq_len_r]
+
+            c_arr[j, :len(row_c)] = row_c
+            r_arr[j, :len(row_r)] = row_r
+            y_arr[j] = float(row_y)
+
+
+            c_mask[j, :len(row_c)] = 1
+            r_mask[j, :len(row_r)] = 1
+
+            key_mask_c[j], key_c[j] = self.get_key(row_c, self.max_seq_len_c, self.desc_len)
+            key_mask_r[j], key_r[j] = self.get_key(row_r, self.max_seq_len_r, self.desc_len)
+
+        # Convert to PyTorch tensor
+        c = Variable(torch.from_numpy(c_arr))
+        r = Variable(torch.from_numpy(r_arr))
+        y = Variable(torch.from_numpy(y_arr))
+        c_mask = Variable(torch.from_numpy(c_mask))
+        r_mask = Variable(torch.from_numpy(r_mask))
+        q_l = Variable(torch.from_numpy(q_l))
+
+        key_mask_c = Variable(torch.from_numpy(key_mask_c))
+        key_mask_r = Variable(torch.from_numpy(key_mask_r))
+
+        key_c = Variable(torch.from_numpy(key_c))
+        key_r = Variable(torch.from_numpy(key_r))
+
+
+
+        # Load to GPU
+        if self.gpu:
+            c, r, y = c.cuda(), r.cuda(), y.cuda()
+            c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
+            q_l = q_l.cuda()
+            key_c, key_mask_c, key_r, key_mask_r = key_c.cuda(), key_mask_c.cuda(), key_r.cuda(), key_mask_r.cuda()
+
+        return c, r, y, c_mask, r_mask, q_l, key_c, key_mask_c, key_r, key_mask_r

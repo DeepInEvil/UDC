@@ -196,10 +196,10 @@ def eval_model_v2(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     for mb in data_iter:
-        context, response, y, cm, rm, _ = mb
+        context, response, y, cm, rm, _, key_c, key_mask_c, key_r, key_mask_r = mb
 
         # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm))
+        scores_mb = F.sigmoid(model(context, response, cm, key_c, key_mask_c, key_r, key_mask_r))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         scores.append(scores_mb.data.numpy())
 

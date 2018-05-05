@@ -585,7 +585,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         # size = self.rnn_desc.bias_ih_l0.size(0)
         # self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
 
-    def forward(self, x1, x2, x1mask):
+    def forward(self, x1, x2, x1mask, key_c, key_mask_c, key_r, key_mask_r):
         """
         Inputs:
         -------
@@ -595,9 +595,10 @@ class GRUAttn_KeyCNN2(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        key_c, key_r, mask_c, mask_r = self.get_weighted_key(x1, x2)
-        #print (mask_c[0])
-        sc, c, r = self.forward_enc(x1, x2, mask_c, mask_r, key_c, key_r)
+        key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_emb_c, key_emb_r = self.get_weighted_key(key_c, key_mask_c, key_r, key_mask_r)
+        sc, c, r = self.forward_enc(x1, x2, key_mask_c, key_mask_r, key_emb_c, key_emb_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
         o = self.forward_fc(c_attn, r)
@@ -624,28 +625,27 @@ class GRUAttn_KeyCNN2(nn.Module):
         except KeyError:
             return [0] * max_len
 
-    def get_weighted_key(self, x1, x2):
+    def get_weighted_key(self, key_c, key_mask_c, key_r, key_mask_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
-        mask_c, keys_c = self.forward_key(x1, 80)
-        mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_c = Variable(torch.zeros(x1.size(0), x1.size(1), self.n_filter * 4)).cuda()
-        for b in range(keys_c.size(0)):
-            emb = self.word_embed(keys_c[b])
+        #mask_c, keys_c = self.forward_key(x1, 80)
+        #mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
+        for b in range(key_c.size(0)):
+            emb = self.word_embed(key_c[b])
             key_emb_c[b] = self._forward(emb)
-        key_emb_c = key_emb_c * mask_c
+        key_emb_c = key_emb_c * key_mask_c
 
-        mask_r, keys_r = self.forward_key(x2, 80)
-        mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_r = Variable(torch.zeros(x2.size(0), x2.size(1), self.n_filter * 4)).cuda()
-        for b in range(keys_r.size(0)):
-            emb = self.word_embed(keys_r[b])
+        #mask_r, keys_r = self.forward_key(x2, 80)
+        #mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        key_emb_r = Variable(torch.zeros(key_r.size(0), key_r.size(1), self.n_filter * 4)).cuda()
+        for b in range(key_r.size(0)):
+            emb = self.word_embed(key_r[b])
             key_emb_r[b] = self._forward(emb)
+        key_emb_r = key_emb_r * key_mask_r
 
-        key_emb_r = key_emb_r * mask_r
-
-        return key_emb_c, key_emb_r, mask_c, mask_r
+        return key_emb_c, key_emb_r
 
     def _forward(self, x):
         x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim

@@ -7,7 +7,7 @@ import numpy as np
 from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
-from data import UDCv1, UDCv2, UDCv3
+from data import UDCv1, UDCv2, UDCv3, UDCv4
 from evaluation import eval_model_v1, eval_model_v2
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2
@@ -47,9 +47,9 @@ torch.manual_seed(args.randseed)
 if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
-max_seq_len = 320
+max_seq_len = 300
 
-udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUAttn_KeyCNN2(
@@ -72,13 +72,12 @@ if args.gpu:
 
 
 def compute_qloss(ql, y):
+
     qloss = Variable(torch.zeros(y.size(0))).cuda()
     tot = 0.0
     for i in range(ql.size(0)):
         qloss[i] = ql[i] * F.relu(y[i]) * 0.001
         tot += 1
-
-    #print torch.sum(qloss)/tot
     return torch.sum(qloss)/tot
 
 
@@ -98,8 +97,8 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql = mb
-            output = model(context, response, cm)
+            context, response, y, cm, rm, ql, key_c, key_mask_c, key_r, key_mask_r = mb
+            output = model(context, response, cm, key_c, key_mask_c, key_r, key_mask_r)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
