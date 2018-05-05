@@ -522,7 +522,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         super(GRUAttn_KeyCNN2, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
-        self.desc_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx, sparse=True)
+        self.desc_emb = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
