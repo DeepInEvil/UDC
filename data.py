@@ -700,8 +700,8 @@ class UDCv4:
         key_mask_c = Variable(torch.from_numpy(key_mask_c))
         key_mask_r = Variable(torch.from_numpy(key_mask_r))
 
-        key_c = Variable(torch.from_numpy(key_c))
-        key_r = Variable(torch.from_numpy(key_r))
+        key_c = Variable(torch.from_numpy(key_c)).type(torch.LongTensor)
+        key_r = Variable(torch.from_numpy(key_r)).type(torch.LongTensor)
 
 
 
