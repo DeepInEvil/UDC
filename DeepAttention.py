@@ -643,13 +643,15 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb = self.emb_drop(self.word_embed(key_c.view(b_s*s_len, -1)))
         key_emb_c = self._forward(key_emb).view(b_s, s_len, -1)
         key_emb_c = key_emb_c * key_mask_c
-        del(key_emb)
+        del(key_emb, b_s, s_len)
         #mask_r, keys_r = self.forward_key(x2, 80)
         #mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         # key_emb_r = Variable(torch.zeros(key_r.size(0), key_r.size(1), self.n_filter * 4)).cuda()
         # for b in range(key_r.size(0)):
         #     emb = self.emb_drop(self.word_embed(key_r[b]))
         #     key_emb_r[b] = self._forward(emb)
+        b_s = key_r.size(0)
+        s_len = key_r.size(1)
         key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
         key_emb_r = self._forward(key_emb).view(b_s, s_len, -1)
         key_emb_r = key_emb_r * key_mask_r
