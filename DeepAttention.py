@@ -640,6 +640,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #     key_emb_c[b] = self._forward(emb)
         b_s = key_c.size(0)
         s_len = key_c.size(1)
+        print (key_c.view(b_s*s_len, -1))
         key_emb = self.emb_drop(self.word_embed(key_c.view(b_s*s_len, -1)))
         print (key_emb.size())
         key_emb_c = self._forward(key_emb).view(b_s, s_len, -1)
