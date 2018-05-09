@@ -633,11 +633,15 @@ class GRUAttn_KeyCNN2(nn.Module):
         """
         #mask_c, keys_c = self.forward_key(x1, 80)
         #mask_c = mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
-        #key_emb_c = Variable(torch.Tensor([[self._forward(self.word_embed(key_c[b])) for b in range(key_c.size(0))]]))
-        for b in range(key_c.size(0)):
-            emb = self.emb_drop(self.word_embed(key_c[b]))
-            key_emb_c[b] = self._forward(emb)
+        # key_emb_c = Variable(torch.zeros(key_c.size(0), key_c.size(1), self.n_filter * 4)).cuda()
+        # #key_emb_c = Variable(torch.Tensor([[self._forward(self.word_embed(key_c[b])) for b in range(key_c.size(0))]]))
+        # for b in range(key_c.size(0)):
+        #     emb = self.emb_drop(self.word_embed(key_c[b]))
+        #     key_emb_c[b] = self._forward(emb)
+        b_s = key_c.size(0)
+        s_len = key_c.size(1)
+        key_emb = self.emb_drop(self.word_embed(key_c.view(b_s*s_len, -1)))
+        key_emb_c = self._forward(key_emb).view(b_s, s_len, -1)
         key_emb_c = key_emb_c * key_mask_c
 
         #mask_r, keys_r = self.forward_key(x2, 80)
@@ -700,7 +704,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         b_size = x1.size(0)
 
         x2 = x2.squeeze(0).unsqueeze(2)
-        attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B*T,D -> B*T,D
+        attn = self.attn(x1.contiguous().view(b_size*max_len, -1))# B, T,D -> B*T,D
         attn = attn.view(b_size, max_len, -1) # B,T,D
         attn_energies = (attn.bmm(x2).transpose(1, 2)) #B,T,D * B,D,1 --> B,1,T
         alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
