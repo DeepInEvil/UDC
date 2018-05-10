@@ -526,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
-        self.desc_rnn_size = 25
+        self.desc_rnn_size = 100
         self.n_filter = 50
         self.rnn = nn.GRU(
             input_size=emb_dim, hidden_size=h_dim,
@@ -534,7 +534,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         )
 
         self.rnn_desc = nn.GRU(
-            input_size=100, hidden_size=self.desc_rnn_size,
+            input_size=200, hidden_size=self.desc_rnn_size,
             num_layers=1, batch_first=True, bidirectional=True
         )
         # self.rnn_key = nn.GRU(
