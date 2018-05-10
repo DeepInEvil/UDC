@@ -533,21 +533,21 @@ class GRUAttn_KeyCNN2(nn.Module):
             num_layers=1, batch_first=True, bidirectional=True
         )
 
-        # self.rnn_desc = nn.GRU(
-        #     input_size=3*self.n_filter, hidden_size=self.desc_rnn_size,
-        #     num_layers=1, batch_first=True
-        # )
+        self.rnn_desc = nn.GRU(
+            input_size=100, hidden_size=self.desc_rnn_size,
+            num_layers=1, batch_first=True, bidirectional=True
+        )
         # self.rnn_key = nn.GRU(
         #     input_size=emb_dim, hidden_size=50,
         #     num_layers=1, batch_first=True, bidirectional=True
         # )
 
         self.h_dim = h_dim
-
-        self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
-        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
-        self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
+        #
+        # self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        # self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
@@ -655,26 +655,26 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
         key_emb_r = self._forward(key_emb).view(b_s, s_len, -1)
         key_emb_r = key_emb_r * key_mask_r
-
+        del (key_emb, b_s, s_len)
         return key_emb_c, key_emb_r
 
     def _forward(self, x):
-        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
-
-        x1 = F.relu(self.conv1(x)).squeeze()
-        x3 = F.relu(self.conv3(x)).squeeze()
-        x5 = F.relu(self.conv5(x)).squeeze()
-        x7 = F.relu(self.conv7(x)).squeeze()
-
-        # Max-over-time-pool
-        x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
-        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
-        x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
-
-        out = torch.cat([x1, x3, x5, x7], dim=1)
-        #_, h = self.rnn_keys(x)
-        #out = torch.cat([h[0], h[1]], dim=-1)
+        # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+        #
+        # x1 = F.relu(self.conv1(x)).squeeze()
+        # x3 = F.relu(self.conv3(x)).squeeze()
+        # x5 = F.relu(self.conv5(x)).squeeze()
+        # x7 = F.relu(self.conv7(x)).squeeze()
+        #
+        # # Max-over-time-pool
+        # x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
+        # x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+        # x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
+        #
+        # out = torch.cat([x1, x3, x5, x7], dim=1)
+        _, h = self.rnn_desc(x)
+        out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
 
