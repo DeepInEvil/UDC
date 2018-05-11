@@ -529,7 +529,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         self.desc_rnn_size = 100
         self.n_filter = 50
         self.rnn = nn.GRU(
-            input_size=emb_dim, hidden_size=h_dim,
+            input_size=2*emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
@@ -684,11 +684,11 @@ class GRUAttn_KeyCNN2(nn.Module):
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.emb_drop(self.word_embed(x1))
-        x1_emb = x1_emb * (1 - maskc) + key_emb_c
-        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        #x1_emb = x1_emb * (1 - maskc) + key_emb_c
+        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
-        x2_emb = x2_emb * (1 - maskr) + key_emb_r
-        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        #x2_emb = x2_emb * (1 - maskr) + key_emb_r
+        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
