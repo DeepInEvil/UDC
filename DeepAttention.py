@@ -551,7 +551,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 4*h_dim))
         #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
@@ -599,11 +599,11 @@ class GRUAttn_KeyCNN2(nn.Module):
         #print (torch.sum(key_mask_r != 0))
         key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_c, key_emb_r = self.get_weighted_key(key_c, key_mask_c, key_r, key_mask_r)
-        sc, c, r = self.forward_enc(x1, x2, key_mask_c, key_mask_r, key_emb_c, key_emb_r)
+        key_emb_r = self.get_weighted_key(key_c, key_mask_c, key_r, key_mask_r)
+        sc, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
 
-        o = self.forward_fc(c_attn, r)
+        o = self.forward_fc(c_attn, r, key_emb_r)
 
         return o.view(-1)
 
@@ -638,12 +638,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         # for b in range(key_c.size(0)):
         #     emb = self.emb_drop(self.word_embed(key_c[b]))
         #     key_emb_c[b] = self._forward(emb)
-        b_s = key_c.size(0)
-        s_len = key_c.size(1)
-        key_emb = self.emb_drop(self.word_embed(key_c.view(b_s*s_len, -1)))
-        key_emb_c = self._forward(key_emb).view(b_s, s_len, -1)
-        key_emb_c = key_emb_c * key_mask_c
-        del(key_emb, b_s, s_len)
+        # b_s = key_c.size(0)
+        # s_len = key_c.size(1)
+        # key_emb = self.emb_drop(self.word_embed(key_c.view(b_s*s_len, -1)))
+        # key_emb_c = self._forward(key_emb).view(b_s, s_len, -1)
+        # key_emb_c = key_emb_c * key_mask_c
+        # del(key_emb, b_s, s_len)
         #mask_r, keys_r = self.forward_key(x2, 80)
         #mask_r = mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         # key_emb_r = Variable(torch.zeros(key_r.size(0), key_r.size(1), self.n_filter * 4)).cuda()
@@ -656,39 +656,42 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb_r = self._forward(key_emb).view(b_s, s_len, -1)
         key_emb_r = key_emb_r * key_mask_r
         del (key_emb, b_s, s_len)
-        return key_emb_c, key_emb_r
+        _, h = self.rnn(key_emb_r)
+        out = torch.cat([h[0], h[1]], dim=-1)
+        #return key_emb_c, key_emb_r
+        return out
 
     def _forward(self, x):
-        # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
-        #
-        # x1 = F.relu(self.conv1(x)).squeeze()
-        # x3 = F.relu(self.conv3(x)).squeeze()
-        # x5 = F.relu(self.conv5(x)).squeeze()
-        # x7 = F.relu(self.conv7(x)).squeeze()
-        #
-        # # Max-over-time-pool
-        # x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
-        # x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
-        # x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
-        #
-        # out = torch.cat([x1, x3, x5, x7], dim=1)
-        _, h = self.rnn_desc(x)
-        out = torch.cat([h[0], h[1]], dim=-1)
+        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+
+        x1 = F.relu(self.conv1(x)).squeeze()
+        x3 = F.relu(self.conv3(x)).squeeze()
+        x5 = F.relu(self.conv5(x)).squeeze()
+        x7 = F.relu(self.conv7(x)).squeeze()
+
+        # Max-over-time-pool
+        x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
+        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+        x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
+
+        out = torch.cat([x1, x3, x5, x7], dim=1)
+        # _, h = self.rnn_desc(x)
+        # out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
 
-    def forward_enc(self, x1, x2, maskc, maskr, key_emb_c, key_emb_r):
+    def forward_enc(self, x1, x2):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.emb_drop(self.word_embed(x1))
         #x1_emb = x1_emb * (1 - maskc) + key_emb_c
-        x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
+        #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
         #x2_emb = x2_emb * (1 - maskr) + key_emb_r
-        x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
+        #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
@@ -718,7 +721,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return weighted_attn.squeeze()
 
-    def forward_fc(self, c, r):
+    def forward_fc(self, c, r, key_emb_r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
@@ -728,14 +731,14 @@ class GRUAttn_KeyCNN2(nn.Module):
         # (batch_size x 1 x h_dim)
         #key_c = key_c.squeeze()
         #key_r = key_r.squeeze()
-        #c = torch.cat([c, key_c], dim=-1)
+        c = torch.cat([c, key_emb_r], dim=-1)
         #s = torch.cat([c, key_r], dim=-1)
-        #s = F.tanh(s)
-        #s = s * torch.cat([c, key_r], dim=-1) + (1 - s) * torch.cat([r, key_c], dim=-1)
+        s = F.tanh(c)
+        s = s * c + (1 - s) * torch.cat([r, key_emb_r], dim=-1)
         #r = torch.cat([r, s], dim=-1)
         o = torch.mm(c, self.M).unsqueeze(1)
         # (batch_size x 1 x 1)
-        o = torch.bmm(o, r.unsqueeze(2))
+        o = torch.bmm(o, s.unsqueeze(2))
         o = o + self.b
 
         return o
