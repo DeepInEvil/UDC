@@ -529,7 +529,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         self.desc_rnn_size = 100
         self.n_filter = 50
         self.rnn = nn.GRU(
-            input_size=2*emb_dim, hidden_size=h_dim,
+            input_size=emb_dim, hidden_size=h_dim,
             num_layers=1, batch_first=True, bidirectional=True
         )
 
