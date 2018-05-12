@@ -551,7 +551,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 4*h_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + 2*self.desc_rnn_size))
         #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
@@ -738,9 +738,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         s = F.tanh(s)
         s = s * torch.cat([c, key_emb_r], dim=-1) + (1 - s) * torch.cat([r, key_emb_r], dim=-1)
         #r = torch.cat([r, s], dim=-1)
-        print (s.size())
+        #print (s.size())
         o = torch.mm(c, self.M).unsqueeze(1)
-        print (o.size())
+        #print (o.size(  ))
         # (batch_size x 1 x 1)
         o = torch.bmm(o, s.unsqueeze(2))
         o = o + self.b
