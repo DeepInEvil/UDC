@@ -738,7 +738,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         s = F.tanh(s)
         s = s * torch.cat([c, key_emb_r], dim=-1) + (1 - s) * torch.cat([r, key_emb_r], dim=-1)
         #r = torch.cat([r, s], dim=-1)
+        print (s.size())
         o = torch.mm(c, self.M).unsqueeze(1)
+        print (o.size())
         # (batch_size x 1 x 1)
         o = torch.bmm(o, s.unsqueeze(2))
         o = o + self.b
