@@ -653,7 +653,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         b_s = key_r.size(0)
         s_len = key_r.size(1)
         key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
-        _, h = self.rnn(key_emb)
+        _, h = self.rnn_desc(key_emb)
         key_emb = torch.cat([h[0], h[1]], dim=-1)
         #key_emb_r = self._forward().view(b_s, s_len, -1)
         key_emb_r = key_emb * key_mask_r
