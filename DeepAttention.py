@@ -544,10 +544,10 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.h_dim = h_dim
         #
-        # self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
-        # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
-        # self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
+        self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
@@ -655,9 +655,9 @@ class GRUAttn_KeyCNN2(nn.Module):
         key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
         _, h = self.rnn_desc(key_emb)
         key_emb = torch.cat([h[0], h[1]], dim=-1).view(b_s, s_len, -1)
-        print (key_emb.size(), key_mask_r.size())
-        #key_emb_r = self._forward().view(b_s, s_len, -1)
+        #print (key_emb.size(), key_mask_r.size())
         key_emb_r = key_emb * key_mask_r
+        key_emb_r = self._forward(key_emb_r)
         del (key_emb, b_s, s_len)
 
         #return key_emb_c, key_emb_r
