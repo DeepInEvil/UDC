@@ -551,7 +551,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
-        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim + 2*self.desc_rnn_size))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         #self.fc_key = nn.Parameter(torch.FloatTensor(2*h_dim + 100, 2*h_dim))
         #self.M = nn.Parameter(torch.FloatTensor(2*h_dim + 50*2, 2*h_dim + 50*2))
         self.b = nn.Parameter(torch.FloatTensor([0]))
@@ -613,7 +613,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         except KeyError:
             return [0] * max_len
 
-    def get_weighted_key(self, key_c, key_mask_c, key_r, key_mask_r):
+    def get_weighted_key(self, key_r, key_mask_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
