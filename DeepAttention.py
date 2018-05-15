@@ -644,7 +644,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         #print (key_emb.size(), key_mask_r.size())
         #key_emb_r = key_emb * key_mask_r
         key_emb = self._forward(key_emb)
-        key_emb_r = key_emb * key_mask_r
+        key_emb_r = key_emb.view(b_s, s_len, -1) * key_mask_r
         del (key_emb, b_s, s_len)
 
         #return key_emb_c, key_emb_r
