@@ -526,7 +526,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         if pretrained_emb is not None:
             self.word_embed.weight.data.copy_(pretrained_emb)
-        self.desc_rnn_size = 100
+        self.desc_rnn_size = 200
         self.n_filter = 50
         self.rnn = nn.GRU(
             input_size=emb_dim, hidden_size=h_dim,
@@ -651,22 +651,22 @@ class GRUAttn_KeyCNN2(nn.Module):
         return key_emb_r
 
     def _forward(self, x):
-        x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
-
-        x1 = F.relu(self.conv1(x)).squeeze()
-        x3 = F.relu(self.conv3(x)).squeeze()
-        x5 = F.relu(self.conv5(x)).squeeze()
-        x7 = F.relu(self.conv7(x)).squeeze()
-
-        # Max-over-time-pool
-        x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
-        x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
-        x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
-        x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
-
-        out = torch.cat([x1, x3, x5, x7], dim=1)
-        # _, h = self.rnn_desc(x)
-        # out = torch.cat([h[0], h[1]], dim=-1)
+        # x = x.unsqueeze(1)  # mbsize x 1 x seq_len x emb_dim
+        #
+        # x1 = F.relu(self.conv1(x)).squeeze()
+        # x3 = F.relu(self.conv3(x)).squeeze()
+        # x5 = F.relu(self.conv5(x)).squeeze()
+        # x7 = F.relu(self.conv7(x)).squeeze()
+        #
+        # # Max-over-time-pool
+        # x1 = F.max_pool1d(x1, x1.size(2)).squeeze()
+        # x3 = F.max_pool1d(x3, x3.size(2)).squeeze()
+        # x5 = F.max_pool1d(x5, x5.size(2)).squeeze()
+        # x7 = F.max_pool1d(x7, x7.size(2)).squeeze()
+        #
+        # out = torch.cat([x1, x3, x5, x7], dim=1)
+        _, h = self.rnn_desc(x)
+        out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
 
@@ -680,8 +680,8 @@ class GRUAttn_KeyCNN2(nn.Module):
         #x1_emb = x1_emb * (1 - maskc) + key_emb_c
         #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
-        #x2_emb = x2_emb + key_emb_r
-        x2_emb = x2_emb * (1 - maskr) + key_emb_r
+        x2_emb = x2_emb + key_emb_r
+        #x2_emb = x2_emb * (1 - maskr) + key_emb_r
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
         # Each is (1 x batch_size x h_dim)
