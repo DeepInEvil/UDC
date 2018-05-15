@@ -615,10 +615,10 @@ class UDCv4:
             y = dataset['y'][i:i+self.batch_size]
 
 
-            c, r, y, c_mask, r_mask, ql, key_c, key_mask_c, key_r, key_mask_r = self._load_batch(c, r, y, self.batch_size)
+            c, r, y, c_mask, r_mask, ql, key_r, key_mask_r = self._load_batch(c, r, y, self.batch_size)
 
             if self.use_mask:
-                yield c, r, y, c_mask, r_mask, ql, key_c, key_mask_c, key_r, key_mask_r
+                yield c, r, y, c_mask, r_mask, ql, key_r, key_mask_r
             else:
                 yield c, r, y
 
@@ -652,10 +652,10 @@ class UDCv4:
         c_mask = np.zeros([size, self.max_seq_len_c], np.float32)
         r_mask = np.zeros([size, self.max_seq_len_r], np.float32)
 
-        key_c = np.zeros([size, self.max_seq_len_c, self.desc_len], np.float32)
+        #key_c = np.zeros([size, self.max_seq_len_c, self.desc_len], np.float32)
         key_r = np.zeros([size, self.max_seq_len_r, self.desc_len], np.float32)
 
-        key_mask_c = np.zeros([size, self.max_seq_len_c], np.float32)
+        #key_mask_c = np.zeros([size, self.max_seq_len_c], np.float32)
         key_mask_r = np.zeros([size, self.max_seq_len_r], np.float32)
 
         for j, (row_c, row_r, row_y) in enumerate(zip(c, r, y)):
@@ -686,21 +686,21 @@ class UDCv4:
             c_mask[j, :len(row_c)] = 1
             r_mask[j, :len(row_r)] = 1
 
-            key_mask_c[j], key_c[j] = self.get_key(row_c, self.max_seq_len_c, self.desc_len)
+            #key_mask_c[j], key_c[j] = self.get_key(row_c, self.max_seq_len_c, self.desc_len)
             key_mask_r[j], key_r[j] = self.get_key(row_r, self.max_seq_len_r, self.desc_len)
 
         # Convert to PyTorch tensor
         c = Variable(torch.from_numpy(c_arr))
         r = Variable(torch.from_numpy(r_arr))
         y = Variable(torch.from_numpy(y_arr))
-        c_mask = Variable(torch.from_numpy(c_mask))
+        #c_mask = Variable(torch.from_numpy(c_mask))
         r_mask = Variable(torch.from_numpy(r_mask))
         q_l = Variable(torch.from_numpy(q_l))
 
-        key_mask_c = Variable(torch.from_numpy(key_mask_c), requires_grad = False)
+        #key_mask_c = Variable(torch.from_numpy(key_mask_c), requires_grad = False)
         key_mask_r = Variable(torch.from_numpy(key_mask_r), requires_grad = False)
 
-        key_c = Variable(torch.from_numpy(key_c)).type(torch.LongTensor)
+        #key_c = Variable(torch.from_numpy(key_c)).type(torch.LongTensor)
         key_r = Variable(torch.from_numpy(key_r)).type(torch.LongTensor)
 
 
@@ -709,7 +709,9 @@ class UDCv4:
         if self.gpu:
             c, r, y = c.cuda(), r.cuda(), y.cuda()
             c_mask, r_mask = c_mask.cuda(), r_mask.cuda()
+            #r_mask = r_mask.cuda()
             q_l = q_l.cuda()
-            key_c, key_mask_c, key_r, key_mask_r = key_c.cuda(), key_mask_c.cuda(), key_r.cuda(), key_mask_r.cuda()
+            #key_c, key_mask_c, key_r, key_mask_r = key_c.cuda(), key_mask_c.cuda(), key_r.cuda(), key_mask_r.cuda()
+            key_r, key_mask_r = key_r.cuda(), key_mask_r.cuda()
 
-        return c, r, y, c_mask, r_mask, q_l, key_c, key_mask_c, key_r, key_mask_r
+        return c, r, y, c_mask, r_mask, q_l, key_r, key_mask_r

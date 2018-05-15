@@ -586,7 +586,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         # size = self.rnn_desc.bias_ih_l0.size(0)
         # self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
 
-    def forward(self, x1, x2, x1mask, key_c, key_mask_c, key_r, key_mask_r):
+    def forward(self, x1, x2, x1mask, key_r, key_mask_r):
         """
         Inputs:
         -------
@@ -597,29 +597,15 @@ class GRUAttn_KeyCNN2(nn.Module):
         o: vector of (batch_size)
         """
         #print (torch.sum(key_mask_r != 0))
-        key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
+        #key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        key_emb_r = self.get_weighted_key(key_c, key_mask_c, key_r, key_mask_r)
-        sc, c, r = self.forward_enc(x1, x2)
+        key_emb_r = self.get_weighted_key(key_r, key_mask_r)
+        sc, c, r = self.forward_enc(x1, x2, key_emb_r)
         c_attn = self.forward_attn(sc, r, x1mask)
 
-        o = self.forward_fc(c_attn, r, key_emb_r)
+        o = self.forward_fc(c_attn, r)
 
         return o.view(-1)
-
-    def forward_key(self, context, max_len):
-
-        key_mask = torch.zeros(context.size(0), context.size(1))
-        keys = torch.zeros(context.size(0), context.size(1), max_len)
-        for i in range(context.size(0)):
-            utrncs = context[i].cpu().data.numpy()
-            for j, word in enumerate(utrncs):
-                if word in self.ubuntu_cmd_vec.keys():
-                    keys[i][j] = torch.from_numpy(self.ubuntu_cmd_vec[word][:max_len]).type(torch.cuda.LongTensor)
-                    key_mask[i][j] = 1
-                else:
-                    keys[i][j] = torch.zeros((max_len)).type(torch.cuda.LongTensor)
-        return Variable(key_mask.cuda(), requires_grad=False), Variable(keys.type(torch.LongTensor).cuda())
 
     def get_desc(self, word, max_len):
         try:
@@ -653,11 +639,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         b_s = key_r.size(0)
         s_len = key_r.size(1)
         key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
-        _, h = self.rnn_desc(key_emb)
-        key_emb = torch.cat([h[0], h[1]], dim=-1).view(b_s, s_len, -1)
+        #_, h = self.rnn_desc(key_emb)
+        #key_emb = torch.cat([h[0], h[1]], dim=-1).view(b_s, s_len, -1)
         #print (key_emb.size(), key_mask_r.size())
+        #key_emb_r = key_emb * key_mask_r
+        key_emb = self._forward(key_emb)
         key_emb_r = key_emb * key_mask_r
-        key_emb_r = self._forward(key_emb_r)
         del (key_emb, b_s, s_len)
 
         #return key_emb_c, key_emb_r
@@ -683,15 +670,17 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return out.squeeze()
 
-    def forward_enc(self, x1, x2):
+    def forward_enc(self, x1, x2, key_emb_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
         x1_emb = self.emb_drop(self.word_embed(x1))
+        #x1_emb = x1_emb + key_emb_r
         #x1_emb = x1_emb * (1 - maskc) + key_emb_c
         #x1_emb = torch.cat([x1_emb, key_emb_c], dim=-1)
         x2_emb = self.emb_drop(self.word_embed(x2))
+        x2_emb = x2_emb + key_emb_r
         #x2_emb = x2_emb * (1 - maskr) + key_emb_r
         #x2_emb = torch.cat([x2_emb, key_emb_r], dim=-1)
 
@@ -723,7 +712,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return weighted_attn.squeeze()
 
-    def forward_fc(self, c, r, key_emb_r):
+    def forward_fc(self, c, r):
         """
         c, r: tensor of (batch_size, h_dim)
         """
@@ -734,15 +723,15 @@ class GRUAttn_KeyCNN2(nn.Module):
         #key_c = key_c.squeeze()
         #key_r = key_r.squeeze()
         #c = torch.cat([c, key_emb_r], dim=-1)
-        s = torch.cat([c, key_emb_r], dim=-1)
-        s = F.tanh(s)
-        s = s * torch.cat([c, key_emb_r], dim=-1) + (1 - s) * torch.cat([r, key_emb_r], dim=-1)
+        #s = torch.cat([c, key_emb_r], dim=-1)
+        #s = F.tanh(s)
+        #s = s * torch.cat([c, key_emb_r], dim=-1) + (1 - s) * torch.cat([r, key_emb_r], dim=-1)
         #r = torch.cat([r, s], dim=-1)
         #print (s.size())
         o = torch.mm(c, self.M).unsqueeze(1)
         #print (o.size(  ))
         # (batch_size x 1 x 1)
-        o = torch.bmm(o, s.unsqueeze(2))
+        o = torch.bmm(o, r.unsqueeze(2))
         o = o + self.b
 
         return o
