@@ -534,7 +534,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         )
 
         self.rnn_desc = nn.GRU(
-            input_size=200, hidden_size=self.desc_rnn_size,
+            input_size=300, hidden_size=self.desc_rnn_size,
             num_layers=1, batch_first=True, bidirectional=True
         )
         # self.rnn_key = nn.GRU(
