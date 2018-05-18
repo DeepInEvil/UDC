@@ -58,7 +58,7 @@ def get_vec(sent):
     return vec/len
 
 if __name__ == '__main__':
-    vocab = open('ubuntu_data/vocab.txt', 'r').readlines()
+    vocab = open('./vocab.txt', 'r').readlines()
     w2id = {}
     for word in vocab:
         w = word.split('\n')[0].split('\t')
@@ -81,3 +81,67 @@ if __name__ == '__main__':
     pickle.dump(dataset, open('dataset_1Mstr.pkl', 'wb'))
 
 
+def get_queries(sent):
+
+
+
+for i, r in enumerate(test['r']):
+    resp = r
+    label = test['y'][i]
+    query = ' '.join(test['c'][i]).split('63346')[-1].split()
+    try:
+        if int(query[-1]) in q_idx and int(r[0]) in [124405, 124413, 54469] and label==0:
+        #if int(query[0]) in [124405, 124413, 54469] and int(query[-1]) in q_idx and int(r[0]) in [124405, 124413, 54469] and label==1:
+            print (query, r)
+    except IndexError:
+        continue
+
+o = 0
+for c, r, p in wrongs:
+    last_utr = c.split('__EOS__')[-1].strip()
+
+    try:
+        if (last_utr.split()[0] in ['what','how','whay','why']) and p.split()[0] in ['what','how','whay','why', 'when']:
+            print (last_utr)
+            print ("***********")
+            print ("responses")
+            print (r )
+            print ('==========')
+            print (p)
+            o += 1
+        if (last_utr.split()[-1] in q_m) and p.split()[0] in ['what','how','whay','why', 'when']:
+            print (last_utr)
+            print ("***********")
+            print ("responses")
+            print (r )
+            print ('==========')
+            print (p)
+            o += 1
+        if (last_utr.split()[-1] in q_m) and p.split()[-1] in q_m:
+            print (last_utr)
+            print ("***********")
+            print ("responses")
+            print (r )
+            print ('==========')
+            print (p)
+            o += 1
+    except IndexError:
+        continue
+
+
+
+o = 0
+for c, r, p in wrongs:
+    last_utr = c.split('__EOS__')[-1].strip()
+
+    try:
+        if last_utr.split()[0] in ['what','how','whay','why'] and (r.split()[0] in ['what','how','whay','why']):
+            print (last_utr)
+            print ("***********")
+            print ("responses")
+            print (r )
+            print ('==========')
+            print (p)
+            o += 1
+    except IndexError:
+        continue

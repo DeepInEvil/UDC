@@ -265,7 +265,7 @@ class GRUDualAttnEnc(nn.Module):
 
         #init.xavier_uniform(self.attn.data)
 
-    def forward(self, x1, x2, x1mask):
+    def forward(self, x1, x2, x1mask, x2mask):
         """
         Inputs:
         -------
@@ -275,9 +275,11 @@ class GRUDualAttnEnc(nn.Module):
         --------
         o: vector of (batch_size)
         """
-        sc, c, r = self.forward_enc(x1, x2)
+        sc, sr, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        o = self.forward_fc(c_attn, r)
+        r_attn = self.forward_attn(sc, c, x2mask)
+
+        o = self.forward_fc(c_attn, r_attn)
         #print (c_attn.size())
 
         #o = F.tanh(self.out_hidden(c_attn))
@@ -294,11 +296,12 @@ class GRUDualAttnEnc(nn.Module):
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
-        _, r = self.rnn(x2_emb)
+        sr, r = self.rnn(x2_emb)
         c = torch.cat([c[0], c[1]], dim=-1)
         r = torch.cat([r[0], r[1]], dim=-1)
 
-        return sc, c.squeeze(), r.squeeze()
+        #return sc, c.squeeze(), r.squeeze()
+        return sc, sr, c.squeeze(), r.squeeze()
 
     def forward_attn(self, x1, x2, mask):
         """

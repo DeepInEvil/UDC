@@ -234,7 +234,7 @@ def eval_model_v4(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         context, response, y, cm, rm, _ = mb
 
         # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm))
+        scores_mb = F.sigmoid(model(context, response, cm, rm))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         #scores.append(scores_mb.data.numpy())
         for j in range(0, len(context), 10):
@@ -246,7 +246,9 @@ def eval_model_v4(model, dataset, mode='valid', gpu=False, no_tqdm=False):
                 tot += 1
 
     scores = np.concatenate(scores)
-    scores = scores[:-(scores.shape[0] % 10)]
+    mod = scores.shape[0] % 10
+    scores = scores[:-mod if mod != 0 else None]
+
     scores = scores.reshape(-1, 10)  # 1 in 10
     recall_at_ks = [r for r in recall_at_k_np(scores)]
 
