@@ -236,14 +236,14 @@ def eval_model_v4(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm, rm))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
-        #scores.append(scores_mb.data.numpy())
-        for j in range(0, len(context), 10):
-            corr, _ = evaluate_recall(scores_mb[j:j+10])
-            if corr:
-                correct += 1
-                tot += 1
-            else:
-                tot += 1
+        scores.append(scores_mb.data.numpy())
+        # for j in range(0, len(context), 10):
+        #     corr, _ = evaluate_recall(scores_mb[j:j+10])
+        #     if corr:
+        #         correct += 1
+        #         tot += 1
+        #     else:
+        #         tot += 1
 
     scores = np.concatenate(scores)
     mod = scores.shape[0] % 10
