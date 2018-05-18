@@ -883,7 +883,7 @@ class GRUAttn_KeyCNN3(nn.Module):
         :return:
         """
         if key_emb is not None:
-            key_emb = self.desc_rnn_add(key_emb.view(key_emb.size(0) * key_emb.size(1), -1)).view(key_emb.size(0),
+            key_emb = F.tanh(self.desc_rnn_add(key_emb.view(key_emb.size(0) * key_emb.size(1), -1))).view(key_emb.size(0),
                                                                                                   key_emb.size(1), -1)
             x1 = x1 + key_emb
         max_len = x1.size(1)
