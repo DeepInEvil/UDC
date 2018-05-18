@@ -49,7 +49,7 @@ if args.gpu:
 
 max_seq_len = 280
 
-udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
 model = GRUDualAttnEnc(
