@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3, UDCv4
-from evaluation import eval_model_v1, eval_model_v4
+from evaluation import eval_model_v1, eval_model_v2
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN3
 
@@ -110,7 +110,7 @@ def main():
 
         del (context, response, y, output)
         # Validation
-        recall_at_ks = eval_model_v4(
+        recall_at_ks = eval_model_v2(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -127,7 +127,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model_v4(
+    recall_at_ks = eval_model_v2(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
