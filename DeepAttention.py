@@ -773,6 +773,7 @@ class GRUAttn_KeyCNN3(nn.Module):
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
         self.b = nn.Parameter(torch.FloatTensor([0]))
         self.attn = nn.Linear(2*h_dim, 2*h_dim)
+        self.desc_rnn_add = nn.Linear(2*self.desc_rnn_size, 2*self.h_dim)
         self.init_params_()
         self.ubuntu_cmd_vec = np.load('ubuntu_data/command_desc_dict.npy').item()
         self.tech_w = 0.0
@@ -851,7 +852,7 @@ class GRUAttn_KeyCNN3(nn.Module):
         :return:
         """
         #_, h = self.rnn_desc(x)
-        _, h = self.rnn(x)
+        _, h = self.rnn_desc(x)
         out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
@@ -882,6 +883,8 @@ class GRUAttn_KeyCNN3(nn.Module):
         :return:
         """
         if key_emb is not None:
+            key_emb = self.desc_rnn_add(key_emb.view(key_emb.size(0) * key_emb.size(1), -1)).view(key_emb.size(0),
+                                                                                                  key_emb.size(1), -1)
             x1 = x1 + key_emb
         max_len = x1.size(1)
         b_size = x1.size(0)
