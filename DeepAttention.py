@@ -875,7 +875,7 @@ class GRUAttn_KeyCNN3(nn.Module):
         :param key_emb:
         :return:
         """
-        if key_emb:
+        if key_emb is not None:
             x1 = x1 + key_emb
         max_len = x1.size(1)
         b_size = x1.size(0)
