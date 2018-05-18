@@ -819,7 +819,7 @@ class GRUAttn_KeyCNN3(nn.Module):
         key_emb_r = self.get_weighted_key(key_r, key_mask_r)
         sc, sr, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        r_attn = self.forward_attn(sr, c, x1mask, key_emb_r)
+        r_attn = self.forward_attn(sr, c, x2mask, key_emb_r)
         o = self.forward_fc(c_attn, r_attn)
 
         return o.view(-1)
