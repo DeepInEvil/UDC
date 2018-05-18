@@ -277,7 +277,7 @@ class GRUDualAttnEnc(nn.Module):
         """
         sc, sr, c, r = self.forward_enc(x1, x2)
         c_attn = self.forward_attn(sc, r, x1mask)
-        r_attn = self.forward_attn(sc, c, x2mask)
+        r_attn = self.forward_attn(sr, c, x2mask)
 
         o = self.forward_fc(c_attn, r_attn)
         #print (c_attn.size())
