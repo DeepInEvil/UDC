@@ -836,16 +836,22 @@ class GRUAttn_KeyCNN3(nn.Module):
 
         b_s = key_r.size(0)
         s_len = key_r.size(1)
-        key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))
+        key_emb = self.emb_drop(self.word_embed(key_r.view(b_s * s_len, -1)))  # BXS, KS, E
 
         key_emb = self._forward(key_emb)
-        key_emb_r = key_emb.view(b_s, s_len, -1) * key_mask_r
+        key_emb_r = key_emb.view(b_s, s_len, -1) * key_mask_r  # B, S, E
         del (key_emb, b_s, s_len)
 
         return key_emb_r
 
     def _forward(self, x):
-        _, h = self.rnn_desc(x)
+        """
+
+        :param x: B X S X E
+        :return:
+        """
+        #_, h = self.rnn_desc(x)
+        _, h = self.rnn(x)
         out = torch.cat([h[0], h[1]], dim=-1)
 
         return out.squeeze()
