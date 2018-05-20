@@ -96,10 +96,10 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     tot = 0.0
     correct = 0.0
     for mb in data_iter:
-        context, response, y, cm, rm, ql = mb
+        context, response, y, cm, rm, ql, key_r, key_mask_r = mb
 
         # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm))
+        scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
 
         for j in range(0, len(context), 10):
