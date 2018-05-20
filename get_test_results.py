@@ -14,8 +14,8 @@ from util import load_model
 
 from tqdm import tqdm
 
-udc = UDCv4('ubuntu_data', batch_size=32, use_mask=True,
-            max_seq_len=300, gpu=True, use_fasttext=True)
+udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
+            max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN3(
     udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
