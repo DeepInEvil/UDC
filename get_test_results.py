@@ -7,18 +7,18 @@ import math
 import torch.nn.init as init
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
-from data import UDCv1, UDCv2, UDCv3
+from data import UDCv1, UDCv2, UDCv4
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN3
 from util import load_model
 
 from tqdm import tqdm
 
-udc = UDCv3('ubuntu_data', batch_size=32, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=32, use_mask=True,
             max_seq_len=300, gpu=True, use_fasttext=True)
 
-model = GRUAttn_KeyCNN2(
-    udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
+model = GRUAttn_KeyCNN3(
+    udc.emb_dim, udc.vocab_size, 320, udc.vectors, 0, True
 )
 
 vocab = open('ubuntu_data/vocab.txt', 'r').readlines()
@@ -130,6 +130,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     return recall_at_ks
 
 
-model = load_model(model, 'GRU_kb_enc_gru2')
+model = load_model(model, 'GRU_kb_enc_gru3')
 
 eval_test()
