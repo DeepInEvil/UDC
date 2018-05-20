@@ -18,7 +18,7 @@ udc = UDCv4('ubuntu_data', batch_size=32, use_mask=True,
             max_seq_len=300, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN3(
-    udc.emb_dim, udc.vocab_size, 320, udc.vectors, 0, True
+    udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True
 )
 
 vocab = open('ubuntu_data/vocab.txt', 'r').readlines()
