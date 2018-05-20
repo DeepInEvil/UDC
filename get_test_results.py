@@ -130,6 +130,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     return recall_at_ks
 
 
-model = load_model(model, 'GRU_kb_enc_gru3')
+model = load_model(model, 'GRU_kb_enc_gru3_bak750')
 
 eval_test()
