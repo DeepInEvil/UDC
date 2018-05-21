@@ -97,7 +97,7 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql, key_r, key_mask_r= mb
+            context, response, y, cm, rm, ql = mb
             #output = model(context, response, cm, rm, key_r, key_mask_r)
             output = model(context, response, cm, rm)
             loss = F.binary_cross_entropy_with_logits(output, y)
@@ -111,7 +111,7 @@ def main():
 
         del (context, response, y, output)
         # Validation
-        recall_at_ks = eval_model_v2(
+        recall_at_ks = eval_model_v4(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
