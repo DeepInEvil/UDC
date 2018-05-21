@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3, UDCv4
-from evaluation import eval_model_v1, eval_model_v2
+from evaluation import eval_model_v4, eval_model_v2
 from util import save_model, clip_gradient_threshold
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN3
 
@@ -52,7 +52,7 @@ max_seq_len = 320
 udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = GRUAttn_KeyCNN2(
+model = GRUDualAttnEnc(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 
@@ -98,7 +98,8 @@ def main():
 
         for it, mb in train_iter:
             context, response, y, cm, rm, ql, key_r, key_mask_r= mb
-            output = model(context, response, cm, rm, key_r, key_mask_r)
+            #output = model(context, response, cm, rm, key_r, key_mask_r)
+            output = model(context, response, cm, rm)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
@@ -128,7 +129,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model_v2(
+    recall_at_ks = eval_model_v4(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
