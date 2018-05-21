@@ -120,7 +120,7 @@ def main():
         #if epoch > 5:
         #     eval_test()
 
-        save_model(model, 'GRU_kb_enc_gru3')
+        save_model(model, 'GRU_kb_enc_gru5')
 
 
 def eval_test():
