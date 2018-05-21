@@ -547,10 +547,10 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         self.h_dim = h_dim
         #
-        self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
-        self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
-        self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
-        self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
+        # self.conv1 = nn.Conv2d(1, self.n_filter, (1, emb_dim))
+        # self.conv3 = nn.Conv2d(1, self.n_filter, (3, emb_dim))
+        # self.conv5 = nn.Conv2d(1, self.n_filter, (5, emb_dim))
+        # self.conv7 = nn.Conv2d(1, self.n_filter, (7, emb_dim))
 
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
@@ -583,13 +583,13 @@ class GRUAttn_KeyCNN2(nn.Module):
         size = self.rnn.bias_ih_l0.size(0)
         self.rnn.bias_ih_l0.data[size//4:size//2] = 2
 
-        # size = self.rnn_desc.bias_hh_l0.size(0)
-        # self.rnn_desc.bias_hh_l0.data[size//4:size//2] = 2
-        #
-        # size = self.rnn_desc.bias_ih_l0.size(0)
-        # self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
+        size = self.rnn_desc.bias_hh_l0.size(0)
+        self.rnn_desc.bias_hh_l0.data[size//4:size//2] = 2
 
-    def forward(self, x1, x2, x1mask, key_r, key_mask_r):
+        size = self.rnn_desc.bias_ih_l0.size(0)
+        self.rnn_desc.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2, x1mask, x2mask, key_r, key_mask_r):
         """
         Inputs:
         -------
@@ -603,18 +603,12 @@ class GRUAttn_KeyCNN2(nn.Module):
         #key_mask_c = key_mask_c.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
         key_emb_r = self.get_weighted_key(key_r, key_mask_r)
-        sc, c, r = self.forward_enc(x1, x2, key_mask_r, key_emb_r)
+        sc, sr, c, r = self.forward_enc(x1, x2, key_emb_r)
         c_attn = self.forward_attn(sc, r, x1mask)
-
-        o = self.forward_fc(c_attn, r)
+        r_attn = self.forward_attn(sr, c, x2mask)
+        o = self.forward_fc(c_attn, r_attn)
 
         return o.view(-1)
-
-    def get_desc(self, word, max_len):
-        try:
-            return self.ubuntu_cmd_vec[word][:max_len]
-        except KeyError:
-            return [0] * max_len
 
     def get_weighted_key(self, key_r, key_mask_r):
         """
@@ -673,7 +667,7 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         return out.squeeze()
 
-    def forward_enc(self, x1, x2, maskr, key_emb_r):
+    def forward_enc(self, x1, x2, key_emb_r):
         """
         x1, x2: seqs of words (batch_size, seq_len)
         """
@@ -689,11 +683,11 @@ class GRUAttn_KeyCNN2(nn.Module):
 
         # Each is (1 x batch_size x h_dim)
         sc, c = self.rnn(x1_emb)
-        _, r = self.rnn(x2_emb)
+        sr, r = self.rnn(x2_emb)
         c = torch.cat([c[0], c[1]], dim=-1) # concat the bi-directional hidden layers
         r = torch.cat([r[0], r[1]], dim=-1)
 
-        return sc, c.squeeze(), r.squeeze()
+        return sc, sr, c.squeeze(), r.squeeze()
 
     def forward_attn(self, x1, x2, mask):
         """
