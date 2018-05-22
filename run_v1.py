@@ -10,7 +10,7 @@ from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3, UDCv4
 from evaluation import eval_model_v4, eval_model_v2
 from util import save_model, clip_gradient_threshold
-from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN3
+from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN4
 
 import argparse
 from tqdm import tqdm
@@ -52,7 +52,7 @@ max_seq_len = 320
 udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = GRUDualAttnEnc(
+model = GRUAttn_KeyCNN4(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 
@@ -97,9 +97,10 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql = mb
-            #output = model(context, response, cm, rm, key_r, key_mask_r)
-            output = model(context, response, cm, rm)
+            #context, response, y, cm, rm, ql = mb
+            context, response, y, cm, rm, ql, key_r, key_mask_r = mb
+            output = model(context, response, cm, rm, key_r, key_mask_r)
+            #output = model(context, response, cm, rm)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
@@ -111,7 +112,7 @@ def main():
 
         del (context, response, y, output)
         # Validation
-        recall_at_ks = eval_model_v4(
+        recall_at_ks = eval_model_v2(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -129,7 +130,7 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
 
-    recall_at_ks = eval_model_v4(
+    recall_at_ks = eval_model_v2(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
