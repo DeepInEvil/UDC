@@ -756,7 +756,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         )
 
         self.h_dim = h_dim
-
+        self.emb_dim = emb_dim
         self.emb_drop = nn.Dropout(emb_drop)
         self.max_seq_len = max_seq_len
         self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
@@ -841,6 +841,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         x1, x2: seqs of words (batch_size, seq_len)
         """
         # Both are (batch_size, seq_len, emb_dim)
+        b, s = x2.size(0), x2.size(1)
         x1_emb = self.emb_drop(self.word_embed(x1)) # B X S X E
         sc, c = self.rnn(x1_emb)
         c = torch.cat([c[0], c[1]], dim=-1)  # concat the bi-directional hidden layers, shape = B X H
@@ -848,7 +849,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         c_k = c.unsqueeze(1).repeat(1, key_emb_r.size(1), 1)
 
         x2_emb = self.emb_drop(self.word_embed(x2))
-        z = F.sigmoid(torch.mm(self.Wc, c_k) + torch.mm(self.We, key_emb_r))
+        z = F.sigmoid(torch.mm(c_k.resize_(b*s, -1), self.Wc).resize_(b, s, self.emb_dim) + torch.mm(key_emb_r.resize_(b*s, -1), self.We).resize_(b, s, self.emb_dim))
 
         x2_emb = (1 - z) * x2_emb + z * key_emb_r
         # Each is (1 x batch_size x h_dim)
