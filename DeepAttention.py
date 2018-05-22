@@ -848,7 +848,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         c_k = c.unsqueeze(1).repeat(1, key_emb_r.size(1), 1)
 
         x2_emb = self.emb_drop(self.word_embed(x2))
-        z = F.sigmoid(self.Wc(c_k) + self.We(key_emb_r))
+        z = F.sigmoid(torch.mm(self.Wc, c_k) + torch.mm(self.We, key_emb_r))
 
         x2_emb = (1 - z) * x2_emb + z * key_emb_r
         # Each is (1 x batch_size x h_dim)
