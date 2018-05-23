@@ -585,14 +585,14 @@ class UDCv4:
         else:
             with open(f'{path}/W.pkl', 'rb') as f:
                 vectors, _ = pickle.load(f, encoding='ISO-8859-1')
-        self.ubuntu_cmd_vec = np.load(f'{path}/man_dict_key.npy').item()
+        self.ubuntu_cmd_vec = np.load(f'{path}/man_dict_new.npy').item()
 
         print('Finished loading dataset!')
 
         self.q_idx = list(np.load('ubuntu_data/ques.npy'))
         self.w1h = [124405, 124413, 54469, 17261]
 
-        self.n_train = len(self.train['y'])
+        self.n_train = len(self.train[  'y'])
         self.n_valid = len(self.valid['y'])
         self.n_test = len(self.test['y'])
         self.vectors = torch.from_numpy(vectors.astype(np.float32))
