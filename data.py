@@ -572,7 +572,7 @@ class UDCv4:
         self.use_mask = use_mask
         self.gpu = gpu
 
-        self.desc_len = 100
+        self.desc_len = 44
 
         with open(f'{path}/dataset_1M.pkl', 'rb') as f:
             dataset = pickle.load(f, encoding='ISO-8859-1')
