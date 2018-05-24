@@ -50,8 +50,8 @@ def get_atten_dict(sent, weights):
 udc = UDCv4('ubuntu_data', batch_size=64, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
-model = GRUAttn_KeyCNN2(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
-model = load_model(model, 'GRU_kb_enc_gru5')
+model = GRUDualAttnEnc(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
+model = load_model(model, 'GRU_kb_enc_gru3')
 model.eval()
 
 data_iter = udc.get_iter('test')
@@ -64,10 +64,11 @@ data_iter.total = n_data // udc.batch_size
 
 for mb in data_iter:
     context, response, y, cm, rm, _, key_r, key_m_r = mb
-    key_mask_r = key_m_r.unsqueeze(2).repeat(1, 1, 50 * 4)
-    scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_m_r)).cpu().data.numpy()
-    key_emb_r = model.get_weighted_key(key_r, key_mask_r)
-    sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
+    #key_mask_r = key_m_r.unsqueeze(2).repeat(1, 1, 50 * 4)
+    #scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_m_r)).cpu().data.numpy()
+    scores_mb = F.sigmoid(model(context, response, cm, rm)).cpu().data.numpy()
+    #key_emb_r = model.get_weighted_key(key_r, key_mask_r)
+    sc, sr, c, r = model.forward_enc(context, response)
 
     max_len = sr.size(1)
     b_size = sr.size(0)
@@ -82,4 +83,4 @@ for mb in data_iter:
         if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5 and y[i].cpu().data.numpy() == 1:
             attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
 
-np.save('ubuntu_data/attention_key.npy', attentions)
+np.save('ubuntu_data/attention_key_dualenc.npy', attentions)
