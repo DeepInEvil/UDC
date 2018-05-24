@@ -62,5 +62,5 @@ for mb in data_iter:
     key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, 50 * 4)
     key_emb_r = model.get_weighted_key(key_r, key_mask_r)
     sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
-    attentions = model.forward_attn(sr, c, rm).alphas.squeeze().cpu().data.numpy
+    attentions = model.forward_attn(sr, c, rm).alpha.squeeze().cpu().data.numpy
     print (attentions)
