@@ -65,7 +65,7 @@ data_iter.total = n_data // udc.batch_size
 for mb in data_iter:
     context, response, y, cm, rm, _, key_r, key_m_r = mb
     key_mask_r = key_m_r.unsqueeze(2).repeat(1, 1, 50 * 4)
-    scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r)).cpu().data.numpy()
+    scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_m_r)).cpu().data.numpy()
     key_emb_r = model.get_weighted_key(key_r, key_mask_r)
     sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
 
