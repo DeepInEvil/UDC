@@ -79,7 +79,7 @@ for mb in data_iter:
     alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
     alpha = alpha * rm
     for i, rb in enumerate(response):
-        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5:
+        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5 and y[i] == 1:
             attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
 
-np.save('attention_key.npy', attentions)
+np.save('ubuntu_data/attention_key.npy', attentions)
