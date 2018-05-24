@@ -50,7 +50,7 @@ def get_atten_dict(sent, weights):
 udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
-model = GRUAttn_KeyCNN3(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
+model = GRUDualAttnEnc(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
 model = load_model(model, 'GRU_kb_enc_gru3')
 model.eval()
 
