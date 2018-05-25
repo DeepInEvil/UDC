@@ -850,7 +850,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         c_k = c.unsqueeze(1).repeat(1, key_emb_r.size(1), 1)
 
         x2_emb = self.emb_drop(self.word_embed(x2))
-        z = F.softmax(torch.mm(c_k.view(b*s, -1), self.Wc).view(b, s, self.emb_dim) + torch.mm(key_emb_r.view(b*s, -1), self.We).view(b, s, self.emb_dim))
+        z = F.softmax(torch.mm(c_k.view(b*s, -1), self.Wc).view(b, s, self.emb_dim) + torch.mm(key_emb_r.view(b*s, -1), self.We).view(b, s, self.emb_dim), dim=-1)
 
         x2_emb = (1 - z) * x2_emb + z * key_emb_r
         # Each is (1 x batch_size x h_dim)
