@@ -705,7 +705,7 @@ class GRUAttn_KeyCNN2(nn.Module):
         alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
         alpha = alpha * mask  # B, T
         alpha = alpha.unsqueeze(1)  # B,1,T
-        weighted_attn = alpha.bmm(x1)  # B,T
+        weighted_attn = alpha.bmm(x1)  # B, 1, T
 
         return weighted_attn.squeeze()
 
@@ -804,7 +804,7 @@ class GRUAttn_KeyCNN4(nn.Module):
         o: vector of (batch_size)
         """
         key_mask_r = key_mask_r.unsqueeze(2).repeat(1, 1, self.n_filter * 4)
-        print (torch.sum(key_mask_r))
+        #print (torch.sum(key_mask_r))
         key_emb_r = self.get_weighted_key(key_r, key_mask_r)
         sc, sr, c, r = self.forward_enc(x1, x2, key_emb_r)
         c_attn = self.forward_attn(sc, r, x1mask)
