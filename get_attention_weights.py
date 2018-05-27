@@ -22,6 +22,20 @@ for word in vocab:
 
 i2w = {v: k for k, v in w2id.items()}
 
+def evaluate_recall(y_pred, k=1):
+    """
+    Get a batch of scores and compute the recalls
+    :param y_pred: predicted batch of candidates batch_size x 10
+    :param k: recall test value
+    :return:
+    """
+    _, sorted_idxs = torch.sort(y_pred, dim=0, descending=True)
+    num_correct = 0.0
+    predictions = sorted_idxs
+    if 0 in predictions[0].cpu().data:
+        return True, _
+    else:
+        return False, predictions[0].cuda()
 
 def getI2W(word):
     try:
@@ -47,7 +61,7 @@ def get_atten_dict(sent, weights):
     return out_attn
 
 
-udc = UDCv4('ubuntu_data', batch_size=64, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN4(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
@@ -66,21 +80,23 @@ for mb in data_iter:
     context, response, y, cm, rm, _, key_r, key_m_r = mb
     key_mask_r = key_m_r.unsqueeze(2).repeat(1, 1, 50 * 4)
     scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_m_r)).cpu().data.numpy()
-    #scores_mb = F.sigmoid(model(context, response, cm, rm)).cpu().data.numpy()
-    key_emb_r = model.get_weighted_key(key_r, key_mask_r)
-    sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
-
-    max_len = sr.size(1)
-    b_size = sr.size(0)
-
-    c = c.squeeze(0).unsqueeze(2)
-    attn = model.attn(sr.contiguous().view(b_size * max_len, -1))  # B*T,D -> B*T,D
-    attn = attn.view(b_size, max_len, -1)  # B,T,D
-    attn_energies = (attn.bmm(c).transpose(1, 2))  # B,T,D * B,D,1 --> B,1,T
-    alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
-    alpha = alpha * rm
-    for i, rb in enumerate(response):
-        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5 and y[i].cpu().data.numpy() == 1:
-            attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
+    scores = scores_mb[:1]
+    print (scores)
+    # #scores_mb = F.sigmoid(model(context, response, cm, rm)).cpu().data.numpy()
+    # key_emb_r = model.get_weighted_key(key_r, key_mask_r)
+    # sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
+    #
+    # max_len = sr.size(1)
+    # b_size = sr.size(0)
+    #
+    # c = c.squeeze(0).unsqueeze(2)
+    # attn = model.attn(sr.contiguous().view(b_size * max_len, -1))  # B*T,D -> B*T,D
+    # attn = attn.view(b_size, max_len, -1)  # B,T,D
+    # attn_energies = (attn.bmm(c).transpose(1, 2))  # B,T,D * B,D,1 --> B,1,T
+    # alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
+    # alpha = alpha * rm
+    # for i, rb in enumerate(response):
+    #     if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5 and y[i].cpu().data.numpy() == 1:
+    #         attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
 
 np.save('ubuntu_data/attention_sigmod.npy', attentions)
