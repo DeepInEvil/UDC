@@ -76,12 +76,18 @@ data_iter.set_description_str('Testing')
 n_data = udc.n_test
 data_iter.total = n_data // udc.batch_size
 
+total = 0.0
+correct = 0.0
 for mb in data_iter:
     context, response, y, cm, rm, _, key_r, key_m_r = mb
     key_mask_r = key_m_r.unsqueeze(2).repeat(1, 1, 50 * 4)
     scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_m_r)).cpu().data.numpy()
-    scores = scores_mb[:1]
-    print (scores)
+    scores = scores_mb[:2]
+    if (scores[0] > [scores[1]]):
+        correct += 1
+        total += 1
+    else:
+        total += 1
     # #scores_mb = F.sigmoid(model(context, response, cm, rm)).cpu().data.numpy()
     # key_emb_r = model.get_weighted_key(key_r, key_mask_r)
     # sc, sr, c, r = model.forward_enc(context, response, key_emb_r)
@@ -99,4 +105,5 @@ for mb in data_iter:
     #     if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and scores_mb[i] > 0.5 and y[i].cpu().data.numpy() == 1:
     #         attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
 
-np.save('ubuntu_data/attention_sigmod.npy', attentions)
+print (correct/total)
+#np.save('ubuntu_data/attention_sigmod.npy', attentions)
