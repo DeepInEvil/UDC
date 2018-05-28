@@ -82,6 +82,7 @@ def compute_qloss(ql, y):
 
 
 def main():
+    best_val = 0.0
     for epoch in range(args.n_epoch):
         print('\n\n-------------------------------------------')
         print('Epoch-{}'.format(epoch))
@@ -118,12 +119,17 @@ def main():
 
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
-
+        recall_1 = recall_at_ks[0]
         if epoch > 10:
             eval_test()
 
-        save_model(model, 'GRU_kb_enc_gru5')
-
+        if len(best_val) == 0:
+            save_model(model, 'GRU_kb_enc_gru5')
+        else:
+            if recall_1 > best_val:
+                best_val = recall_1
+                print ("Saving model for recall@1:" + str(recall_1))
+                save_model(model, 'GRU_kb_enc_gru5')
 
 
 def eval_test():
