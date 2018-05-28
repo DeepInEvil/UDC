@@ -123,7 +123,7 @@ def main():
         if epoch > 10:
             eval_test()
 
-        if len(best_val) == 0:
+        if best_val == 0.0:
             save_model(model, 'GRU_kb_enc_gru5')
         else:
             if recall_1 > best_val:
