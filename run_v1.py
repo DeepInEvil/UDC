@@ -130,6 +130,9 @@ def main():
                 best_val = recall_1
                 print ("Saving model for recall@1:" + str(recall_1))
                 save_model(model, 'GRU_kb_enc_gru5')
+            else:
+                print ("Not saving, best accuracy so far:" + str(best_val))
+
 
 
 def eval_test():
