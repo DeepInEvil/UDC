@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3, UDCv4
 from evaluation import eval_model_v4, eval_model_v2
-from util import save_model, clip_gradient_threshold
+from util import save_model, clip_gradient_threshold, load_model
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN4
 
 import argparse
@@ -129,16 +129,20 @@ def main():
             if recall_1 > best_val:
                 best_val = recall_1
                 print ("Saving model for recall@1:" + str(recall_1))
-                save_model(model, 'GRU_kb_enc_gru5')
+                save_model(model, 'DKE-GRU')
             else:
                 print ("Not saving, best accuracy so far:" + str(best_val))
-
 
 
 def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
-
+    print('Loading the best model........')
+    model = GRUAttn_KeyCNN4(
+        udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    )
+    model = load_model(model, 'DKE-GRU')
+    model.eval()
     recall_at_ks = eval_model_v2(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
@@ -149,7 +153,7 @@ def eval_test():
 
 try:
     main()
-    #eval_test()
+    eval_test()
 except KeyboardInterrupt:
     eval_test()
     exit(0)
