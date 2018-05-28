@@ -103,8 +103,14 @@ for mb in data_iter:
     alpha = alpha * rm
     pred = np.argmax(scores_mb)
     for i, rb in enumerate(response):
-        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and pred == 0:
-            attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
+        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0:
+            if pred == 0:
+                attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
+                correct += 1
+                total += 1
+            else:
 
-#print (correct/total)
+                total += 1
+
+print (correct/total)
 np.save('ubuntu_data/attention_sigmod.npy', attentions)
