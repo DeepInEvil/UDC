@@ -125,6 +125,7 @@ def main():
 
         if best_val == 0.0:
             save_model(model, 'GRU_kb_enc_gru5')
+            best_val = recall_1
         else:
             if recall_1 > best_val:
                 best_val = recall_1
