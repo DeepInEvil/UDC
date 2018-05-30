@@ -65,7 +65,7 @@ udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN4(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
-model = load_model(model, 'DKE-GRU')
+model = load_model(model, 'attention_key_add.npy')
 model.eval()
 
 data_iter = udc.get_iter('test')
@@ -113,7 +113,7 @@ for mb in data_iter:
 
     pred = np.argmax(scores_mb)
     for i, rb in enumerate(response):
-        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and y[i].cpu().data.numpy() == 1 and pred == 0:
+        if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and y[i].cpu().data.numpy() == 1:
             if pred == 0:
                 attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
                 #contexts.append(get_atten_dict(context[i].cpu().data.numpy(), alphac[i].cpu().data.numpy()))
@@ -124,4 +124,5 @@ for mb in data_iter:
                 total += 1
 
 print (correct/total)
+print (correct)
 np.save('ubuntu_data/attention_dke.npy', attentions)
