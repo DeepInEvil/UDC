@@ -103,20 +103,20 @@ for mb in data_iter:
     alpha = F.softmax(attn_energies.squeeze(1), dim=-1)  # B, T
     alpha = alpha * rm
 
-    max_len = sc.size(1)
-    b_size = sc.size(0)
-    attn_c = model.attn(sc.contiguous().view(b_size * max_len, -1))  # B*T,D -> B*T,D
-    attn_c = attn_c.view(b_size, max_len, -1)  # B,T,D
-    attn_energies_c = (attn_c.bmm(r).transpose(1, 2))  # B,T,D * B,D,1 --> B,1,T
-    alphac = F.softmax(attn_energies_c.squeeze(1), dim=-1)  # B, T
-    alphac = alphac * rm
+    # max_len = sc.size(1)
+    # b_size = sc.size(0)
+    # attn_c = model.attn(sc.contiguous().view(b_size * max_len, -1))  # B*T,D -> B*T,D
+    # attn_c = attn_c.view(b_size, max_len, -1)  # B,T,D
+    # attn_energies_c = (attn_c.bmm(r).transpose(1, 2))  # B,T,D * B,D,1 --> B,1,T
+    # alphac = F.softmax(attn_energies_c.squeeze(1), dim=-1)  # B, T
+    # alphac = alphac * rm
 
     pred = np.argmax(scores_mb)
     for i, rb in enumerate(response):
         if (torch.sum(key_m_r[i]).cpu().data.numpy()) > 0 and y[i].cpu().data.numpy() == 1 and pred == 0:
             if pred == 0:
                 attentions.append(get_atten_dict(response[i].cpu().data.numpy(), alpha[i].cpu().data.numpy()))
-                contexts.append(get_atten_dict(context[i].cpu().data.numpy(), alphac[i].cpu().data.numpy()))
+                #contexts.append(get_atten_dict(context[i].cpu().data.numpy(), alphac[i].cpu().data.numpy()))
                 correct += 1
                 total += 1
             else:
