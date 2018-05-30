@@ -14,7 +14,7 @@ from util import load_model
 
 from tqdm import tqdm
 
-udc = UDCv4('ubuntu_data', batch_size=64, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN4(
@@ -104,7 +104,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         pred = np.argmax(scores_mb.cpu().data.numpy())
         for j, con in enumerate(context):
             #corr, _ = evaluate_recall(scores_mb[j:j+10])
-            if pred == 0 and y[j].cpu().data.numpy() == 1:
+            if pred == 0:
                 correct += 1
                 tot += 1
             else:
