@@ -101,7 +101,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
-        pred = np.argmax(scores_mb)
+        pred = np.argmax(scores_mb.cpu().data.numpy())
         for j, con in enumerate(context):
             #corr, _ = evaluate_recall(scores_mb[j:j+10])
             if pred == 0 and y[j].cpu().data.numpy() == 1:
