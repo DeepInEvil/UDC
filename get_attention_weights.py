@@ -65,7 +65,7 @@ udc = UDCv4('ubuntu_data', batch_size=10, use_mask=True,
             max_seq_len=320, gpu=True, use_fasttext=True)
 
 model = GRUAttn_KeyCNN4(udc.emb_dim, udc.vocab_size, 300, udc.vectors, 0, True)
-model = load_model(model, 'DKE-GRU.')
+model = load_model(model, 'DKE-GRU')
 model.eval()
 
 data_iter = udc.get_iter('test')
@@ -124,4 +124,4 @@ for mb in data_iter:
                 total += 1
 
 print (correct/total)
-np.save('ubuntu_data/attention_sigmod.npy', attentions)
+np.save('ubuntu_data/attention_dke.npy', attentions)
