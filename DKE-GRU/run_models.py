@@ -44,7 +44,7 @@ if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
 max_seq_len = 320
-model_name = 'bigru'
+model_name = 'cgru'
 #dataset
 udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
