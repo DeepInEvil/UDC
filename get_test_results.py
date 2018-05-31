@@ -106,7 +106,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
 
             correct_response = get_words((response[0].cpu().data.numpy()))
             # print (response[j+_].cpu().data.numpy())
-            predicted = get_words((response[np.argmax(pred)].cpu().data.numpy()))
+            predicted = get_words((response[pred].cpu().data.numpy()))
 
             out_file.write(cntxt + '\t' + correct_response + '\t' + predicted)
             out_file.write('\n')
