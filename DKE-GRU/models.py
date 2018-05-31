@@ -9,7 +9,7 @@ import math
 
 class biGRU(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.6, pad_idx=0, z_dim=None):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.6, pad_idx=0):
         super(biGRU, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
@@ -24,10 +24,7 @@ class biGRU(nn.Module):
 
         self.emb_drop = nn.Dropout(emb_drop)
 
-        if z_dim is None:
-            self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
-        else:
-            self.M = nn.Parameter(torch.FloatTensor(h_dim+z_dim, h_dim+z_dim))
+        self.M = nn.Parameter(torch.FloatTensor(2*h_dim, 2*h_dim))
 
         self.b = nn.Parameter(torch.FloatTensor([0]))
 
