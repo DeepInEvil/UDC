@@ -49,7 +49,7 @@ model_name = 'gruDual'
 udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 #model definition
-model = DKE_GRU(
+model = gruDual(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 #optimizer
