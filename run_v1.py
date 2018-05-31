@@ -49,13 +49,13 @@ if args.gpu:
 
 max_seq_len = 320
 
-udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = GRUDualEncoder(
+model = GRUAttn_KeyCNN4(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-
+model_name = 'dke_gru'
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
@@ -98,11 +98,11 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql = mb
-            #context, response, y, cm, rm, ql, key_r, key_mask_r = mb
-            #output = model(context, response, cm, rm, key_r, key_mask_r)
+            #context, response, y, cm, rm, ql = mb
+            context, response, y, cm, rm, ql, key_r, key_mask_r = mb
+            output = model(context, response, cm, rm, key_r, key_mask_r)
             #output = model(context, response, cm, rm)
-            output = model(context, response)
+            #output = model(context, response)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
@@ -125,13 +125,13 @@ def main():
         #     eval_test()
 
         if best_val == 0.0:
-            save_model(model, 'GRUDualEnc')
+            save_model(model, model_name)
             best_val = recall_1
         else:
             if recall_1 > best_val:
                 best_val = recall_1
                 print ("Saving model for recall@1:" + str(recall_1))
-                save_model(model, 'GRUDualEnc')
+                save_model(model, model_name)
             else:
                 print ("Not saving, best accuracy so far:" + str(best_val))
 
@@ -146,7 +146,7 @@ def eval_test():
     model = GRUDualEncoder(
          udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
     )
-    model = load_model(model, 'GRUDualEnc')
+    model = load_model(model, model_name)
     model.eval()
     recall_at_ks = eval_model_v3(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
