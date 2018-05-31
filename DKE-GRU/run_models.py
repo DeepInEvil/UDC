@@ -6,9 +6,9 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 from data import UDCv1, UDCv2, UDCv3, UDCv4
-from evaluation import eval_model_v4, eval_model_v2, eval_model_v3
+from evaluation import eval_model_v4, eval_model_v2, eval_model_v1
 from util import save_model, clip_gradient_threshold, load_model
-from models import biGRU
+from models import biGRU, cGRU
 import argparse
 from tqdm import tqdm
 
@@ -46,7 +46,7 @@ if args.gpu:
 max_seq_len = 320
 model_name = 'bigru'
 #dataset
-udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 #model definition
 model = biGRU(
@@ -77,8 +77,8 @@ def run_model():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql = mb
-            output = model(context, response)
+            context, response, y, cm, rm, ql, key_r, key_mask_r = mb
+            output = model(context, response, cm)
             loss = F.binary_cross_entropy_with_logits(output, y)
 
             loss.backward()
@@ -86,7 +86,7 @@ def run_model():
             solver.zero_grad()
 
         # Validation
-        recall_at_ks = eval_model_v3(
+        recall_at_ks = eval_model_v1(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -121,7 +121,7 @@ def eval_test():
     )
     model = load_model(model, model_name)
     model.eval()
-    recall_at_ks = eval_model_v3(
+    recall_at_ks = eval_model_v1(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 

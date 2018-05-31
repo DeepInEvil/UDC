@@ -34,7 +34,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     for mb in data_iter:
-        context, response, y, cm, rm = mb
+        context, response, y, cm, rm, _, key_r, key_mask_r = mb
 
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm))
