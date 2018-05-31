@@ -8,7 +8,7 @@ from torch.autograd import Variable
 from data import UDCv1
 from evaluation import eval_model
 from util import save_model, clip_gradient_threshold, load_model
-from models import biGRU, cGRU, DKE_GRU
+from models import biGRU, cGRU, DKE_GRU, gruDual
 import argparse
 from tqdm import tqdm
 
@@ -44,7 +44,7 @@ if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
 max_seq_len = 320
-model_name = 'cgru'
+model_name = 'gruDual'
 #dataset
 udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
@@ -107,6 +107,7 @@ def run_model():
                 save_model(model, model_name)
             else:
                 print ("Not saving, best accuracy so far:" + str(best_val))
+        #Early stopping
         if recall_1 < np.max(recall1s[-args.early_stop:]):
             break
 

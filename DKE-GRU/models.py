@@ -503,3 +503,85 @@ class DKE_GRU(nn.Module):
         o = o + self.b
 
         return o
+
+
+class gruDual(nn.Module):
+
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
+        super(gruDual, self).__init__()
+
+        self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
+        #Load pre-trained embedding
+        if pretrained_emb is not None:
+            self.word_embed.weight.data.copy_(pretrained_emb)
+        #size of description RNN
+
+        self.rnn = nn.GRU(
+            input_size=emb_dim, hidden_size=h_dim,
+            num_layers=1, batch_first=True, bidirectional=False
+        )
+
+
+        self.h_dim = h_dim
+        self.emb_dim = emb_dim
+        self.emb_drop = nn.Dropout(emb_drop)
+        self.max_seq_len = max_seq_len
+        self.M = nn.Parameter(torch.FloatTensor(h_dim, h_dim))
+        self.b = nn.Parameter(torch.FloatTensor([0]))
+        self.init_params_()
+        self.tech_w = 0.0
+        if gpu:
+            self.cuda()
+
+    def init_params_(self):
+        #Initializing parameters
+        nn.init.xavier_normal(self.M)
+
+        # Set forget gate bias to 2
+        size = self.rnn.bias_hh_l0.size(0)
+        self.rnn.bias_hh_l0.data[size//4:size//2] = 2
+
+        size = self.rnn.bias_ih_l0.size(0)
+        self.rnn.bias_ih_l0.data[size//4:size//2] = 2
+
+    def forward(self, x1, x2, x1mask, x2mask, key_r, key_mask_r):
+        """
+        Inputs:
+        -------
+        x1, x2: seqs of words (batch_size, seq_len)
+
+        Outputs:
+        --------
+        o: vector of (batch_size)
+        """
+        c, r = self.forward_enc(x1, x2)
+        #getting values after applying attentio
+        #final output
+        o = self.forward_fc(c, r)
+
+        return o.view(-1)
+
+    def forward_enc(self, x1, x2):
+        """
+        x1, x2, key_emb: seqs of words (batch_size, seq_len)
+        """
+        # Both are (batch_size, seq_len, emb_dim)
+        x1_emb = self.emb_drop(self.word_embed(x1)) # B X S X E
+        sc, c = self.rnn(x1_emb)
+
+        x2_emb = self.emb_drop(self.word_embed(x2))
+        sr, r = self.rnn(x2_emb)
+
+        return c.squeeze(), r.squeeze()
+
+    def forward_fc(self, c, r):
+        """
+        dual encoder
+        c, r: tensor of (batch_size, h_dim)
+        """
+        o = torch.mm(c, self.M).unsqueeze(1)
+        # (batch_size x 1 x 1)
+        o = torch.bmm(o, r.unsqueeze(2))
+        o = o + self.b
+
+        return o
