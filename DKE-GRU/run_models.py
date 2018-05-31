@@ -6,7 +6,7 @@ import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
 from data import UDCv1, UDCv2, UDCv3, UDCv4
-from evaluation import eval_model_v4, eval_model_v2, eval_model_v1
+from evaluation import eval_model
 from util import save_model, clip_gradient_threshold, load_model
 from models import biGRU, cGRU, DKE_GRU
 import argparse
@@ -77,7 +77,7 @@ def run_model():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            context, response, y, cm, rm, ql, key_r, key_mask_r = mb
+            context, response, y, cm, rm, key_r, key_mask_r = mb
             output = model(context, response, cm, rm, key_r, key_mask_r)
             loss = F.binary_cross_entropy_with_logits(output, y)
 
@@ -86,7 +86,7 @@ def run_model():
             solver.zero_grad()
 
         # Validation
-        recall_at_ks = eval_model_v1(
+        recall_at_ks = eval_model(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
@@ -121,7 +121,7 @@ def eval_test():
     )
     model = load_model(model, model_name)
     model.eval()
-    recall_at_ks = eval_model_v1(
+    recall_at_ks = eval_model(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 

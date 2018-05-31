@@ -19,7 +19,16 @@ def recall_at_k_np(scores, ks=[1, 2, 3, 4, 5]):
     return recalls
 
 
-def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
+def eval_model(model, dataset, mode='valid', gpu=False, no_tqdm=False):
+    """
+    evaluation for DKE-GRU and AddGRU
+    :param model:
+    :param dataset:
+    :param mode:
+    :param gpu:
+    :param no_tqdm:
+    :return:
+    """
     model.eval()
     scores = []
 
@@ -34,41 +43,7 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     for mb in data_iter:
-        context, response, y, cm, rm, _, key_r, key_mask_r = mb
-
-        # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm))
-        scores_mb = scores_mb.cpu() if gpu else scores_mb
-        scores.append(scores_mb.data.numpy())
-
-    scores = np.concatenate(scores)
-
-    # Handle the case when numb. of data not divisible by 10
-    mod = scores.shape[0] % 10
-    scores = scores[:-mod if mod != 0 else None]
-
-    scores = scores.reshape(-1, 10)  # 1 in 10
-    recall_at_ks = [r for r in recall_at_k_np(scores)]
-
-    return recall_at_ks
-
-
-def eval_model_v2(model, dataset, mode='valid', gpu=False, no_tqdm=False):
-    model.eval()
-    scores = []
-
-    assert mode in ['valid', 'test']
-
-    data_iter = dataset.get_iter(mode)
-
-    if not no_tqdm:
-        data_iter = tqdm(data_iter)
-        data_iter.set_description_str('Evaluation')
-        n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
-        data_iter.total = n_data // dataset.batch_size
-
-    for mb in data_iter:
-        context, response, y, cm, rm, _, key_r, key_mask_r = mb
+        context, response, y, cm, rm, key_r, key_mask_r = mb
 
         # Get scores
         scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
@@ -78,71 +53,6 @@ def eval_model_v2(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     scores = np.concatenate(scores)
     
     # Handle the case when numb. of data not divisible by 10
-    mod = scores.shape[0] % 10
-    scores = scores[:-mod if mod != 0 else None]
-
-    scores = scores.reshape(-1, 10)  # 1 in 10
-    recall_at_ks = [r for r in recall_at_k_np(scores)]
-
-    return recall_at_ks
-
-
-def eval_model_v3(model, dataset, mode='valid', gpu=False, no_tqdm=False):
-    model.eval()
-    scores = []
-
-    assert mode in ['valid', 'test']
-
-    data_iter = dataset.get_iter(mode)
-
-    if not no_tqdm:
-        data_iter = tqdm(data_iter)
-        data_iter.set_description_str('Evaluation')
-        n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
-        data_iter.total = n_data // dataset.batch_size
-
-    for mb in data_iter:
-        context, response, y, cm, rm, _ = mb
-
-        # Get scores
-        #scores_mb = F.sigmoid(model(context, response, cm, rm))
-        scores_mb = F.sigmoid(model(context, response))
-        scores_mb = scores_mb.cpu() if gpu else scores_mb
-        scores.append(scores_mb.data.numpy())
-
-    scores = np.concatenate(scores)
-    mod = scores.shape[0] % 10
-    scores = scores[:-mod if mod != 0 else None]
-
-    scores = scores.reshape(-1, 10)  # 1 in 10
-    recall_at_ks = [r for r in recall_at_k_np(scores)]
-
-    return recall_at_ks
-
-
-def eval_model_v4(model, dataset, mode='valid', gpu=False, no_tqdm=False):
-    model.eval()
-    scores = []
-
-    assert mode in ['valid', 'test']
-
-    data_iter = dataset.get_iter(mode)
-
-    if not no_tqdm:
-        data_iter = tqdm(data_iter)
-        data_iter.set_description_str('Evaluation')
-        n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
-        data_iter.total = n_data // dataset.batch_size
-
-    for mb in data_iter:
-        context, response, y, cm, rm, _ = mb
-
-        # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm, rm))
-        scores_mb = scores_mb.cpu() if gpu else scores_mb
-        scores.append(scores_mb.data.numpy())
-
-    scores = np.concatenate(scores)
     mod = scores.shape[0] % 10
     scores = scores[:-mod if mod != 0 else None]
 
