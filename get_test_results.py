@@ -100,14 +100,16 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         pred = np.argmax(scores_mb.cpu().data.numpy())
-        cntxt = get_words(context[0].cpu().data.numpy()).strip()
 
-        correct_response = get_words((response[0].cpu().data.numpy()))
-        # print (response[j+_].cpu().data.numpy())
-        predicted = get_words((response[np.argmax(pred)].cpu().data.numpy()))
+        if pred != 0:
+            cntxt = get_words(context[0].cpu().data.numpy()).strip()
 
-        out_file.write(cntxt + '\t' + correct_response + '\t' + predicted)
-        out_file.write('\n')
+            correct_response = get_words((response[0].cpu().data.numpy()))
+            # print (response[j+_].cpu().data.numpy())
+            predicted = get_words((response[np.argmax(pred)].cpu().data.numpy()))
+
+            out_file.write(cntxt + '\t' + correct_response + '\t' + predicted)
+            out_file.write('\n')
         scores.append(scores_mb.data.numpy())
     out_file.close()
     scores = np.concatenate(scores)
