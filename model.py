@@ -148,7 +148,7 @@ class LSTMDualEncoder(nn.Module):
 
 class GRUDualEncoder(nn.Module):
 
-    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.5, pad_idx=0, z_dim=None):
+    def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.6, pad_idx=0, z_dim=None):
         super(GRUDualEncoder, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)

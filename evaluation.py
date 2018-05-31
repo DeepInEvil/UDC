@@ -215,6 +215,46 @@ def eval_model_v2(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     return recall_at_ks
 
 
+def eval_model_v3(model, dataset, mode='valid', gpu=False, no_tqdm=False):
+    model.eval()
+    scores = []
+
+    assert mode in ['valid', 'test']
+
+    data_iter = dataset.get_iter(mode)
+
+    if not no_tqdm:
+        data_iter = tqdm(data_iter)
+        data_iter.set_description_str('Evaluation')
+        n_data = dataset.n_valid if mode == 'valid' else dataset.n_test
+        data_iter.total = n_data // dataset.batch_size
+    tot = 0.0
+    correct = 0.0
+    for mb in data_iter:
+        context, response, y, cm, rm, _ = mb
+
+        # Get scores
+        #scores_mb = F.sigmoid(model(context, response, cm, rm))
+        scores_mb = F.sigmoid(model(context, response))
+        scores_mb = scores_mb.cpu() if gpu else scores_mb
+        scores.append(scores_mb.data.numpy())
+        # for j in range(0, len(context), 10):
+        #     corr, _ = evaluate_recall(scores_mb[j:j+10])
+        #     if corr:
+        #         correct += 1
+        #         tot += 1
+        #     else:
+        #         tot += 1
+
+    scores = np.concatenate(scores)
+    mod = scores.shape[0] % 10
+    scores = scores[:-mod if mod != 0 else None]
+
+    scores = scores.reshape(-1, 10)  # 1 in 10
+    recall_at_ks = [r for r in recall_at_k_np(scores)]
+
+    return recall_at_ks
+
 def eval_model_v4(model, dataset, mode='valid', gpu=False, no_tqdm=False):
     model.eval()
     scores = []

@@ -8,10 +8,10 @@ from torch.autograd import Variable
 
 from model import CNNDualEncoder, LSTMDualEncoder, CCN_LSTM, EmbMM
 from data import UDCv1, UDCv2, UDCv3, UDCv4
-from evaluation import eval_model_v4, eval_model_v2
+from evaluation import eval_model_v4, eval_model_v2, eval_model_v3
 from util import save_model, clip_gradient_threshold, load_model
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN4
-
+from model import GRUDualEncoder
 import argparse
 from tqdm import tqdm
 
@@ -49,10 +49,10 @@ if args.gpu:
 
 max_seq_len = 320
 
-udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv3('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 
-model = GRUAttn_KeyCNN4(
+model = GRUDualEncoder(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 
@@ -98,10 +98,11 @@ def main():
             train_iter.total = udc.n_train // udc.batch_size
 
         for it, mb in train_iter:
-            #context, response, y, cm, rm, ql = mb
-            context, response, y, cm, rm, ql, key_r, key_mask_r = mb
-            output = model(context, response, cm, rm, key_r, key_mask_r)
+            context, response, y, cm, rm, ql = mb
+            #context, response, y, cm, rm, ql, key_r, key_mask_r = mb
+            #output = model(context, response, cm, rm, key_r, key_mask_r)
             #output = model(context, response, cm, rm)
+            output = model(context, response)
             loss = F.binary_cross_entropy_with_logits(output, y)
             # loss = F.mse_loss(F.sigmoid(output), y)
 
@@ -113,24 +114,24 @@ def main():
 
         del (context, response, y, output)
         # Validation
-        recall_at_ks = eval_model_v2(
+        recall_at_ks = eval_model_v3(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
         print('Loss: {:.3f}; recall@1: {:.3f}; recall@2: {:.3f}; recall@5: {:.3f}'
               .format(loss.data[0], recall_at_ks[0], recall_at_ks[1], recall_at_ks[4]))
         recall_1 = recall_at_ks[0]
-        if epoch > 10:
-            eval_test()
+        # if epoch > 10:
+        #     eval_test()
 
         if best_val == 0.0:
-            save_model(model, 'GRU_kb_enc_gru5')
+            save_model(model, 'GRUDualEnc')
             best_val = recall_1
         else:
             if recall_1 > best_val:
                 best_val = recall_1
                 print ("Saving model for recall@1:" + str(recall_1))
-                save_model(model, 'DKE-GRU')
+                save_model(model, 'GRUDualEnc')
             else:
                 print ("Not saving, best accuracy so far:" + str(best_val))
 
@@ -139,12 +140,15 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
     print('Loading the best model........')
-    model = GRUAttn_KeyCNN4(
-        udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    # model = GRUAttn_KeyCNN4(
+    #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    # )    #
+    model = GRUDualEncoder(
+         udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
     )
-    model = load_model(model, 'DKE-GRU')
+    model = load_model(model, 'GRUDualEnc')
     model.eval()
-    recall_at_ks = eval_model_v2(
+    recall_at_ks = eval_model_v3(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
