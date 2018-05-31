@@ -49,7 +49,7 @@ model_name = 'cgru'
 udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 #model definition
-model = biGRU(
+model = cGRU(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 #optimizer
