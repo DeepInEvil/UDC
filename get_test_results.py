@@ -34,7 +34,7 @@ def getI2W(word):
     try:
         return i2w[word]
     except KeyError:
-        return '__PAD__'
+        return ''
 
 
 def get_words(sent):
@@ -93,8 +93,6 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     out_file = open('ubuntu_data/wrong_pred_dke.txt', 'w')
-    tot = 0.0
-    correct = 0.0
     for mb in data_iter:
         context, response, y, cm, rm, ql, key_r, key_mask_r = mb
 
@@ -102,24 +100,16 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         pred = np.argmax(scores_mb.cpu().data.numpy())
-        for j, con in enumerate(context):
-            #corr, _ = evaluate_recall(scores_mb[j:j+10])
-            if pred == 0:
-                correct += 1
-                tot += 1
-            else:
-                tot += 1
-                cntxt = get_words((context[j].cpu().data.numpy()))
-                correct_response = get_words((response[j].cpu().data.numpy()))
-                #print (response[j+_].cpu().data.numpy())
-                predicted = get_words((response[np.argmax(pred)].cpu().data.numpy()))
+        cntxt = get_words(context[0].cpu().data.numpy()).strip()
 
-                out_file.write(cntxt+'\t'+correct_response + '\t' + predicted)
-                out_file.write('\n')
+        correct_response = get_words((response[0].cpu().data.numpy()))
+        # print (response[j+_].cpu().data.numpy())
+        predicted = get_words((response[np.argmax(pred)].cpu().data.numpy()))
+
+        out_file.write(cntxt + '\t' + correct_response + '\t' + predicted)
+        out_file.write('\n')
         scores.append(scores_mb.data.numpy())
     out_file.close()
-    print (tot)
-    print (correct/tot)
     scores = np.concatenate(scores)
     mod = scores.shape[0] % 10
     scores = scores[:-mod if mod != 0 else None]
