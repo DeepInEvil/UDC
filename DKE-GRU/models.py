@@ -155,7 +155,7 @@ class cGRU(nn.Module):
         c = torch.cat([c[0], c[1]], dim=-1)
         r = torch.cat([r[0], r[1]], dim=-1)
 
-        return c.squeeze(), r.squeeze()
+        return sc, c.squeeze(), r.squeeze()
 
     def forward_attn(self, x1, x2, mask):
         """
