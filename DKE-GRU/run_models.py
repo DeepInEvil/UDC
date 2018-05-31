@@ -5,7 +5,7 @@ import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
-from data import UDCv1, UDCv2, UDCv3, UDCv4
+from data import UDCv1
 from evaluation import eval_model
 from util import save_model, clip_gradient_threshold, load_model
 from models import biGRU, cGRU, DKE_GRU
@@ -46,7 +46,7 @@ if args.gpu:
 max_seq_len = 320
 model_name = 'cgru'
 #dataset
-udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
+udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 #model definition
 model = DKE_GRU(
