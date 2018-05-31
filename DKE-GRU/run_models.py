@@ -112,14 +112,14 @@ def run_model():
             break
 
 
-def eval_test():
+def eval_test(model):
     #Evaluation test
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
     print('Loading the best model........')
-    model = biGRU(
-         udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-    )
+    # model = biGRU(
+    #      udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    # )
     model = load_model(model, model_name)
     model.eval()
     recall_at_ks = eval_model(
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     #run the models
     try:
         run_model()
-        eval_test()
+        eval_test(model)
     except KeyboardInterrupt:
-        eval_test()
+        eval_test(model)
         exit(0)
