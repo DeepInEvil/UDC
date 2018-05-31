@@ -3,7 +3,6 @@ from torchtext.vocab import Vocab, GloVe
 import torch
 from torch.autograd import Variable
 import re
-import twokenize
 from collections import OrderedDict, Counter
 import numpy as np
 import pickle
