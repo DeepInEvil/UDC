@@ -28,3 +28,6 @@ The DKE-GRU model should be run as:
 
 python -u DKE-GRU/run_models.py --h_dim 300 --mb_size 32 --n_epoch 20 --gpu --lr 0.0001
 
+The logs for DKE-GRU are already provided, it can be viewed using:
+
+tail -f logs/run_dke_gru.txt
