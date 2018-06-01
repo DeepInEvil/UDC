@@ -79,7 +79,7 @@ def run_model():
 
         for it, mb in train_iter:
             context, response, y, cm, rm, key_r, key_mask_r = mb
-            output = model(context, response, cm, rm, key_r, key_mask_r)
+            output = model(context, response, cm, rm, key_r, key_mask_r)  # Appropriate this line while running different models
             loss = F.binary_cross_entropy_with_logits(output, y)
 
             loss.backward()

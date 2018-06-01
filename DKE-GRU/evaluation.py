@@ -46,7 +46,7 @@ def eval_model(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         context, response, y, cm, rm, key_r, key_mask_r = mb
 
         # Get scores
-        scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r))
+        scores_mb = F.sigmoid(model(context, response, cm, rm, key_r, key_mask_r)) #Appropritate this line while running different models.
         scores_mb = scores_mb.cpu() if gpu else scores_mb
         scores.append(scores_mb.data.numpy())
 
