@@ -44,12 +44,12 @@ if args.gpu:
     torch.cuda.manual_seed(args.randseed)
 
 max_seq_len = 320
-model_name = 'gruDual'
+model_name = 'DKE-GRU'
 #dataset
 udc = UDCv1('ubuntu_data', batch_size=args.mb_size, use_mask=True,
             max_seq_len=max_seq_len, gpu=args.gpu, use_fasttext=True)
 #model definition
-model = gruDual(
+model = DKE_GRU(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
 #optimizer
@@ -117,9 +117,6 @@ def eval_test(model):
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
     print('Loading the best model........')
-    # model = biGRU(
-    #      udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-    # )
     model = load_model(model, model_name)
     model.eval()
     recall_at_ks = eval_model(

@@ -521,7 +521,6 @@ class gruDual(nn.Module):
             num_layers=1, batch_first=True, bidirectional=False
         )
 
-
         self.h_dim = h_dim
         self.emb_dim = emb_dim
         self.emb_drop = nn.Dropout(emb_drop)
