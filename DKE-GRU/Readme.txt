@@ -10,8 +10,7 @@ Install the requirements.txt file and install pytorch version: "0.3.1.post2"
 ### Prerequisites
 
 Download the pre-processed files from Wu et. al, from here: https://www.dropbox.com/s/2fdn26rj6h9bpvl/ubuntu%20data.zip?dl=0and save it in ubuntu_data.
-Run
-python ./preprocess.py
+Run: python ./preprocess.py
 To create the required preprocessed dataset
 This will be read from data.py
 Use the train.txt file to train a fasttext model using the fasttext library:https://github.com/facebookresearch/fastText by:

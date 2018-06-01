@@ -1,10 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
-from torch.autograd import Variable
 from data import UDCv1
 from evaluation import eval_model
 from util import save_model, clip_gradient_threshold, load_model
@@ -60,6 +57,10 @@ if args.gpu:
 
 
 def run_model():
+    """
+    Training method
+    :return:
+    """
     best_val = 0.0
     recall1s = []
     for epoch in range(args.n_epoch):
@@ -113,7 +114,11 @@ def run_model():
 
 
 def eval_test(model):
-    #Evaluation test
+    '''
+    Evaluation
+    :param model:
+    :return:
+    '''
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
     print('Loading the best model........')

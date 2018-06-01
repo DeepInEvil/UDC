@@ -38,7 +38,7 @@ class UDCv1:
             with open(f'{path}/W.pkl', 'rb') as f:
                 vectors, _ = pickle.load(f, encoding='ISO-8859-1')
         #load the command description file
-        self.ubuntu_cmd_vec = np.load(f'{path}/man_dict_new.npy').item()
+        self.ubuntu_cmd_vec = np.load(f'{path}/command_description.npy').item()
         #self.ubuntu_cmd_vec = np.load(f'{path}/man_dict_key.npy').item()
 
         print('Finished loading dataset!')
