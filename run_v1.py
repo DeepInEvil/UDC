@@ -32,7 +32,7 @@ parser.add_argument('--mb_size', type=int, default=128, metavar='',
                     help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
-parser.add_argument('--randseed', type=int, default=123, metavar='',
+parser.add_argument('--randseed', type=int, default=666, metavar='',
                     help='random seed (default: 123)')
 parser.add_argument('--no_tqdm', default=False, action='store_true',
                     help='disable tqdm progress bar')
@@ -140,12 +140,12 @@ def eval_test():
     print('\n\nEvaluating on test set...')
     print('-------------------------------')
     print('Loading the best model........')
-    # model = GRUAttn_KeyCNN4(
-    #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-    # )    #
-    model = GRUDualEncoder(
-         udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
-    )
+    model = GRUAttn_KeyCNN4(
+        udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    )    #
+    # model = GRUDualEncoder(
+    #      udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
+    # )
     model = load_model(model, model_name)
     model.eval()
     recall_at_ks = eval_model_v3(
