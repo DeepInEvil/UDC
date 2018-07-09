@@ -114,7 +114,7 @@ def main():
 
         del (context, response, y, output)
         # Validation
-        recall_at_ks = eval_model_v3(
+        recall_at_ks = eval_model_v2(
             model, udc, 'valid', gpu=args.gpu, no_tqdm=args.no_tqdm
         )
 
