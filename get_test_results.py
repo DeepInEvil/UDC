@@ -93,6 +93,8 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
         data_iter.total = n_data // dataset.batch_size
 
     out_file = open('ubuntu_data/wrong_pred_dke.txt', 'w')
+    out_file2 = open('ubuntu_data/correct_pred_dke.txt', 'w')
+
     for mb in data_iter:
         context, response, y, cm, rm, ql, key_r, key_mask_r = mb
 
@@ -110,8 +112,17 @@ def eval_model_v1(model, dataset, mode='valid', gpu=False, no_tqdm=False):
 
             out_file.write(cntxt + '\t' + correct_response + '\t' + predicted)
             out_file.write('\n')
+        else:
+            cntxt = get_words(context[0].cpu().data.numpy()).strip()
+            correct_response = get_words((response[0].cpu().data.numpy()))
+            # print (response[j+_].cpu().data.numpy())
+            predicted = get_words((response[pred].cpu().data.numpy()))
+
+            out_file2.write(cntxt + '\t' + correct_response + '\t' + predicted)
+            out_file2.write('\n')
         scores.append(scores_mb.data.numpy())
     out_file.close()
+    out_file2.close()
     scores = np.concatenate(scores)
     mod = scores.shape[0] % 10
     scores = scores[:-mod if mod != 0 else None]
