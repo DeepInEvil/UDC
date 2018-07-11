@@ -148,7 +148,7 @@ def eval_test():
     # )
     model = load_model(model, model_name)
     model.eval()
-    recall_at_ks = eval_model_v3(
+    recall_at_ks = eval_model_v2(
         model, udc, 'test', gpu=args.gpu, no_tqdm=args.no_tqdm
     )
 
