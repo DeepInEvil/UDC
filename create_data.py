@@ -145,3 +145,38 @@ for c, r, p in wrongs:
             o += 1
     except IndexError:
         continue
+
+def get_freq(file):
+    with open(file,'r') as f:
+        data = f.readlines()
+    for d in data:
+        d = d.replace('\n', '').split('\t')
+        for c in d:
+            for w in c.split():
+                vocab[w] += 1.0
+
+
+import math
+
+
+def Entropy(string, base=2.0):
+    # make set with all unrepeatable symbols from string
+    dct = dict.fromkeys(list(string))
+
+    # calculate frequencies
+    pkvec = [float(string.count(c)) / len(string) for c in dct]
+    print (pkvec)
+    # calculate Entropy
+    H = -sum([pk * math.log(pk) / math.log(base) for pk in pkvec])
+    return H
+
+
+print(Entropy("Python is not so easy"))
+
+
+def get_entropy(string, base=2.0):
+    words = string.split()
+    probs = [prob[w] for w in words]
+    H = -sum([math.log(pk) / math.log(base) for pk in probs if pk != 0.0])
+    ent = H/len(words)
+    return ent
