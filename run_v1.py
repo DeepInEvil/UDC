@@ -12,6 +12,7 @@ from evaluation import eval_model_v4, eval_model_v2, eval_model_v3
 from util import save_model, clip_gradient_threshold, load_model
 from DeepAttention import LSTMDualAttnEnc, LSTMPAttn, GRUDualAttnEnc, GRUAttnmitKey, LSTMKeyAttn, GRUAttn_KeyCNN2, GRUAttn_KeyCNN4
 from model import GRUDualEncoder
+import random
 import argparse
 from tqdm import tqdm
 
@@ -32,20 +33,23 @@ parser.add_argument('--mb_size', type=int, default=128, metavar='',
                     help='size of minibatch (default: 128)')
 parser.add_argument('--n_epoch', type=int, default=500, metavar='',
                     help='number of iterations (default: 500)')
-parser.add_argument('--randseed', type=int, default=666, metavar='',
-                    help='random seed (default: 123)')
+# parser.add_argument('--randseed', type=int, default=666, metavar='',
+#                     help='random seed (default: 666)')
 parser.add_argument('--no_tqdm', default=False, action='store_true',
                     help='disable tqdm progress bar')
 
 
 args = parser.parse_args()
-
+rand_int = random.randint(0, 1000)
 # Set random seed
-np.random.seed(args.randseed)
-torch.manual_seed(args.randseed)
-
+#np.random.seed(args.randseed)
+np.random.seed(rand_int)
+#torch.manual_seed(args.randseed)
+torch.manual_seed(rand_int)
+print ("Running with random seed:" + str(rand_int))
 if args.gpu:
-    torch.cuda.manual_seed(args.randseed)
+    #torch.cuda.manual_seed(args.randseed)
+    torch.cuda.manual_seed(rand_int)
 
 max_seq_len = 320
 
@@ -55,7 +59,7 @@ udc = UDCv4('ubuntu_data', batch_size=args.mb_size, use_mask=True,
 model = GRUAttn_KeyCNN4(
     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 )
-model_name = 'dke_gru'
+model_name = 'dke_gru'+str(rand_int)
 # model = LSTMPAttn(
 #     udc.emb_dim, udc.vocab_size, args.h_dim, udc.vectors, 0, args.gpu
 # )
