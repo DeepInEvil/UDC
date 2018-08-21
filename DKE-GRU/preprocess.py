@@ -26,8 +26,9 @@ def get_values(file, get_c_d=False, w2id=None):
     chars = []
     y = [int(a[0]) for a in data]
     c = [' __EOS__ '.join(a[1:-1]).split() for a in data]
-    c = []
+    c = [[getw2id(w, w2id) for w in s] for s in c]
     r = [a[-1].split() for a in data]
+    r = [[getw2id(w, w2id) for w in s] for s in r]
     if get_c_d:
         for word in c:
             sent = ' '.join(word)
