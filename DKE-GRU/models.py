@@ -88,10 +88,10 @@ class biGRU(nn.Module):
         return o
 
 
-class cGRU(nn.Module):
+class A_DE_bigRU(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, gpu=False, emb_drop=0.6, pad_idx=0):
-        super(cGRU, self).__init__()
+        super(A_DE_bigRU, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
 
@@ -443,10 +443,10 @@ class Add_GRU(nn.Module):
         return o
 
 
-class DKE_GRU(nn.Module):
+class AK_DKE_biGRU(nn.Module):
 
     def __init__(self, emb_dim, n_vocab, h_dim=256, pretrained_emb=None, pad_idx=0, gpu=False, emb_drop=0.6, max_seq_len=160):
-        super(DKE_GRU, self).__init__()
+        super(AK_DKE_biGRU, self).__init__()
 
         self.word_embed = nn.Embedding(n_vocab, emb_dim, padding_idx=pad_idx)
         #Load pre-trained embedding

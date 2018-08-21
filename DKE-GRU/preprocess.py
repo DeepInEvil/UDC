@@ -3,11 +3,18 @@ import pickle
 from collections import defaultdict
 
 def getw2id(word, w2id):
+    """
+    get Ids of words from dictionary
+    :param word:
+    :param w2id:
+    :return:
+    """
     try:
         return w2id[word]
     except KeyError:
         return w2id['**unknown**']
-def get_values(file, get_c_d=False, w2id):
+
+def get_values(file, get_c_d=False, w2id=None):
     """
     get label context and response.
     :param file: filel name
