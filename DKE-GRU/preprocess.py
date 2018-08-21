@@ -34,13 +34,6 @@ if __name__ == '__main__':
     for word in vocab:
         w = word.split('\n')[0].split('\t')
         w2id[w[0]] =int(w[1])
-    #
-    # man_cmd = pd.read_csv('./data/man.csv', sep='\t', header=None)
-    # man_cmd = np.array(man_cmd)
-    #
-    # man_dict = {}
-    # for a, b in man_cmd:
-    #     man_dict[w2id[a.strip()]] = get_vec(b)
 
     train, test, valid = {}, {}, {}
     train['y'], train['c'], train['r'] = get_values('ubuntu_data/train.txt', get_c_d=False)
