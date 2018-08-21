@@ -2,8 +2,12 @@ import re
 import pickle
 from collections import defaultdict
 
-
-def get_values(file, get_c_d=False):
+def getw2id(word, w2id):
+    try:
+        return w2id[word]
+    except KeyError:
+        return w2id['**unknown**']
+def get_values(file, get_c_d=False, w2id):
     """
     get label context and response.
     :param file: filel name
@@ -15,6 +19,7 @@ def get_values(file, get_c_d=False):
     chars = []
     y = [int(a[0]) for a in data]
     c = [' __EOS__ '.join(a[1:-1]).split() for a in data]
+    c = []
     r = [a[-1].split() for a in data]
     if get_c_d:
         for word in c:
@@ -36,9 +41,9 @@ if __name__ == '__main__':
         w2id[w[0]] =int(w[1])
 
     train, test, valid = {}, {}, {}
-    train['y'], train['c'], train['r'] = get_values('ubuntu_data/train.txt', get_c_d=False)
-    test['y'], test['c'], test['r'] = get_values('ubuntu_data/test.txt')
-    valid['y'], valid['c'], valid['r'] = get_values('ubuntu_data/valid.txt')
-    char_vocab = defaultdict(float)
+    train['y'], train['c'], train['r'] = get_values('ubuntu_data/train.txt', get_c_d=False, w2id=w2id)
+    test['y'], test['c'], test['r'] = get_values('ubuntu_data/test.txt', w2id=w2id)
+    valid['y'], valid['c'], valid['r'] = get_values('ubuntu_data/valid.txt', w2id=w2id)
+    #char_vocab = defaultdict(float)
     dataset = train, valid, test
     pickle.dump(dataset, open('ubuntu_data/dataset_1M.pkl', 'wb'))

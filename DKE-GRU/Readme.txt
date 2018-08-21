@@ -1,10 +1,10 @@
-# Domain Knowledge enhanced Gated recurrent Unit (DKE-GRU)
+# Attention and external Knowledge augmented Dual Encoder with bi-directional GRU (AK-DKE-biGRU)
 
-Project for running DKE-GRU model.
+Project for running AK-DKE-biGRU model.
 
 ## Getting Started
 
-We use python version3.6.4
+We use python version 3.6.4
 Install the requirements.txt file and install pytorch version: "0.3.1.post2"
 
 ### Prerequisites
@@ -23,7 +23,6 @@ Download the ubuntu_description.npy file provided and copy it to ubuntu_data dir
 
 ## Running the model
 
-The DKE-GRU model should be run as:
+The AK-DKE-biGRU model should be run as:
 
-python -u DKE-GRU/run_models.py --h_dim 300 --mb_size 32 --n_epoch 20 --gpu --lr 0.0001
-
+python -u run_models.py --h_dim 300 --mb_size 32 --n_epoch 20 --gpu --lr 0.0001
